@@ -56,11 +56,11 @@ class SystemCall(Step):
     """
 
     def process(self, *args):
-        from .. import datamodels
+        import stdatamodels
 
         newargs = []
         for i, arg in enumerate(args):
-            if isinstance(arg, datamodels.DataModel):
+            if isinstance(arg, stdatamodels.DataModel):
                 filename = "{0}.{1:04d}.{2}".format(
                     self.qualified_name, i, arg.get_fileext())
                 arg.save(filename)

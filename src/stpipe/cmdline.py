@@ -372,9 +372,13 @@ def steps_to_reftypes_from_config(cfg):
     returns { step : [reftypes...], ... }
     """
     if not os.path.dirname(cfg):
-        from jwst import pipeline
-        pkgpath = os.path.dirname(pipeline.__file__)
-        cfgpath = os.path.join(pkgpath, os.path.basename(cfg))
+        raise NotImplementedError("stpipe doesn't yet support reading a pipeline config from a package")
+        # TODO: The following code assumes that that the config will reside in the
+        # jwst.pipeline package.  We'll need to work out a way for it to search
+        # romancal as well.
+        # from jwst import pipeline
+        # pkgpath = os.path.dirname(pipeline.__file__)
+        # cfgpath = os.path.join(pkgpath, os.path.basename(cfg))
     else:
         cfgpath = cfg
     steps_to_reftypes = {}

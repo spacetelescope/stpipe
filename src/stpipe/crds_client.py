@@ -42,8 +42,11 @@ import crds
 from crds.core import config, exceptions, heavy_client, log
 from crds.core import crds_cache_locking
 
-from ..lib import s3_utils
-from ..datamodels import open as dm_open
+from . import s3_utils
+
+# TODO: The current plan is for the open functions to reside in jwst
+# and romancal.  We may need to work out a way to access then from here.
+# from ..datamodels import open as dm_open
 
 def get_exceptions_module():
     """Provide external indirect access to the crds.core.exceptions module to
@@ -59,10 +62,12 @@ def get_refpaths_from_filename(filename, reference_file_types, observatory=None)
 
     See also get_multiple_reference_filepaths().
     """
-    from .. import datamodels
-    with datamodels.open(filename) as model:
-        refpaths = get_multiple_reference_paths(model, reference_file_types, observatory)
-    return refpaths
+    # TODO: We don't yet have access to the open function here.
+    raise NotImplementedError("stpipe does not yet implement get_refpaths_from_filename")
+    # from .. import datamodels
+    # with datamodels.open(filename) as model:
+    #     refpaths = get_multiple_reference_paths(model, reference_file_types, observatory)
+    # return refpaths
 
 
 def get_multiple_reference_paths(dataset_model, reference_file_types, observatory=None):
@@ -82,16 +87,18 @@ def get_multiple_reference_paths(dataset_model, reference_file_types, observator
 
     Returns best references dict { filetype : filepath or "N/A", ... }
     """
-    log.set_log_time(True)
-    if dataset_model.meta.model_type == 'ModelContainer':
-        first_exposure = get_first_science_exposure(dataset_model)
-        dataset_model = dm_open(first_exposure)
-    data_dict = _get_data_dict(dataset_model)
-    if observatory is None:
-        observatory = dataset_model.meta.telescope or 'jwst'
-    observatory = observatory.lower()
-    refpaths = _get_refpaths(data_dict, tuple(reference_file_types), observatory)
-    return refpaths
+    # TODO: We don't yet have access to the open function here.
+    raise NotImplementedError("stpipe does not yet implement get_multiple_reference_paths")
+    # log.set_log_time(True)
+    # if dataset_model.meta.model_type == 'ModelContainer':
+    #     first_exposure = get_first_science_exposure(dataset_model)
+    #     dataset_model = dm_open(first_exposure)
+    # data_dict = _get_data_dict(dataset_model)
+    # if observatory is None:
+    #     observatory = dataset_model.meta.telescope or 'jwst'
+    # observatory = observatory.lower()
+    # refpaths = _get_refpaths(data_dict, tuple(reference_file_types), observatory)
+    # return refpaths
 
 def get_first_science_exposure(dataset_model):
     for exposure in dataset_model.meta.asn_table.products[0].members:
@@ -180,14 +187,16 @@ def get_reference_file(dataset, reference_file_type, observatory=None, asn_expty
 
     See also get_multiple_reference_paths().
     """
-    if isinstance(dataset, str):
-        from jwst import datamodels
-        with datamodels.open(dataset, asn_exptypes=asn_exptypes) as model:
-            return get_multiple_reference_paths(
-                model, [reference_file_type], observatory)[reference_file_type]
-    else:
-        return get_multiple_reference_paths(
-            dataset, [reference_file_type], observatory)[reference_file_type]
+    # TODO: We don't yet have access to the open function here.
+    raise NotImplementedError("stpipe does not yet implement get_reference_file")
+    # if isinstance(dataset, str):
+    #     from jwst import datamodels
+    #     with datamodels.open(dataset, asn_exptypes=asn_exptypes) as model:
+    #         return get_multiple_reference_paths(
+    #             model, [reference_file_type], observatory)[reference_file_type]
+    # else:
+    #     return get_multiple_reference_paths(
+    #         dataset, [reference_file_type], observatory)[reference_file_type]
 
 
 def get_override_name(reference_file_type):

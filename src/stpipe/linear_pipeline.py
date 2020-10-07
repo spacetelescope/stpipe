@@ -126,16 +126,17 @@ class LinearPipeline(Pipeline, metaclass=_LinearPipelineMetaclass):
                 mode = 'RUN'
 
             if mode == 'BEFORE':
-                from .. import datamodels
+                raise NotImplementedError("stpipe does not yet have access to the open function")
+                # from .. import datamodels
 
-                try:
-                    with datamodels.open(filename) as dm:
-                        pass
-                except (ValueError, TypeError, IOError):
-                    return recurse(mode, filename, pipeline_steps[1:])
-                else:
-                    dm = datamodels.open(filename)
-                    return recurse(mode, dm, pipeline_steps[1:])
+                # try:
+                #     with datamodels.open(filename) as dm:
+                #         pass
+                # except (ValueError, TypeError, IOError):
+                #     return recurse(mode, filename, pipeline_steps[1:])
+                # else:
+                #     dm = datamodels.open(filename)
+                #     return recurse(mode, dm, pipeline_steps[1:])
 
             elif mode == 'RUN':
                 dm = step(input_file)

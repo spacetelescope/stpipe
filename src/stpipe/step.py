@@ -29,14 +29,24 @@ from . import config_parser
 from . import crds_client
 from . import log
 from . import utilities
-from .. import __version_commit__, __version__
-from ..associations.load_as_asn import (LoadAsAssociation, LoadAsLevel2Asn)
-from ..associations.lib.format_template import FormatTemplate
-from ..associations.lib.update_path import update_key_value
-from ..datamodels import (DataModel, ModelContainer, StepParsModel)
-from ..datamodels import open as dm_open
-from ..lib.class_property import ClassInstanceMethod
-from ..lib.suffix import remove_suffix
+
+# TODO: This needs to be the version of jwst/romancal, not this package:
+# from .. import __version_commit__, __version__
+
+# TODO: Association code isn't available here:
+# from ..associations.load_as_asn import (LoadAsAssociation, LoadAsLevel2Asn)
+# from ..associations.lib.format_template import FormatTemplate
+# from ..associations.lib.update_path import update_key_value
+
+# TODO: Neither ModelContainer nor StepParsModel are available yet:
+from stdatamodels import DataModel
+# from ..datamodels import (DataModel, ModelContainer, StepParsModel)
+
+# TODO: The open function is not yet available:
+# from ..datamodels import open as dm_open
+
+from .class_property import ClassInstanceMethod
+from .suffix import remove_suffix
 
 class Step():
     """
@@ -347,7 +357,7 @@ class Step():
         the running of each step.  The real work that is unique to
         each step type is done in the `process` method.
         """
-        from .. import datamodels
+        from .. import stdatamodels
         gc.collect()
 
         # Make generic log messages go to this step's logger
@@ -414,16 +424,18 @@ class Step():
                     step_result = hook_results
 
             # Update meta information
-            if not isinstance(
-                    step_result, (list, tuple, datamodels.ModelContainer)
-            ):
+            # TODO: ModelContainer isn't yet available here:
+            # if not isinstance(
+            #         step_result, (list, tuple, datamodels.ModelContainer)
+            # ):
+            if not isinstance(step_result, (list, tuple)):
                 results = [step_result]
             else:
                 results = step_result
 
             if len(self._reference_files_used):
                 for result in results:
-                    if isinstance(result, datamodels.DataModel):
+                    if isinstance(result, DataModel):
                         for ref_name, filename in self._reference_files_used:
                             if hasattr(result.meta.ref_file, ref_name):
                                 getattr(result.meta.ref_file, ref_name).name = filename
@@ -434,9 +446,11 @@ class Step():
 
             # Mark versions
             for result in results:
-                if isinstance(result, datamodels.DataModel):
-                    result.meta.calibration_software_revision = __version_commit__ or 'RELEASE'
-                    result.meta.calibration_software_version = __version__
+                if isinstance(result, DataModel):
+                    # TODO: We don't yet have access to the host package's version and commit:
+                    pass
+                    # result.meta.calibration_software_revision = __version_commit__ or 'RELEASE'
+                    # result.meta.calibration_software_version = __version__
 
             # Save the output file if one was specified
             if not self.skip and self.save_results:
@@ -856,36 +870,55 @@ class Step():
            not output_file:
             return
 
-        if isinstance(model, ModelContainer):
-            save_model_func = partial(
-                self.save_model,
+        # TODO: ModelContainer isn't yet available here:
+        # if isinstance(model, ModelContainer):
+        #     save_model_func = partial(
+        #         self.save_model,
+        #         suffix=suffix,
+        #         force=force,
+        #         format=format,
+        #         **components
+        #     )
+        #     output_path = model.save(
+        #         path=output_file,
+        #         save_model_func=save_model_func)
+        # else:
+
+        #     # Search for an output file name.
+        #     if (
+        #             self.output_use_model or
+        #             (output_file is None and not self.search_output_file)
+        #     ):
+        #         output_file = model.meta.filename
+        #         idx = None
+        #     output_path = model.save(
+        #         self.make_output_path(
+        #             basepath=output_file,
+        #             suffix=suffix,
+        #             idx=idx,
+        #             name_format=format,
+        #             **components
+        #         )
+        #     )
+        #     self.log.info('Saved model in {}'.format(output_path))
+
+        # Search for an output file name.
+        if (
+                self.output_use_model or
+                (output_file is None and not self.search_output_file)
+        ):
+            output_file = model.meta.filename
+            idx = None
+        output_path = model.save(
+            self.make_output_path(
+                basepath=output_file,
                 suffix=suffix,
-                force=force,
-                format=format,
+                idx=idx,
+                name_format=format,
                 **components
             )
-            output_path = model.save(
-                path=output_file,
-                save_model_func=save_model_func)
-        else:
-
-            # Search for an output file name.
-            if (
-                    self.output_use_model or
-                    (output_file is None and not self.search_output_file)
-            ):
-                output_file = model.meta.filename
-                idx = None
-            output_path = model.save(
-                self.make_output_path(
-                    basepath=output_file,
-                    suffix=suffix,
-                    idx=idx,
-                    name_format=format,
-                    **components
-                )
-            )
-            self.log.info('Saved model in {}'.format(output_path))
+        )
+        self.log.info('Saved model in {}'.format(output_path))
 
         return output_path
 
@@ -990,30 +1023,34 @@ class Step():
             basename = ''
             suffix_sep = ''
             separator = ''
-        formatter = FormatTemplate(
-            separator=separator,
-            remove_unused=True
-        )
 
-        if len(components):
-            component_str = formatter(component_format, **components)
-        else:
-            component_str = ''
+        # TODO: This still lives in the association code in jwst:
+        raise NotImplementedError("stpipe does not yet have access to FormatTemplate")
 
-        basename = formatter(
-            name_format,
-            basename=basename,
-            suffix=suffix,
-            suffix_sep=suffix_sep,
-            ext=ext,
-            components=component_str
-        )
+        # formatter = FormatTemplate(
+        #     separator=separator,
+        #     remove_unused=True
+        # )
 
-        output_dir = step.search_attr('output_dir', default='')
-        output_dir = expandvars(expanduser(output_dir))
-        full_output_path = join(output_dir, basename)
+        # if len(components):
+        #     component_str = formatter(component_format, **components)
+        # else:
+        #     component_str = ''
 
-        return full_output_path
+        # basename = formatter(
+        #     name_format,
+        #     basename=basename,
+        #     suffix=suffix,
+        #     suffix_sep=suffix_sep,
+        #     ext=ext,
+        #     components=component_str
+        # )
+
+        # output_dir = step.search_attr('output_dir', default='')
+        # output_dir = expandvars(expanduser(output_dir))
+        # full_output_path = join(output_dir, basename)
+
+        # return full_output_path
 
     def closeout(self, to_close=None, to_del=None):
         """Close out step processing
@@ -1069,7 +1106,9 @@ class Step():
         datamodel : DataModel
             Object opened as a datamodel
         """
-        return dm_open(self.make_input_path(obj))
+        # TODO: We don't have access to datamodels.open yet:
+        raise NotImplementedError("stpipe does not yet implement open_model")
+        # return dm_open(self.make_input_path(obj))
 
     def make_input_path(self, file_path):
         """Create an input path for a given file path
@@ -1114,9 +1153,11 @@ class Step():
         association : jwst.associations.lib.rules_level2_base.DMSLevel2bBase
             Association
         """
-        asn = LoadAsLevel2Asn.load(obj, basename=self.output_file)
-        update_key_value(asn, 'expname', (), mod_func=self.make_input_path)
-        return asn
+        # TODO: Should this move to the jwst base class?
+        raise NotImplementedError("stpipe does not yet implement load_as_level2_asn")
+        # asn = LoadAsLevel2Asn.load(obj, basename=self.output_file)
+        # update_key_value(asn, 'expname', (), mod_func=self.make_input_path)
+        # return asn
 
     def load_as_level3_asn(self, obj):
         """Load object as an association
@@ -1134,9 +1175,11 @@ class Step():
         association : jwst.associations.lib.rules_level3_base.DMS_Level3_Base
             Association
         """
-        asn = LoadAsAssociation.load(obj)
-        update_key_value(asn, 'expname', (), mod_func=self.make_input_path)
-        return asn
+        # TODO: Should this move to the jwst base class?
+        raise NotImplementedError("stpipe does not yet implement load_as_level3_asn")
+        # asn = LoadAsAssociation.load(obj)
+        # update_key_value(asn, 'expname', (), mod_func=self.make_input_path)
+        # return asn
 
     def _set_input_dir(self, input, exclusive=True):
         """Set the input directory
@@ -1182,11 +1225,13 @@ class Step():
             status = 'SKIPPED'
             self.skip = True
 
-        if isinstance(datamodel, ModelContainer):
-            for model in datamodel:
-                model.meta.cal_step._instance[cal_step] = status
-        else:
-            datamodel.meta.cal_step._instance[cal_step] = status
+        # TODO: We don't have access to ModelContainer yet:
+        # if isinstance(datamodel, ModelContainer):
+        #     for model in datamodel:
+        #         model.meta.cal_step._instance[cal_step] = status
+        # else:
+        #     datamodel.meta.cal_step._instance[cal_step] = status
+        datamodel.meta.cal_step._instance[cal_step] = status
 
         # TODO: standardize cal_step naming to point to the offical step name
 
@@ -1252,18 +1297,20 @@ class Step():
         model : `StepParsModel`
             The `StepParsModel`.
         """
-        pars_model = StepParsModel()
-        pars_model.parameters.instance.update(step.get_pars(full_spec=full_spec))
+        # TODO: We don't have access to StepParsModel yet:
+        raise NotImplementedError("stpipe does not yet implement get_pars_model")
+        # pars_model = StepParsModel()
+        # pars_model.parameters.instance.update(step.get_pars(full_spec=full_spec))
 
-        # Update class and name.
-        full_class_name = _full_class_name(step)
-        pars_model.parameters.instance.update({
-            'class': full_class_name,
-            'name': getattr(step, 'name', full_class_name.split('.')[-1])
-        })
-        pars_model.meta.reftype = 'pars-' + pars_model.parameters.name.lower()
+        # # Update class and name.
+        # full_class_name = _full_class_name(step)
+        # pars_model.parameters.instance.update({
+        #     'class': full_class_name,
+        #     'name': getattr(step, 'name', full_class_name.split('.')[-1])
+        # })
+        # pars_model.meta.reftype = 'pars-' + pars_model.parameters.name.lower()
 
-        return pars_model
+        # return pars_model
 
     def update_pars(self, parameters):
         """Update step parameters

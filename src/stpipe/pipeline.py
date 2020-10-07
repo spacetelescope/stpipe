@@ -31,15 +31,17 @@ Pipeline
 """
 from os.path import dirname, join
 
-from ..extern.configobj.configobj import Section, ConfigObj
+from .extern.configobj.configobj import Section, ConfigObj
 
 from . import config_parser
 from . import Step
 from . import crds_client
 from . import log
 from .step import get_disable_crds_steppars
-from ..datamodels import open as dm_open
-from ..lib.class_property import ClassInstanceMethod
+
+# TODO: We don't yet have access to the open function here.
+# from ..datamodels import open as dm_open
+from .class_property import ClassInstanceMethod
 
 
 class Pipeline(Step):
@@ -194,12 +196,13 @@ class Pipeline(Step):
         log.log.debug('Retrieving all substep parameters from CRDS')
         #
         # Iterate over the steps in the pipeline
-        with dm_open(dataset, asn_n_members=1) as model:
-            for cal_step in cls.step_defs.keys():
-                cal_step_class = cls.step_defs[cal_step]
-                refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(
-                    model, observatory=observatory
-                )
+        raise NotImplementedError("stpipe does not yet have access to the open function")
+        # with dm_open(dataset, asn_n_members=1) as model:
+        #     for cal_step in cls.step_defs.keys():
+        #         cal_step_class = cls.step_defs[cal_step]
+        #         refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(
+        #             model, observatory=observatory
+        #         )
         #
         # Now merge any config parameters from the step cfg file
         log.log.debug(f'Retrieving pipeline {pars_model.meta.reftype.upper()} parameters from CRDS')
@@ -266,15 +269,17 @@ class Pipeline(Step):
         -------
         None
         """
-        from .. import datamodels
-        try:
-            with datamodels.open(input_file, asn_n_members=1,
-                                asn_exptypes=["science"]) as model:
-                self._precache_references_opened(model)
-        except (ValueError, TypeError, IOError):
-            self.log.info(
-                'First argument {0} does not appear to be a '
-                'model'.format(input_file))
+        # TODO: We don't yet know how to open files in a generic way.
+        raise NotImplementedError("stpipe does not yet have access to the open function")
+        # from .. import datamodels
+        # try:
+        #     with datamodels.open(input_file, asn_n_members=1,
+        #                         asn_exptypes=["science"]) as model:
+        #         self._precache_references_opened(model)
+        # except (ValueError, TypeError, IOError):
+        #     self.log.info(
+        #         'First argument {0} does not appear to be a '
+        #         'model'.format(input_file))
 
     def _precache_references_opened(self, model_or_container):
         """Pre-fetches references for `model_or_container`.
@@ -331,18 +336,20 @@ class Pipeline(Step):
         """Return True IFF `input_file` is a ModelContainer or successfully
         loads as an association.
         """
-        from ..associations import load_asn
-        from .. import datamodels
-        if isinstance(input_file, datamodels.ModelContainer):
-            return True
+        # TODO: Should this be moved to a jwst-specific Pipeline base class?
+        raise NotImplementedError("stpipe does not yet have access to associations or ModelContainer")
+        # from ..associations import load_asn
+        # from .. import datamodels
+        # if isinstance(input_file, datamodels.ModelContainer):
+        #     return True
 
-        try:
-            with open(input_file, 'r') as input_file_fh:
-                load_asn(input_file_fh)
-        except Exception:
-            return False
-        else:
-            return True
+        # try:
+        #     with open(input_file, 'r') as input_file_fh:
+        #         load_asn(input_file_fh)
+        # except Exception:
+        #     return False
+        # else:
+        #     return True
 
     @ClassInstanceMethod
     def get_pars(pipeline, full_spec=True):

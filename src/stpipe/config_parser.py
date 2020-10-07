@@ -39,12 +39,15 @@ from asdf import open as asdf_open
 
 from asdf import ValidationError as AsdfValidationError
 
-from ..extern.configobj.configobj import (
+from .extern.configobj.configobj import (
     ConfigObj, Section, flatten_errors, get_extra_values)
-from ..extern.configobj.validate import Validator, ValidateError, VdtTypeError
+from .extern.configobj.validate import Validator, ValidateError, VdtTypeError
 
-from ..datamodels import DataModel, StepParsModel
-from ..lib import s3_utils
+# TODO: stdatamodels doesn't yet include StepParsModel.
+# from ..datamodels import DataModel, StepParsModel
+from stdatamodels import DataModel
+
+from . import s3_utils
 
 from . import utilities
 
@@ -166,11 +169,13 @@ def _load_config_file_s3(config_file):
 
 
 def _config_obj_from_asdf(cfg):
-    configobj = ConfigObj()
-    configobj.merge(cfg['parameters'])
-    configobj.pars_model = StepParsModel(cfg)
-    cfg.close()
-    return configobj
+    # TODO: Should we move StepParsModel into stdatamodels?
+    raise NotImplementedError("stpipe doesn't have access to StepParsModel yet")
+    # configobj = ConfigObj()
+    # configobj.merge(cfg['parameters'])
+    # configobj.pars_model = StepParsModel(cfg)
+    # cfg.close()
+    # return configobj
 
 
 def get_merged_spec_file(cls, preserve_comments=False):

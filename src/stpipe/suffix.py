@@ -272,42 +272,45 @@ def find_suffixes():
     is worth doing dynamically or only as a utility to update
     a static list.
     """
-    from jwst.stpipe import Step
+    # TODO: If we want to use this, it'll need to be reworked to
+    # be less jwst-specific.
+    raise NotImplementedError("stpipe does not yet implement find_suffixes")
+    # from jwst.stpipe import Step
 
-    suffixes = set()
+    # suffixes = set()
 
-    jwst = import_module('jwst')
-    jwst_fpath = path.split(jwst.__file__)[0]
+    # jwst = import_module('jwst')
+    # jwst_fpath = path.split(jwst.__file__)[0]
 
-    # First traverse the code base and find all
-    # `Step` classes. The default suffix is the
-    # class name.
-    for module in load_local_pkg(jwst_fpath):
-        for klass_name, klass in getmembers(
-            module,
-            lambda o: isclass(o) and issubclass(o, Step)
-        ):
-            suffixes.add(klass_name.lower())
+    # # First traverse the code base and find all
+    # # `Step` classes. The default suffix is the
+    # # class name.
+    # for module in load_local_pkg(jwst_fpath):
+    #     for klass_name, klass in getmembers(
+    #         module,
+    #         lambda o: isclass(o) and issubclass(o, Step)
+    #     ):
+    #         suffixes.add(klass_name.lower())
 
-    # Instantiate Steps/Pipelines from their configuration files.
-    # Different names and suffixes can be defined in this way.
-    # Note: Based on the `collect_pipeline_cfgs` script
-    config_path = path.join(jwst_fpath, 'pipeline')
-    for config_file in listdir(config_path):
-        if config_file.endswith('.cfg'):
-            try:
-                step = Step.from_config_file(
-                    path.join(config_path, config_file)
-                )
-            except Exception as err:
-                logger.debug(f'Configuration {config_file} failed: {str(err)}')
-            else:
-                suffixes.add(step.name.lower())
-                if step.suffix is not None:
-                    suffixes.add(step.suffix.lower())
+    # # Instantiate Steps/Pipelines from their configuration files.
+    # # Different names and suffixes can be defined in this way.
+    # # Note: Based on the `collect_pipeline_cfgs` script
+    # config_path = path.join(jwst_fpath, 'pipeline')
+    # for config_file in listdir(config_path):
+    #     if config_file.endswith('.cfg'):
+    #         try:
+    #             step = Step.from_config_file(
+    #                 path.join(config_path, config_file)
+    #             )
+    #         except Exception as err:
+    #             logger.debug(f'Configuration {config_file} failed: {str(err)}')
+    #         else:
+    #             suffixes.add(step.name.lower())
+    #             if step.suffix is not None:
+    #                 suffixes.add(step.suffix.lower())
 
-    # That's all folks
-    return list(suffixes)
+    # # That's all folks
+    # return list(suffixes)
 
 
 def load_local_pkg(fpath):
