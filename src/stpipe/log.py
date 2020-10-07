@@ -108,7 +108,7 @@ class LogConfig():
         self.name = name
         self.handler = handler
         if not isinstance(self.handler, list):
-            if self.handler.strip() == '':
+            if self.handler is None or self.handler.strip() == '':
                 self.handler = []
             else:
                 self.handler = [x.strip() for x in self.handler.split(',')]
