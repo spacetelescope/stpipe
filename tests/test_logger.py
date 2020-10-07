@@ -3,7 +3,7 @@ import logging
 
 import pytest
 
-from .. import log as stpipe_log
+from stpipe import log as stpipe_log
 
 
 @pytest.mark.openfiles_ignore

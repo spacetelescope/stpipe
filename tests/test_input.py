@@ -3,12 +3,14 @@
 from os import path
 
 import pytest
-from .steps import StepWithModel
-from .util import t_path
+from steps import StepWithModel
+from util import t_path
 
-from jwst.stpipe import Step
-from jwst.datamodels import (DataModel, ModelContainer)
-from jwst import datamodels
+from stpipe import Step
+# TODO: We don't have access to ModelContainer yet
+from stdatamodels import DataModel
+# from jwst.datamodels import (DataModel, ModelContainer)
+import stdatamodels
 
 
 def test_default_input_with_container(mk_tmp_dirs):

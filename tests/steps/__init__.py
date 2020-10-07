@@ -1,9 +1,10 @@
-from jwst.stpipe import (Pipeline, Step)
-from jwst import datamodels
-from jwst.datamodels import (
-    ImageModel,
-    ModelContainer,
-)
+from stpipe import (Pipeline, Step)
+import stdatamodels
+# TODO: jwst.datamodels isn't available here:
+# from jwst.datamodels import (
+#     ImageModel,
+#     ModelContainer,
+# )
 
 class StepWithReference(Step):
     """Step that refers to a reference file"""
@@ -152,51 +153,57 @@ class PreHookStep(Step):
         self.parent.pre_hook_run = True
 
 
-class SaveStep(Step):
-    """
-    Step with explicit save.
-    """
+# TODO: Need to rework this to use smoething other than ImageModel.  Maybe
+# define some dummy model classes somewhere?
+# class SaveStep(Step):
+#     """
+#     Step with explicit save.
+#     """
 
-    spec = """
-    """
+#     spec = """
+#     """
 
-    def process(self, *args):
-        model = ImageModel(args[0])
+#     def process(self, *args):
+#         model = ImageModel(args[0])
 
-        self.log.info('Saving model as "processed"')
-        self.save_model(model, 'processed')
+#         self.log.info('Saving model as "processed"')
+#         self.save_model(model, 'processed')
 
-        return model
-
-
-class StepWithContainer(Step):
-    """A step with a model"""
-
-    spec = """
-    """
-
-    def process(self, *args):
-        container = ModelContainer()
-        model1 = ImageModel(args[0]).copy()
-        model2 = ImageModel(args[0]).copy()
-        model1.meta.filename = 'swc_model1.fits'
-        model2.meta.filename = 'swc_model2.fits'
-        container.append(model1)
-        container.append(model2)
-
-        return container
+#         return model
 
 
-class StepWithModel(Step):
-    """A step with a model"""
+# TODO: Need to rework this to use smoething other than ImageModel.  Maybe
+# define some dummy model classes somewhere?
+# class StepWithContainer(Step):
+#     """A step with a model"""
 
-    spec = """
-    """
+#     spec = """
+#     """
 
-    def process(self, *args):
-        model = self.open_model(args[0])
-        model = ImageModel(model)
-        return model
+#     def process(self, *args):
+#         container = ModelContainer()
+#         model1 = ImageModel(args[0]).copy()
+#         model2 = ImageModel(args[0]).copy()
+#         model1.meta.filename = 'swc_model1.fits'
+#         model2.meta.filename = 'swc_model2.fits'
+#         container.append(model1)
+#         container.append(model2)
+
+#         return container
+
+
+# TODO: Need to rework this to use smoething other than ImageModel.  Maybe
+# define some dummy model classes somewhere?
+# class StepWithModel(Step):
+#     """A step with a model"""
+
+#     spec = """
+#     """
+
+#     def process(self, *args):
+#         model = self.open_model(args[0])
+#         model = ImageModel(model)
+#         return model
 
 
 class EmptyPipeline(Pipeline):
@@ -211,55 +218,59 @@ class EmptyPipeline(Pipeline):
         return args
 
 
-class ProperPipeline(Pipeline):
-    """Pipeline with proper output setup"""
+# TODO: Need to rework this to use smoething other than ImageModel.  Maybe
+# define some dummy model classes somewhere?
+# class ProperPipeline(Pipeline):
+#     """Pipeline with proper output setup"""
 
-    spec = """
-    """
+#     spec = """
+#     """
 
-    step_defs = {
-        'stepwithmodel': StepWithModel,
-        'another_stepwithmodel': StepWithModel,
-        'stepwithcontainer': StepWithContainer,
-        'withdefaultsstep': WithDefaultsStep
-    }
+#     step_defs = {
+#         'stepwithmodel': StepWithModel,
+#         'another_stepwithmodel': StepWithModel,
+#         'stepwithcontainer': StepWithContainer,
+#         'withdefaultsstep': WithDefaultsStep
+#     }
 
-    def process(self, *args):
+#     def process(self, *args):
 
-        self.suffix = 'pp'
+#         self.suffix = 'pp'
 
-        model = ImageModel(args[0])
+#         model = ImageModel(args[0])
 
-        self.stepwithmodel.suffix = 'swm'
-        r = self.stepwithmodel(model)
-        self.another_stepwithmodel.suffix = 'aswm'
-        r = self.another_stepwithmodel(r)
-        self.stepwithcontainer.suffix = 'swc'
-        r = self.stepwithcontainer(r)
-        self.withdefaultsstep.suffix = 'wds'
-        r = self.withdefaultsstep(r)
+#         self.stepwithmodel.suffix = 'swm'
+#         r = self.stepwithmodel(model)
+#         self.another_stepwithmodel.suffix = 'aswm'
+#         r = self.another_stepwithmodel(r)
+#         self.stepwithcontainer.suffix = 'swc'
+#         r = self.stepwithcontainer(r)
+#         self.withdefaultsstep.suffix = 'wds'
+#         r = self.withdefaultsstep(r)
 
-        return r
+#         return r
 
 
-class SavePipeline(Pipeline):
-    """Save model in pipeline"""
+# TODO: Need to rework this to use smoething other than ImageModel.  Maybe
+# define some dummy model classes somewhere?
+# class SavePipeline(Pipeline):
+#     """Save model in pipeline"""
 
-    spec = """
-    """
+#     spec = """
+#     """
 
-    step_defs = {
-        'stepwithmodel': StepWithModel,
-        'savestep': SaveStep
-    }
+#     step_defs = {
+#         'stepwithmodel': StepWithModel,
+#         'savestep': SaveStep
+#     }
 
-    def process(self, *args):
-        model = ImageModel(args[0])
+#     def process(self, *args):
+#         model = ImageModel(args[0])
 
-        r = self.stepwithmodel(model)
-        r = self.savestep(r)
+#         r = self.stepwithmodel(model)
+#         r = self.savestep(r)
 
-        return r
+#         return r
 
 
 class MakeListPipeline(Pipeline):

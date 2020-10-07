@@ -42,7 +42,7 @@ import crds
 from crds.core import config, exceptions, heavy_client, log
 from crds.core import crds_cache_locking
 
-from . import s3_utils
+from stdatamodels import s3_utils
 
 # TODO: The current plan is for the open functions to reside in jwst
 # and romancal.  We may need to work out a way to access then from here.

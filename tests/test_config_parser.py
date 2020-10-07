@@ -1,8 +1,8 @@
 import pytest
 
-from jwst.stpipe.tests.steps import MakeListStep
-from jwst.stpipe import config_parser
-from jwst.extern.configobj.configobj import ConfigObj
+from steps import MakeListStep
+from stpipe import config_parser
+from stpipe.extern.configobj.configobj import ConfigObj
 
 def test_load_config_file_s3(s3_root_dir):
     path = str(s3_root_dir.join("pars-makeliststep.asdf"))

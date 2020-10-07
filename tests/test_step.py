@@ -7,31 +7,34 @@ from os.path import (
 
 import pytest
 import jwst
-from jwst import datamodels
-from jwst.extern.configobj.configobj import ConfigObj
-from jwst.refpix import RefPixStep
-from jwst.stpipe import Step, crds_client
-from jwst.stpipe import cmdline
-from jwst.stpipe.config_parser import ValidationError
+import stdatamodels
+from stpipe.extern.configobj.configobj import ConfigObj
+# TODO: We don't have access to this here:
+# from jwst.refpix import RefPixStep
+from stpipe import Step, crds_client
+from stpipe import cmdline
+from stpipe.config_parser import ValidationError
 
-from .steps import EmptyPipeline, MakeListPipeline, MakeListStep, ProperPipeline
-from .util import t_path
+from steps import EmptyPipeline, MakeListPipeline, MakeListStep, ProperPipeline
+from util import t_path
 
 from crds.core.exceptions import CrdsLookupError
 
 
-ParsModelWithPar3 = datamodels.StepParsModel(t_path(join('steps','jwst_generic_pars-makeliststep_0002.asdf')))
-ParsModelWithPar3.parameters.instance.update({'par3': False})
+# TODO: StepParsModel isn't available yet:
+# ParsModelWithPar3 = datamodels.StepParsModel(t_path(join('steps','jwst_generic_pars-makeliststep_0002.asdf')))
+# ParsModelWithPar3.parameters.instance.update({'par3': False})
 
-REFPIXSTEP_CRDS_MIRI_PARS = {
-    'class': jwst.refpix.refpix_step.RefPixStep,
-    'name': 'refpix',
-    'odd_even_columns': False,
-    'odd_even_rows': False,
-    'side_gain': 10.0,
-    'side_smoothing_length': 21,
-    'use_side_ref_pixels': False
-}
+# TODO: We don't have access to RefPixStep here:
+# REFPIXSTEP_CRDS_MIRI_PARS = {
+#     'class': jwst.refpix.refpix_step.RefPixStep,
+#     'name': 'refpix',
+#     'odd_even_columns': False,
+#     'odd_even_rows': False,
+#     'side_gain': 10.0,
+#     'side_smoothing_length': 21,
+#     'use_side_ref_pixels': False
+# }
 
 CRDS_ERROR_STRING = 'PARS-WITHDEFAULTSSTEP: No parameters found'
 
@@ -452,7 +455,7 @@ def test_step():
     step_fn = join(dirname(__file__), 'steps', 'some_other_step.cfg')
     step = Step.from_config_file(step_fn)
 
-    from .steps import AnotherDummyStep
+    from steps import AnotherDummyStep
 
     assert isinstance(step, AnotherDummyStep)
     assert step.name == 'SomeOtherStepOriginal'
@@ -462,7 +465,7 @@ def test_step():
 
 
 def test_step_from_python():
-    from .steps import AnotherDummyStep
+    from steps import AnotherDummyStep
 
     step = AnotherDummyStep("SomeOtherStepOriginal", par1=42.0, par2="abc def")
 
@@ -476,7 +479,7 @@ def test_step_from_python():
 
 
 def test_step_from_python_simple():
-    from .steps import AnotherDummyStep
+    from steps import AnotherDummyStep
 
     result = AnotherDummyStep.call(1, 2, par1=42.0, par2="abc def")
 
@@ -484,7 +487,7 @@ def test_step_from_python_simple():
 
 
 def test_step_from_python_simple2():
-    from .steps import AnotherDummyStep
+    from steps import AnotherDummyStep
 
     step_fn = join(dirname(__file__), 'steps', 'some_other_step.cfg')
 
@@ -677,13 +680,13 @@ def test_step_with_local_class():
 
 
 def test_extra_parameter():
-    from .steps import AnotherDummyStep
+    from steps import AnotherDummyStep
     with pytest.raises(ValidationError):
         AnotherDummyStep("SomeOtherStepOriginal", par5='foo')
 
 
 def test_crds_override():
-    from .steps import AnotherDummyStep
+    from steps import AnotherDummyStep
 
     step = AnotherDummyStep(
         "SomeOtherStepOriginal",
@@ -695,14 +698,14 @@ def test_crds_override():
 
 
 def test_omit_ref_file():
-    from .steps import OptionalRefTypeStep
+    from steps import OptionalRefTypeStep
 
     step = OptionalRefTypeStep(override_to_be_ignored_ref_type="")
     step.process()
 
 
 def test_search_attr():
-    from .steps import SavePipeline
+    from steps import SavePipeline
 
     value = '/tmp'
     pipeline = SavePipeline('afile.fits', output_dir=value)

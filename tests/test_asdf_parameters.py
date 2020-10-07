@@ -2,11 +2,11 @@
 from pathlib import Path
 import pytest
 
-from jwst.stpipe.config_parser import ValidationError
-from jwst.stpipe.step import Step
+from stpipe.config_parser import ValidationError
+from stpipe.step import Step
 
-from .steps import MakeListStep, MakeListPipeline
-from .util import t_path
+from steps import MakeListStep, MakeListPipeline
+from util import t_path
 
 DEFAULT_PAR1 = 42.0
 DEFAULT_PAR2 = 'Yes, a string'

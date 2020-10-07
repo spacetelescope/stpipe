@@ -5,10 +5,10 @@ import numpy as np
 from numpy.testing import assert_allclose
 import pytest
 
-from jwst import datamodels
-from jwst.stpipe import Step, Pipeline, LinearPipeline, crds_client
+import stdatamodels
+from stpipe import Step, Pipeline, LinearPipeline, crds_client
 
-from .steps import PipeWithReference, StepWithReference
+from steps import PipeWithReference, StepWithReference
 
 
 def library_function():

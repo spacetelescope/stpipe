@@ -7,7 +7,7 @@ import pytest
 from astropy.io import fits
 
 from .. import Step
-from ..import crds_client
+from stpipe import crds_client
 import crds
 
 TMP_DIR = None
@@ -27,7 +27,7 @@ class CrdsStep(Step):
     reference_file_types = ['flat']
 
     def process(self, input_file):
-        from ... import datamodels
+        import stdatamodels
 
         with datamodels.open(input_file) as dm:
             self.ref_filename = self.get_reference_file(dm, 'flat')

@@ -47,7 +47,7 @@ from .extern.configobj.validate import Validator, ValidateError, VdtTypeError
 # from ..datamodels import DataModel, StepParsModel
 from stdatamodels import DataModel
 
-from . import s3_utils
+from stdatamodels import s3_utils
 
 from . import utilities
 
