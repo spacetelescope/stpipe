@@ -39,7 +39,8 @@ general integration can be managed here.
 import re
 
 import crds
-from crds.core import config, exceptions, heavy_client, log
+# from crds.core import config, exceptions, heavy_client, log
+from crds.core import config, exceptions, heavy_client
 from crds.core import crds_cache_locking
 
 from stdatamodels import s3_utils

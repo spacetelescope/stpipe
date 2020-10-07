@@ -22,10 +22,11 @@ Hence, to update `KNOW_SUFFIXES`, update both `SUFFIXES_TO_ADD` and
 """
 from copy import copy
 from importlib import import_module
-from inspect import (getmembers, isclass)
+# from inspect import (getmembers, isclass)
 import itertools
 import logging
-from os import (listdir, path, walk)
+# from os import (listdir, path, walk)
+from os import path, walk
 import re
 import sys
 

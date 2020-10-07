@@ -204,24 +204,24 @@ class Pipeline(Step):
         #             model, observatory=observatory
         #         )
         #
-        # Now merge any config parameters from the step cfg file
-        log.log.debug(f'Retrieving pipeline {pars_model.meta.reftype.upper()} parameters from CRDS')
-        exceptions = crds_client.get_exceptions_module()
-        try:
-            ref_file = crds_client.get_reference_file(model,
-                                                      pars_model.meta.reftype,
-                                                      observatory=observatory,
-                                                      asn_exptypes=['science'])
-        except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
-            log.log.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
-        else:
-            if ref_file != 'N/A':
-                log.log.info(f'{pars_model.meta.reftype.upper()} parameters found: {ref_file}')
-                refcfg = cls.merge_pipeline_config(refcfg, ref_file)
-            else:
-                log.log.debug(f'No {pars_model.meta.reftype.upper()} reference files found.')
+        # # Now merge any config parameters from the step cfg file
+        # log.log.debug(f'Retrieving pipeline {pars_model.meta.reftype.upper()} parameters from CRDS')
+        # exceptions = crds_client.get_exceptions_module()
+        # try:
+        #     ref_file = crds_client.get_reference_file(model,
+        #                                               pars_model.meta.reftype,
+        #                                               observatory=observatory,
+        #                                               asn_exptypes=['science'])
+        # except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
+        #     log.log.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
+        # else:
+        #     if ref_file != 'N/A':
+        #         log.log.info(f'{pars_model.meta.reftype.upper()} parameters found: {ref_file}')
+        #         refcfg = cls.merge_pipeline_config(refcfg, ref_file)
+        #     else:
+        #         log.log.debug(f'No {pars_model.meta.reftype.upper()} reference files found.')
 
-        return refcfg
+        # return refcfg
 
     @classmethod
     def merge_pipeline_config(cls, refcfg, ref_file):
