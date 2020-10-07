@@ -99,6 +99,7 @@ class MyPipeline(Pipeline):
         return dm
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_pipeline(_jail):
     pipeline_fn = join(dirname(__file__), 'steps', 'python_pipeline.cfg')
     pipe = Step.from_config_file(pipeline_fn)
@@ -110,6 +111,7 @@ def test_pipeline(_jail):
     pipe.run()
 
 
+@pytest.mark.skip("MyPipeline uses jwst.datamodels")
 def test_pipeline_python(_jail):
     steps = {
         'flat_field': {'threshold': 42.0}
@@ -137,6 +139,7 @@ class MyLinearPipeline(LinearPipeline):
         ]
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_prefetch(_jail, monkeypatch):
     """Test prefetching"""
 
@@ -177,6 +180,7 @@ def test_prefetch(_jail, monkeypatch):
     assert not mock_get_ref.called
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_partial_pipeline(_jail):
     pipe = MyLinearPipeline()
 
@@ -190,6 +194,7 @@ def test_partial_pipeline(_jail):
     assert_allclose(np.sum(result.data), 9969.82514685, rtol=1e-4)
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_pipeline_commandline(_jail):
     args = [
         abspath(join(dirname(__file__), 'steps', 'python_pipeline.cfg')),
@@ -204,6 +209,7 @@ def test_pipeline_commandline(_jail):
     pipe.run()
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_pipeline_commandline_class(_jail):
     args = [
         'jwst.stpipe.tests.test_pipeline.MyPipeline',
@@ -225,6 +231,7 @@ def test_pipeline_commandline_class(_jail):
     pipe.run()
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_pipeline_commandline_invalid_args():
     from io import StringIO
 

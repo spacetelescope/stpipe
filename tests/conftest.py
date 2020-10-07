@@ -1,4 +1,6 @@
 import io
+import tempfile
+import os
 
 import pytest
 
@@ -7,9 +9,24 @@ from stdatamodels import s3_utils
 import helpers
 
 
+@pytest.fixture
+def mk_tmp_dirs():
+    """Create a set of temporary directorys and change to one of them."""
+    tmp_current_path = tempfile.mkdtemp()
+    tmp_data_path = tempfile.mkdtemp()
+    tmp_config_path = tempfile.mkdtemp()
+
+    old_path = os.getcwd()
+    try:
+        os.chdir(tmp_current_path)
+        yield (tmp_current_path, tmp_data_path, tmp_config_path)
+    finally:
+        os.chdir(old_path)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def setup_logging():
-    stpipe import log
+    from stpipe import log
 
     # Turn off default logging when running tests
     buffer = io.BytesIO(b"[*]\n")

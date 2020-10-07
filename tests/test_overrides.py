@@ -77,6 +77,7 @@ def make_rawramp(nints, ngroups, ysize, xsize):
     return dm_ramp
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_invalid_override():
     """Test that a bogus override type is caught."""
     dm_ramp, ref_data = create_models()
@@ -85,6 +86,7 @@ def test_invalid_override():
         DQInitStep(override_mask = DQInitStep)
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_valid_model_override():
     dm_ramp, ref_data = create_models()
 
@@ -99,6 +101,7 @@ def test_valid_model_override():
     step.process(dm_ramp)
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_string_override():
     dm_ramp, ref_data = create_models()
 

@@ -6,7 +6,8 @@ from os.path import (
 )
 
 import pytest
-import jwst
+# TODO: Not available here:
+# import jwst
 import stdatamodels
 from stpipe.extern.configobj.configobj import ConfigObj
 # TODO: We don't have access to this here:
@@ -15,7 +16,9 @@ from stpipe import Step, crds_client
 from stpipe import cmdline
 from stpipe.config_parser import ValidationError
 
-from steps import EmptyPipeline, MakeListPipeline, MakeListStep, ProperPipeline
+# TODO: ProperPipeline isn't available yet because it relies on jwst models:
+# from steps import EmptyPipeline, MakeListPipeline, MakeListStep, ProperPipeline
+from steps import EmptyPipeline, MakeListPipeline, MakeListStep
 from util import t_path
 
 from crds.core.exceptions import CrdsLookupError
@@ -45,6 +48,7 @@ def data_path():
     return data_path
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 @pytest.mark.parametrize(
     'arg, env_set, expected_fn', [
         ('--disable-crds-steppars', None,   lambda stream: not CRDS_ERROR_STRING in stream),
@@ -82,6 +86,7 @@ def test_parameters_from_crds():
     assert pars == REFPIXSTEP_CRDS_MIRI_PARS
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_parameters_from_crds_fail():
     """Test retrieval of parameters from CRDS"""
     with datamodels.open(t_path(join('data', 'miri_data.fits'))) as data:
@@ -90,6 +95,7 @@ def test_parameters_from_crds_fail():
         assert not len(pars)
 
 
+@pytest.mark.skip("StepParsModel not available yet")
 @pytest.mark.parametrize(
     'cfg_file, expected',
     [
@@ -103,12 +109,14 @@ def test_reftype(cfg_file, expected):
     assert step.get_pars_model().meta.reftype == 'pars-' + expected.lower()
 
 
+@pytest.mark.skip("StepParsModel not available yet")
 def test_noproperty_pars():
     """Ensure that property parameters are excluded"""
     pars = Step.get_pars()
     assert pars['input_dir'] is None
 
 
+@pytest.mark.skip("StepParsModel not available yet")
 def test_saving_pars(tmpdir):
     """Save the step parameters from the commandline"""
     cfg_path = t_path(join('steps', 'jwst_generic_pars-makeliststep_0002.asdf'))
@@ -126,6 +134,7 @@ def test_saving_pars(tmpdir):
     step.closeout()
 
 
+@pytest.mark.skip("StepParsModel not available yet")
 @pytest.mark.parametrize(
     'step_obj, full_spec, expected',
     [
@@ -424,6 +433,7 @@ def test_getpars(step_obj, full_spec, expected):
     assert step_obj.get_pars(full_spec=full_spec) == expected
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_hook():
     """Test the running of hooks"""
     step_fn = join(dirname(__file__), 'steps', 'stepwithmodel_hook.cfg')
@@ -438,6 +448,7 @@ def test_hook():
     assert step.post_hook_run
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_hook_with_return():
     """Test the running of hooks"""
     step_fn = join(dirname(__file__), 'steps', 'stepwithmodel_hookreturn.cfg')
@@ -451,6 +462,7 @@ def test_hook_with_return():
     assert step.post_hook_run
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_step():
     step_fn = join(dirname(__file__), 'steps', 'some_other_step.cfg')
     step = Step.from_config_file(step_fn)
@@ -478,6 +490,7 @@ def test_step_from_python():
     assert result == 3
 
 
+@pytest.mark.skip("StepParsModel not available yet")
 def test_step_from_python_simple():
     from steps import AnotherDummyStep
 
@@ -486,6 +499,7 @@ def test_step_from_python_simple():
     assert result == 3
 
 
+@pytest.mark.skip("StepParsModel not available yet")
 def test_step_from_python_simple2():
     from steps import AnotherDummyStep
 
@@ -496,6 +510,7 @@ def test_step_from_python_simple2():
     assert result == 3
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_step_from_commandline():
     args = [
         abspath(join(dirname(__file__), 'steps', 'some_other_step.cfg')),
@@ -511,6 +526,7 @@ def test_step_from_commandline():
     step.run(1, 2)
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_step_from_commandline_class():
     args = [
         'jwst.stpipe.tests.steps.AnotherDummyStep',
@@ -559,6 +575,7 @@ def test_step_from_commandline_invalid4():
         Step.from_cmdline(args)
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 @pytest.mark.parametrize(
     "command_line_pars, command_line_config_pars, reference_pars, expected_pars",
     [
@@ -672,6 +689,7 @@ def test_step_from_commandline_par_precedence(command_line_pars, command_line_co
         assert getattr(step, key) == value
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_step_with_local_class():
     step_fn = join(dirname(__file__), 'steps', 'local_class.cfg')
     step = Step.from_config_file(step_fn)
@@ -685,6 +703,7 @@ def test_extra_parameter():
         AnotherDummyStep("SomeOtherStepOriginal", par5='foo')
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_crds_override():
     from steps import AnotherDummyStep
 
@@ -697,6 +716,7 @@ def test_crds_override():
     assert fd == join(dirname(__file__), 'data', 'flat.fits')
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_omit_ref_file():
     from steps import OptionalRefTypeStep
 
@@ -704,6 +724,7 @@ def test_omit_ref_file():
     step.process()
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_search_attr():
     from steps import SavePipeline
 
@@ -721,6 +742,7 @@ def test_print_configspec():
     step.print_configspec()
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_call_with_config(caplog, _jail):
     """Test call using a config file with substeps
 

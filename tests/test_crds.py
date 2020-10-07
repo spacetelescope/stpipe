@@ -6,7 +6,7 @@ import pytest
 
 from astropy.io import fits
 
-from .. import Step
+from stpipe import Step
 from stpipe import crds_client
 import crds
 
@@ -34,11 +34,13 @@ class CrdsStep(Step):
         return datamodels.DataModel()
 
 
+@pytest.mark.skip("test uses jwst.datamodels")
 def test_crds_step():
     """Nominal working CrdsStep flat fetch for valid dataset."""
     _run_flat_fetch_on_dataset('data/crds.fits')
 
 
+@pytest.mark.skip("test uses jwst.datamodels")
 def test_crds_step_bad():
     """Run CrdsStep on a dataset with detector set to N/A."""
     with pytest.raises(crds.CrdsError):
@@ -52,6 +54,8 @@ def _run_flat_fetch_on_dataset(dataset_path):
         step.run(input_file)
     assert basename(step.ref_filename) == "jwst_nircam_flat_0296.fits"
 
+
+@pytest.mark.skip("test uses jwst.datamodels")
 def test_crds_step_override():
     """Run CRDS step with override parameter bypassing CRDS lookup."""
     from ... import datamodels
@@ -67,6 +71,8 @@ def test_crds_step_override():
     with fits.open(TMP_FITS) as hdulist:
         assert hdulist[0].header['R_FLAT'].endswith('flat.fits')
 
+
+@pytest.mark.skip("uses crds module that imports jwst")
 def test_crds_failed_getreferences_parameter():
     """Run crds.getreferences() with invalid FILTER."""
     header = {
@@ -89,6 +95,8 @@ def test_crds_failed_getreferences_parameter():
     with pytest.raises(crds.CrdsError):
         crds.getreferences(header, reftypes=["flat"])
 
+
+@pytest.mark.skip("uses crds module that imports jwst")
 def test_crds_failed_getreferences_reftype():
     """Run crds.getreferences() with an invalid reftypes list."""
     header = {
@@ -111,6 +119,8 @@ def test_crds_failed_getreferences_reftype():
     with pytest.raises(crds.CrdsError):
         crds.getreferences(header, reftypes=["foo"])
 
+
+@pytest.mark.skip("uses crds module that imports jwst")
 def test_crds_failed_getreferences_bad_context():
     import crds
     header = {

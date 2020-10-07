@@ -4,6 +4,8 @@ import os
 from os import path
 import shutil
 
+import pytest
+
 from stpipe import Step
 
 data_fn = 'flat.fits'
@@ -11,6 +13,7 @@ data_fn_path = path.join(path.dirname(__file__), 'data', data_fn)
 data_name, data_ext = path.splitext(data_fn)
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_make_output_path():
     """Test the basic make_output_file method"""
 
@@ -34,6 +37,7 @@ def test_make_output_path():
     assert output_path == path.join(step.output_dir, 'junk_step.fits')
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_step_default(mk_tmp_dirs):
     """Default save should be current working directory"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -50,6 +54,7 @@ def test_save_step_default(mk_tmp_dirs):
     assert path.isfile(fname)
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_step_withoutput(mk_tmp_dirs):
     """Default save should be current working directory"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -69,6 +74,7 @@ def test_save_step_withoutput(mk_tmp_dirs):
     assert path.isfile(output_path + '_stepwithmodel' + output_ext)
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_step_withoutputsuffix(mk_tmp_dirs):
     """Default save should be current working directory"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -88,6 +94,7 @@ def test_save_step_withoutputsuffix(mk_tmp_dirs):
     assert path.isfile(actual_output_file)
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_step_withdir(mk_tmp_dirs):
     """Save to specified folder"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -108,6 +115,7 @@ def test_save_step_withdir(mk_tmp_dirs):
     assert path.isfile(output_fn_path)
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_step_withdir_environment(mk_tmp_dirs):
     """Save to specified folder"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -130,6 +138,7 @@ def test_save_step_withdir_environment(mk_tmp_dirs):
     assert path.isfile(output_fn_path)
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_step_withdir_withoutput(mk_tmp_dirs):
     """Save to specified folder"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -154,6 +163,7 @@ def test_save_step_withdir_withoutput(mk_tmp_dirs):
     assert path.isfile(output_fn_path)
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_container(mk_tmp_dirs):
     """Step with output_use_model"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -169,6 +179,7 @@ def test_save_container(mk_tmp_dirs):
     assert path.isfile('flat_1_stepwithcontainer.fits')
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_container_usemodel(mk_tmp_dirs):
     """Step with output_use_model"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -185,6 +196,7 @@ def test_save_container_usemodel(mk_tmp_dirs):
     assert path.isfile('swc_model2_stepwithcontainer.fits')
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_container_withfile(mk_tmp_dirs):
     """Step with output_use_model"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -203,6 +215,7 @@ def test_save_container_withfile(mk_tmp_dirs):
     step.closeout()
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_pipeline_default(mk_tmp_dirs):
     """Default save should be current working directory"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -236,6 +249,7 @@ def test_save_pipeline_default(mk_tmp_dirs):
     assert path.isfile(desired)
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_pipeline_withdir(mk_tmp_dirs):
     """Save to specified folder"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -260,6 +274,7 @@ def test_save_pipeline_withdir(mk_tmp_dirs):
     assert path.isfile(output_pipeline_fn_path)
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_substep_withdir(mk_tmp_dirs):
     """Save to specified folder"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -297,6 +312,7 @@ def test_save_substep_withdir(mk_tmp_dirs):
     assert path.isfile(desired)
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_proper_pipeline(mk_tmp_dirs):
     """Test how pipeline saving should work"""
     args = [
@@ -310,6 +326,7 @@ def test_save_proper_pipeline(mk_tmp_dirs):
     assert path.isfile('flat_pp.fits')
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_proper_pipeline_withdir(mk_tmp_dirs):
     """Test how pipeline saving should work with output_dir"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -326,6 +343,7 @@ def test_save_proper_pipeline_withdir(mk_tmp_dirs):
     assert path.isfile(path.join(tmp_data_path, 'flat_pp.fits'))
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_proper_pipeline_withdir_withoutput(mk_tmp_dirs):
     """Test how pipeline saving should work with output_dir"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -348,6 +366,7 @@ def test_save_proper_pipeline_withdir_withoutput(mk_tmp_dirs):
     ))
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_proper_pipeline_substeps(mk_tmp_dirs):
     """Test how pipeline saving should work"""
     args = [
@@ -365,6 +384,7 @@ def test_save_proper_pipeline_substeps(mk_tmp_dirs):
     assert path.isfile('flat_aswm.fits')
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_proper_pipeline_substeps_skip(mk_tmp_dirs):
     """Test how pipeline saving should work"""
     args = [
@@ -383,6 +403,7 @@ def test_save_proper_pipeline_substeps_skip(mk_tmp_dirs):
     assert not path.isfile('flat_aswm.fits')
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_proper_pipeline_substeps_withdir(mk_tmp_dirs):
     """Test how pipeline saving should work"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -404,6 +425,7 @@ def test_save_proper_pipeline_substeps_withdir(mk_tmp_dirs):
     assert path.isfile(path.join(tmp_config_path, 'flat_aswm.fits'))
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_proper_pipeline_container(mk_tmp_dirs):
     """Test how pipeline saving should work"""
     args = [
@@ -417,6 +439,7 @@ def test_save_proper_pipeline_container(mk_tmp_dirs):
     assert path.isfile('flat_1_pp.fits')
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_proper_pipeline_container_withdir(mk_tmp_dirs):
     """Test how pipeline saving should work with output_dir"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -433,6 +456,7 @@ def test_save_proper_pipeline_container_withdir(mk_tmp_dirs):
     assert path.isfile(path.join(tmp_data_path, 'flat_1_pp.fits'))
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_proper_pipeline_container_withdir_withoutput(mk_tmp_dirs):
     """Test how pipeline saving should work with output_dir"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -457,6 +481,7 @@ def test_save_proper_pipeline_container_withdir_withoutput(mk_tmp_dirs):
     ))
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_proper_pipeline_container_substeps(mk_tmp_dirs):
     """Test how pipeline saving should work"""
     args = [
@@ -477,6 +502,7 @@ def test_save_proper_pipeline_container_substeps(mk_tmp_dirs):
     assert path.isfile('flat_1_swc.fits')
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_proper_pipeline_container_substeps_skip(mk_tmp_dirs):
     """Test how pipeline saving should work"""
     args = [
@@ -498,6 +524,7 @@ def test_save_proper_pipeline_container_substeps_skip(mk_tmp_dirs):
     assert path.isfile('flat_1_swc.fits')
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_proper_pipeline_container_substeps_withdir(mk_tmp_dirs):
     """Test how pipeline saving should work"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -522,6 +549,7 @@ def test_save_proper_pipeline_container_substeps_withdir(mk_tmp_dirs):
     assert path.isfile(path.join(tmp_data_path, 'flat_1_swc.fits'))
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_proper_pipeline_container_usemodel(mk_tmp_dirs):
     """Test how pipeline saving should work"""
     args = [
@@ -551,6 +579,7 @@ def test_save_proper_pipeline_container_usemodel(mk_tmp_dirs):
     assert len(output_files) == 0
 
 
+@pytest.mark.skip("uses jwst.datamodels")
 def test_save_proper_pipeline_container_nosearch(mk_tmp_dirs):
     """Test how pipeline saving should work"""
     args = [

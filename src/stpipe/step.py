@@ -357,7 +357,6 @@ class Step():
         the running of each step.  The real work that is unique to
         each step type is done in the `process` method.
         """
-        from .. import stdatamodels
         gc.collect()
 
         # Make generic log messages go to this step's logger
