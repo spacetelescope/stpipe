@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+import argparse
+
+
+def parse_args():
+    parser = argparse.ArgumentParser("stpipe", description="stpipe CLI")
+    parser.add_argument("-v", "--version", help="print version information and exit", action="store_true")
+
+    subparsers = parser.add_subparsers(dest="command", title="commands", required=True)
+
+    pipeline_parser = subparsers.add_parser("pipeline", help="operate on pipelines", description="operate on pipelines")
+    pipeline_subparsers = pipeline_parser.add_subparsers(dest="subcommand", title="command", required=True)
+
+    pipeline_describe_parser = pipeline_subparsers.add_parser("describe", help="describe a pipeline", description="describe a pipeline")
+    pipeline_describe_parser.add_argument("pipeline-class", help="pipeline class name")
+
+    pipeline_list_parser = pipeline_subparsers.add_parser("list", help="list available pipelines", description="list available pipelines")
+    pipeline_list_parser.add_argument("pattern", help="(optional) restrict pipelines to glob pattern", nargs="?")
+
+    pipeline_run_parser = pipeline_subparsers.add_parser("run", help="run a pipeline", description="run a pipeline")
+    pipeline_run_parser.add_argument("pipeline-class", help="pipeline class name")
+
+    step_parser = subparsers.add_parser("step", help="operate on steps", description="operate on steps")
+    step_subparsers = step_parser.add_subparsers(dest="subcommand", title="command", required=True)
+
+    step_describe_parser = step_subparsers.add_parser("describe", help="describe a step", description="describe a step")
+
+    step_list_parser = step_subparsers.add_parser("list", help="list available steps", description="list available steps")
+    step_list_parser.add_argument("pattern", help="(optional) restrict steps to glob pattern", nargs="?")
+
+    step_run_parser = step_subparsers.add_parser("run", help="run a step", description="run a step")
+    step_run_parser.add_argument("step-class", help="step class name")
+
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+
+if __name__ == "__main__":
+    main()
