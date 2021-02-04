@@ -1,0 +1,4 @@
+stpipe API
+================
+
+.. automodapi:: stpipe

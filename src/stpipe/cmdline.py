@@ -8,9 +8,8 @@ import textwrap
 
 from . import config_parser
 from . import log
-from . import Step
 from . import utilities
-from .step import get_disable_crds_steppars
+from .step import get_disable_crds_steppars, Step
 
 built_in_configuration_parameters = [
     'debug', 'logcfg', 'verbose'
@@ -38,7 +37,7 @@ def _get_config_and_class(identifier):
             config, config_file=config_file)
     else:
         try:
-            step_class = utilities.import_class(identifier, Step)
+            step_class = utilities.import_class(utilities.resolve_step_class_alias(identifier), Step)
         except (ImportError, AttributeError, TypeError):
             raise ValueError(
                 '{0!r} is not a path to a config file or a Python Step '
@@ -296,15 +295,9 @@ def just_the_step_from_cmdline(args, cls=None):
     log.log.info("Hostname: {0}".format(os.uname()[1]))
     log.log.info("OS: {0}".format(os.uname()[0]))
 
-    # If initialized from a StepParsModel, remember that.
-    try:
-        step._pars_model = config.get_pars_model()
-    except AttributeError:
-        pass
-
     # Save the step configuration
     if known.save_parameters:
-        step.get_pars_model().save(known.save_parameters)
+        step.export_config(known.save_parameters, include_metadata=True)
         log.log.info(f"Step/Pipeline parameters saved to '{known.save_parameters}'")
 
     return step, step_class, positional, debug_on_exception
@@ -338,7 +331,7 @@ def step_from_cmdline(args, cls=None):
         just_the_step_from_cmdline(args, cls)
 
     try:
-        profile_path = os.environ.pop("JWST_PROFILE", None)
+        profile_path = os.environ.pop("STPIPE_PROFILE", None)
         if profile_path:
             import cProfile
             cProfile.runctx("step.run(*positional)", globals(), locals(), profile_path)
@@ -364,26 +357,3 @@ def step_script(cls):
     assert issubclass(cls, Step)
 
     return step_from_cmdline(sys.argv[1:], cls=cls)
-
-
-def steps_to_reftypes_from_config(cfg):
-    """Based on a pipeline .cfg file
-
-    returns { step : [reftypes...], ... }
-    """
-    if not os.path.dirname(cfg):
-        raise NotImplementedError("stpipe doesn't yet support reading a pipeline config from a package")
-        # TODO: The following code assumes that that the config will reside in the
-        # jwst.pipeline package.  We'll need to work out a way for it to search
-        # romancal as well.
-        # from jwst import pipeline
-        # pkgpath = os.path.dirname(pipeline.__file__)
-        # cfgpath = os.path.join(pkgpath, os.path.basename(cfg))
-    else:
-        cfgpath = cfg
-    steps_to_reftypes = {}
-    step, _step_class, _positional, _debug_on_exception = \
-        just_the_step_from_cmdline([cfgpath])
-    for name, substep in step.step_defs.items():
-        steps_to_reftypes[name] = sorted(list(substep.reference_file_types))
-    return steps_to_reftypes

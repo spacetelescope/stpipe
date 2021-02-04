@@ -1,47 +1,15 @@
-# Copyright (C) 2010 Association of Universities for Research in Astronomy(AURA)
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#
-#     1. Redistributions of source code must retain the above copyright
-#       notice, this list of conditions and the following disclaimer.
-#
-#     2. Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following
-#       disclaimer in the documentation and/or other materials provided
-#       with the distribution.
-#
-#     3. The name of AURA and its representatives may not be used to
-#       endorse or promote products derived from this software without
-#       specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY AURA ``AS IS'' AND ANY EXPRESS OR IMPLIED
-# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL AURA BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-# OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
-# TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
-# DAMAGE.
 """
 Pipeline
 """
+from collections.abc import Sequence
 from os.path import dirname, join
 
 from .extern.configobj.configobj import Section, ConfigObj
 
 from . import config_parser
-from . import Step
 from . import crds_client
-from . import log
-from .step import get_disable_crds_steppars
-
-# TODO: We don't yet have access to the open function here.
-# from ..datamodels import open as dm_open
-from .class_property import ClassInstanceMethod
+from .log import log
+from .step import get_disable_crds_steppars, Step
 
 
 class Pipeline(Step):
@@ -155,7 +123,7 @@ class Pipeline(Step):
         return spec
 
     @classmethod
-    def get_config_from_reference(cls, dataset, observatory=None, disable=None):
+    def get_config_from_reference(cls, dataset, disable=None):
         """Retrieve step parameters from reference database
 
         Parameters
@@ -169,9 +137,6 @@ class Pipeline(Step):
             be used by the CRDS "bestref" algorithm to obtain a reference
             file.
 
-        observatory : str
-            telescope name used with CRDS,  e.g. 'jwst'.
-
         disable: bool or None
             Do not retrieve parameters from CRDS. If None, check global settings.
 
@@ -181,7 +146,7 @@ class Pipeline(Step):
             The parameters as retrieved from CRDS. If there is an issue, log as such
             and return an empty config obj.
         """
-        pars_model = cls.get_pars_model()
+        reftype = cls.get_config_reftype()
         refcfg = ConfigObj()
         refcfg['steps'] = Section(refcfg, refcfg.depth + 1, refcfg.main, name="steps")
 
@@ -189,39 +154,34 @@ class Pipeline(Step):
         if disable is None:
             disable = get_disable_crds_steppars()
         if disable:
-            log.log.debug(f'{pars_model.meta.reftype.upper()}: CRDS parameter reference retrieval disabled.')
+            log.debug(f'{reftype.upper()}: CRDS parameter reference retrieval disabled.')
             return refcfg
 
 
-        log.log.debug('Retrieving all substep parameters from CRDS')
+        log.debug('Retrieving all substep parameters from CRDS')
         #
         # Iterate over the steps in the pipeline
-        raise NotImplementedError("stpipe does not yet have access to the open function")
-        # with dm_open(dataset, asn_n_members=1) as model:
-        #     for cal_step in cls.step_defs.keys():
-        #         cal_step_class = cls.step_defs[cal_step]
-        #         refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(
-        #             model, observatory=observatory
-        #         )
-        #
-        # # Now merge any config parameters from the step cfg file
-        # log.log.debug(f'Retrieving pipeline {pars_model.meta.reftype.upper()} parameters from CRDS')
-        # exceptions = crds_client.get_exceptions_module()
-        # try:
-        #     ref_file = crds_client.get_reference_file(model,
-        #                                               pars_model.meta.reftype,
-        #                                               observatory=observatory,
-        #                                               asn_exptypes=['science'])
-        # except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
-        #     log.log.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
-        # else:
-        #     if ref_file != 'N/A':
-        #         log.log.info(f'{pars_model.meta.reftype.upper()} parameters found: {ref_file}')
-        #         refcfg = cls.merge_pipeline_config(refcfg, ref_file)
-        #     else:
-        #         log.log.debug(f'No {pars_model.meta.reftype.upper()} reference files found.')
+        with cls._datamodels_open(dataset, asn_n_members=1) as model:
+            for cal_step in cls.step_defs.keys():
+                cal_step_class = cls.step_defs[cal_step]
+                refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(model)
+            #
+            # Now merge any config parameters from the step cfg file
+            log.debug(f'Retrieving pipeline {reftype.upper()} parameters from CRDS')
+            try:
+                ref_file = crds_client.get_reference_file(model.get_crds_parameters(),
+                                                        reftype,
+                                                        model.crds_observatory)
+            except (AttributeError, crds_client.CrdsError):
+                log.debug(f'{reftype.upper()}: No parameters found')
+            else:
+                if ref_file != 'N/A':
+                    log.info(f'{reftype.upper()} parameters found: {ref_file}')
+                    refcfg = cls.merge_pipeline_config(refcfg, ref_file)
+                else:
+                    log.debug(f'No {reftype.upper()} reference files found.')
 
-        # return refcfg
+        return refcfg
 
     @classmethod
     def merge_pipeline_config(cls, refcfg, ref_file):
@@ -269,17 +229,14 @@ class Pipeline(Step):
         -------
         None
         """
-        # TODO: We don't yet know how to open files in a generic way.
-        raise NotImplementedError("stpipe does not yet have access to the open function")
-        # from .. import datamodels
-        # try:
-        #     with datamodels.open(input_file, asn_n_members=1,
-        #                         asn_exptypes=["science"]) as model:
-        #         self._precache_references_opened(model)
-        # except (ValueError, TypeError, IOError):
-        #     self.log.info(
-        #         'First argument {0} does not appear to be a '
-        #         'model'.format(input_file))
+        try:
+            with self.open_model(input_file, asn_n_members=1,
+                                asn_exptypes=["science"]) as model:
+                self._precache_references_opened(model)
+        except (ValueError, TypeError, IOError):
+            self.log.info(
+                'First argument {0} does not appear to be a '
+                'model'.format(input_file))
 
     def _precache_references_opened(self, model_or_container):
         """Pre-fetches references for `model_or_container`.
@@ -292,7 +249,7 @@ class Pipeline(Step):
 
         No garbage collection.
         """
-        if self._is_container(model_or_container):
+        if isinstance(model_or_container, Sequence):
             # recurse on each contained model
             for contained_model in model_or_container:
                 self._precache_references_opened(contained_model)
@@ -309,8 +266,8 @@ class Pipeline(Step):
         Parameters
         ----------
         model :  `DataModel`
-            Only a `DataModel` instnace is allowed.
-            Cannot be a filename, ModelContainer, etc.
+            Only a `DataModel` instance is allowed.
+            Cannot be a filename, Sequence, etc.
         """
         ovr_refs = {
             reftype: self.get_ref_override(reftype)
@@ -322,7 +279,7 @@ class Pipeline(Step):
 
         self.log.info("Prefetching reference files for dataset: " + repr(model.meta.filename) +
                       " reftypes = " + repr(fetch_types))
-        crds_refs = crds_client.get_multiple_reference_paths(model, fetch_types)
+        crds_refs = crds_client.get_multiple_reference_paths(model.get_crds_parameters(), fetch_types, model.crds_observatory)
 
         ref_path_map = dict(list(crds_refs.items()) + list(ovr_refs.items()))
 
@@ -331,40 +288,18 @@ class Pipeline(Step):
             self.log.info(f"{how} for {reftype.upper()} reference file is '{refpath}'.")
             crds_client.check_reference_open(refpath)
 
-    @classmethod
-    def _is_container(cls, input_file):
-        """Return True IFF `input_file` is a ModelContainer or successfully
-        loads as an association.
-        """
-        # TODO: Should this be moved to a jwst-specific Pipeline base class?
-        raise NotImplementedError("stpipe does not yet have access to associations or ModelContainer")
-        # from ..associations import load_asn
-        # from .. import datamodels
-        # if isinstance(input_file, datamodels.ModelContainer):
-        #     return True
-
-        # try:
-        #     with open(input_file, 'r') as input_file_fh:
-        #         load_asn(input_file_fh)
-        # except Exception:
-        #     return False
-        # else:
-        #     return True
-
-    @ClassInstanceMethod
-    def get_pars(pipeline, full_spec=True):
+    def get_pars(self, full_spec=True):
         """Retrieve the configuration parameters of a pipeline
 
-        The pipeline, and all referenced substeps, parameters
-        are retrieved.
+        Parameters are retrieved for the pipeline and all of its
+        component steps.
 
         Parameters
         ----------
-        step : `Pipeline`-derived class or instance
-
         full_spec : bool
             Return all parameters, including parent-specified parameters.
-            If `False`, return only parameters specific to the class/instance.
+            If `False`, return only parameters specific to the pipeline
+            and steps.
 
         Returns
         -------
@@ -373,13 +308,6 @@ class Pipeline(Step):
         """
         pars = super().get_pars(full_spec=full_spec)
         pars['steps'] = {}
-        for step_name, step_class in pipeline.step_defs.items():
-
-            # If a step has already been instantiated, get its parameters
-            # from the instantiation. Otherwise, retrieve from the class
-            # itself.
-            try:
-                pars['steps'][step_name] = getattr(pipeline, step_name).get_pars(full_spec=full_spec)
-            except AttributeError:
-                pars['steps'][step_name] = step_class.get_pars(full_spec=full_spec)
+        for step_name, step_class in self.step_defs.items():
+            pars['steps'][step_name] = getattr(self, step_name).get_pars(full_spec=full_spec)
         return pars

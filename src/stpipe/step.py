@@ -1,17 +1,17 @@
 """
 Step
 """
+from collections.abc import Sequence
 from contextlib import contextmanager
 from functools import partial
 import gc
-import inspect
 import os
 from os.path import (
     abspath,
     basename,
     dirname,
-    # expanduser,
-    # expandvars,
+    expanduser,
+    expandvars,
     isfile,
     join,
     split,
@@ -24,31 +24,17 @@ try:
     DISCOURAGED_TYPES = (fits.HDUList,)
 except ImportError:
     DISCOURAGED_TYPES = None
+from stdatamodels import DataModel
 
+from . import config
 from . import config_parser
 from . import crds_client
 from . import log
 from . import utilities
+from .format_template import FormatTemplate
 
-# TODO: This needs to be the version of jwst/romancal, not this package:
-# from .. import __version_commit__, __version__
 
-# TODO: Association code isn't available here:
-# from ..associations.load_as_asn import (LoadAsAssociation, LoadAsLevel2Asn)
-# from ..associations.lib.format_template import FormatTemplate
-# from ..associations.lib.update_path import update_key_value
-
-# TODO: Neither ModelContainer nor StepParsModel are available yet:
-from stdatamodels import DataModel
-# from ..datamodels import (DataModel, ModelContainer, StepParsModel)
-
-# TODO: The open function is not yet available:
-# from ..datamodels import open as dm_open
-
-from .class_property import ClassInstanceMethod
-from .suffix import remove_suffix
-
-class Step():
+class Step:
     """
     Step
     """
@@ -66,6 +52,9 @@ class Step():
     search_output_file = boolean(default=True)       # Use outputfile define in parent step
     input_dir          = string(default=None)        # Input directory
     """
+    # Nickname used to refer to this class in lieu of the fully-qualified class
+    # name.  Must be globally unique!
+    class_alias = None
 
     # Correction parameters. These store and use whatever information a Step
     # may need to perform its operations without re-calculating, or to use
@@ -80,6 +69,17 @@ class Step():
     # Set to False in subclasses to skip prefetch,
     # but by default attempt to prefetch
     prefetch_references = True
+
+    @classmethod
+    def get_config_reftype(cls):
+        """
+        Get the CRDS reftype for this step's config reference.
+
+        Returns
+        -------
+        str
+        """
+        return f"pars-{cls.__name__.lower()}"
 
     @classmethod
     def merge_config(cls, config, config_file):
@@ -175,7 +175,7 @@ class Step():
     @classmethod
     def _parse_class_and_name(cls, config, parent=None, name=None, config_file=None):
         if 'class' in config:
-            step_class = utilities.import_class(config['class'],
+            step_class = utilities.import_class(utilities.resolve_step_class_alias(config['class']),
                                                 config_file=config_file)
             if not issubclass(step_class, cls):
                 raise TypeError(
@@ -288,7 +288,6 @@ class Step():
             Additional parameters to set.  These will be set as member
             variables on the new Step instance.
         """
-        self._pars_model = None
         self._reference_files_used = []
         self._input_filename = None
         self._input_dir = None
@@ -348,7 +347,7 @@ class Step():
         for i, arg in enumerate(args):
             if isinstance(arg, discouraged_types):
                 self.log.error(
-                    "{0} {1} object.  Use jwst.datamodels instead.".format(
+                    "{0} {1} object.  Use stdatamodels.DataModel instead.".format(
                         msg, i))
 
     def run(self, *args):
@@ -423,33 +422,18 @@ class Step():
                     step_result = hook_results
 
             # Update meta information
-            # TODO: ModelContainer isn't yet available here:
-            # if not isinstance(
-            #         step_result, (list, tuple, datamodels.ModelContainer)
-            # ):
-            if not isinstance(step_result, (list, tuple)):
+            if not isinstance(step_result, Sequence):
                 results = [step_result]
             else:
                 results = step_result
 
-            if len(self._reference_files_used):
-                for result in results:
-                    if isinstance(result, DataModel):
-                        for ref_name, filename in self._reference_files_used:
-                            if hasattr(result.meta.ref_file, ref_name):
-                                getattr(result.meta.ref_file, ref_name).name = filename
-                        result.meta.ref_file.crds.sw_version = crds_client.get_svn_version()
-                        result.meta.ref_file.crds.context_used = \
-                            crds_client.get_context_used(result.meta.telescope)
-                self._reference_files_used = []
-
-            # Mark versions
+            # The finalize_result hook allows subclasses to add
+            # metadata (like the cal code package version) before
+            # the result is saved.
             for result in results:
-                if isinstance(result, DataModel):
-                    # TODO: We don't yet have access to the host package's version and commit:
-                    pass
-                    # result.meta.calibration_software_revision = __version_commit__ or 'RELEASE'
-                    # result.meta.calibration_software_version = __version__
+                self.finalize_result(result, self._reference_files_used)
+
+            self._reference_files_used = []
 
             # Save the output file if one was specified
             if not self.skip and self.save_results:
@@ -491,6 +475,41 @@ class Step():
         return step_result
 
     __call__ = run
+
+    def finalize_result(self, result, reference_files_used):
+        """
+        Hook that allows subclasses to set mission-specific metadata on each
+        step result before that result is saved.
+
+        Parameters
+        ----------
+        result : stdatamodels.DataModel or collections.abc.Sequence
+            One step result (potentially of many).
+
+        reference_files_used : list of tuple
+            List of reference files used when running the step, each
+            a tuple in the form (str reference type, str reference URI).
+        """
+        pass
+
+    def remove_suffix(name):
+        """
+        Remove a known Step filename suffix from a filename
+        (if present).
+
+        Parameters
+        ----------
+        name : str
+            Filename.
+
+        Returns
+        -------
+        str
+            Filename with any known suffix removed.
+        str
+            Separator that delimited the original suffix.
+        """
+        return name, "_"
 
     def prefetch(self, *args):
         """Prefetch reference files,  nominally called when
@@ -542,7 +561,7 @@ class Step():
         a new instance but simply runs the existing instance of the `Step`
         class.
         """
-        logger_name = cls.get_pars_model().instance['parameters']['name']
+        logger_name = cls.__name__
         log_cls = log.getLogger(logger_name)
         if len(args) > 0:
             filename = args[0]
@@ -667,7 +686,7 @@ class Step():
 
         Parameters
         ----------
-        input_file : jwst.datamodels.ModelBase instance
+        input_file : stdatamodels.DataModel
             A model of the input file.  Metadata on this input file
             will be used by the CRDS "bestref" algorithm to obtain a
             reference file.
@@ -693,8 +712,12 @@ class Step():
             else:
                 return ""
         else:
-            reference_name = crds_client.get_reference_file(
-                input_file, reference_file_type)
+            with self.open_model(input_file) as model:
+                reference_name = crds_client.get_reference_file(
+                    model.get_crds_parameters(),
+                    reference_file_type,
+                    model.crds_observatory,
+                )
             if reference_name != "N/A":
                 hdr_name = "crds://" + basename(reference_name)
             else:
@@ -704,21 +727,18 @@ class Step():
         return crds_client.check_reference_open(reference_name)
 
     @classmethod
-    def get_config_from_reference(cls, dataset, observatory=None, disable=None):
+    def get_config_from_reference(cls, dataset, disable=None):
         """Retrieve step parameters from reference database
 
         Parameters
         ----------
-        cls : `jwst.stpipe.step.Step`
+        cls : stpipe.Step
             Either a class or instance of a class derived
             from `Step`.
-        dataset : `jwst.datamodels.ModelBase`
+        dataset : stdatamodels.DataModel
             A model of the input file.  Metadata on this input file will
             be used by the CRDS "bestref" algorithm to obtain a reference
             file.
-        observatory : str
-            telescope name used with CRDS,  e.g. 'jwst'.
-
         disable: bool or None
             Do not retrieve parameters from CRDS. If None, check global settings.
 
@@ -732,28 +752,34 @@ class Step():
         # Get the root logger, since the following operations
         # are happening in the surrounding architecture.
         logger = log.delegator.log
-        pars_model = cls.get_pars_model()
+        reftype = cls.get_config_reftype()
+
+        # If the dataset is not an operable DataModel, log as such and return
+        # an empty config object
+        try:
+            model = cls._datamodels_open(dataset)
+        except (IOError, TypeError, ValueError):
+            logger.warning('Input dataset is not a DataModel.')
+            disable = True
 
         # Check if retrieval should be attempted.
         if disable is None:
             disable = get_disable_crds_steppars()
         if disable:
-            logger.info(f'{pars_model.meta.reftype.upper()}: CRDS parameter reference retrieval disabled.')
+            logger.info(f'{reftype.upper()}: CRDS parameter reference retrieval disabled.')
             return config_parser.ConfigObj()
 
         # Retrieve step parameters from CRDS
-        logger.debug(f'Retrieving step {pars_model.meta.reftype.upper()} parameters from CRDS')
-        exceptions = crds_client.get_exceptions_module()
+        logger.debug(f'Retrieving step {reftype.upper()} parameters from CRDS')
         try:
-            ref_file = crds_client.get_reference_file(dataset,
-                                                      pars_model.meta.reftype,
-                                                      observatory=observatory,
-                                                      asn_exptypes=['science'])
-        except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
-            logger.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
+            ref_file = crds_client.get_reference_file(model.get_crds_parameters(),
+                                                      reftype,
+                                                      model.crds_observatory)
+        except (AttributeError, crds_client.CrdsError):
+            logger.debug(f'{reftype.upper()}: No parameters found')
             return config_parser.ConfigObj()
         if ref_file != 'N/A':
-            logger.info(f'{pars_model.meta.reftype.upper()} parameters found: {ref_file}')
+            logger.info(f'{reftype.upper()} parameters found: {ref_file}')
             ref = config_parser.load_config_file(ref_file)
 
             ref_pars = {
@@ -761,15 +787,15 @@ class Step():
                 for par, value in ref.items()
                 if par not in ['class', 'name']
             }
-            logger.info(f'{pars_model.meta.reftype.upper()} parameters are {ref_pars}')
+            logger.info(f'{reftype.upper()} parameters are {ref_pars}')
 
             return ref
         else:
-            logger.debug(f'No {pars_model.meta.reftype.upper()} reference files found.')
+            logger.debug(f'No {reftype.upper()} reference files found.')
             return config_parser.ConfigObj()
 
     @classmethod
-    def reference_uri_to_cache_path(cls, reference_uri):
+    def reference_uri_to_cache_path(cls, reference_uri, observatory):
         """Convert an abstract CRDS reference URI to an absolute file path in the CRDS
         cache.  Reference URI's are typically output to dataset headers to record the
         reference files used.
@@ -780,7 +806,7 @@ class Step():
         The CRDS cache is typically located relative to env var CRDS_PATH
         with default value /grp/crds/cache.   See also https://jwst-crds.stsci.edu
         """
-        return crds_client.reference_uri_to_cache_path(reference_uri)
+        return crds_client.reference_uri_to_cache_path(reference_uri, observatory)
 
     def set_primary_input(self, obj, exclusive=True):
         """
@@ -828,7 +854,7 @@ class Step():
 
         Parameters
         ----------
-        model : jwst.datamodels.Model instance
+        model : stdatamodels.DataModel instance
             The model to save.
 
         suffix : str
@@ -869,55 +895,36 @@ class Step():
            not output_file:
             return
 
-        # TODO: ModelContainer isn't yet available here:
-        # if isinstance(model, ModelContainer):
-        #     save_model_func = partial(
-        #         self.save_model,
-        #         suffix=suffix,
-        #         force=force,
-        #         format=format,
-        #         **components
-        #     )
-        #     output_path = model.save(
-        #         path=output_file,
-        #         save_model_func=save_model_func)
-        # else:
-
-        #     # Search for an output file name.
-        #     if (
-        #             self.output_use_model or
-        #             (output_file is None and not self.search_output_file)
-        #     ):
-        #         output_file = model.meta.filename
-        #         idx = None
-        #     output_path = model.save(
-        #         self.make_output_path(
-        #             basepath=output_file,
-        #             suffix=suffix,
-        #             idx=idx,
-        #             name_format=format,
-        #             **components
-        #         )
-        #     )
-        #     self.log.info('Saved model in {}'.format(output_path))
-
-        # Search for an output file name.
-        if (
-                self.output_use_model or
-                (output_file is None and not self.search_output_file)
-        ):
-            output_file = model.meta.filename
-            idx = None
-        output_path = model.save(
-            self.make_output_path(
-                basepath=output_file,
+        if isinstance(model, Sequence):
+            save_model_func = partial(
+                self.save_model,
                 suffix=suffix,
-                idx=idx,
-                name_format=format,
+                force=force,
+                format=format,
                 **components
             )
-        )
-        self.log.info('Saved model in {}'.format(output_path))
+            output_path = model.save(
+                path=output_file,
+                save_model_func=save_model_func)
+        else:
+
+            # Search for an output file name.
+            if (
+                    self.output_use_model or
+                    (output_file is None and not self.search_output_file)
+            ):
+                output_file = model.meta.filename
+                idx = None
+            output_path = model.save(
+                self.make_output_path(
+                    basepath=output_file,
+                    suffix=suffix,
+                    idx=idx,
+                    name_format=format,
+                    **components
+                )
+            )
+            self.log.info('Saved model in {}'.format(output_path))
 
         return output_path
 
@@ -1006,7 +1013,7 @@ class Step():
             default_name_format = '{basename}{components}{suffix_sep}{suffix}.{ext}'
             suffix_sep = None
             if suffix is not None:
-                basename, suffix_sep = remove_suffix(basename)
+                basename, suffix_sep = step.remove_suffix(basename)
             if suffix_sep is None:
                 suffix_sep = separator
         else:
@@ -1022,34 +1029,30 @@ class Step():
             basename = ''
             suffix_sep = ''
             separator = ''
+        formatter = FormatTemplate(
+            separator=separator,
+            remove_unused=True
+        )
 
-        # TODO: This still lives in the association code in jwst:
-        raise NotImplementedError("stpipe does not yet have access to FormatTemplate")
+        if len(components):
+            component_str = formatter(component_format, **components)
+        else:
+            component_str = ''
 
-        # formatter = FormatTemplate(
-        #     separator=separator,
-        #     remove_unused=True
-        # )
+        basename = formatter(
+            name_format,
+            basename=basename,
+            suffix=suffix,
+            suffix_sep=suffix_sep,
+            ext=ext,
+            components=component_str
+        )
 
-        # if len(components):
-        #     component_str = formatter(component_format, **components)
-        # else:
-        #     component_str = ''
+        output_dir = step.search_attr('output_dir', default='')
+        output_dir = expandvars(expanduser(output_dir))
+        full_output_path = join(output_dir, basename)
 
-        # basename = formatter(
-        #     name_format,
-        #     basename=basename,
-        #     suffix=suffix,
-        #     suffix_sep=suffix_sep,
-        #     ext=ext,
-        #     components=component_str
-        # )
-
-        # output_dir = step.search_attr('output_dir', default='')
-        # output_dir = expandvars(expanduser(output_dir))
-        # full_output_path = join(output_dir, basename)
-
-        # return full_output_path
+        return full_output_path
 
     def closeout(self, to_close=None, to_del=None):
         """Close out step processing
@@ -1089,7 +1092,14 @@ class Step():
                 self.log.debug("An error has occurred: %s", error)
         gc.collect()
 
-    def open_model(self, obj):
+    @classmethod
+    def _datamodels_open(cls, init, **kwargs):
+        """
+        Wrapper around observatory-specific datamodels.open function.
+        """
+        raise NotImplementedError(f"{cls.__name__} does not implement _datamodels_open")
+
+    def open_model(self, init, **kwargs):
         """Open a datamodel
 
         Primarily a wrapper around `DataModel.open` to
@@ -1097,7 +1107,7 @@ class Step():
 
         Parameters
         ----------
-        obj : object
+        init : object
             The object to open
 
         Returns
@@ -1105,9 +1115,14 @@ class Step():
         datamodel : DataModel
             Object opened as a datamodel
         """
-        # TODO: We don't have access to datamodels.open yet:
-        raise NotImplementedError("stpipe does not yet implement open_model")
-        # return dm_open(self.make_input_path(obj))
+        # Use the parent method if available, since this step
+        # might be a hook that doesn't implement _datamodels_open.
+        if self.parent is None:
+            datamodels_open = self._datamodels_open
+        else:
+            datamodels_open = self.parent._datamodels_open
+
+        return datamodels_open(self.make_input_path(init), **kwargs)
 
     def make_input_path(self, file_path):
         """Create an input path for a given file path
@@ -1136,49 +1151,6 @@ class Step():
 
         return full_path
 
-    def load_as_level2_asn(self, obj):
-        """Load object as an association
-
-        Loads the specified object into a Level2 association.
-        If necessary, prepend `Step.input_dir` to all members.
-
-        Parameters
-        ----------
-        obj : object
-            Object to load as a Level2 association
-
-        Returns
-        -------
-        association : jwst.associations.lib.rules_level2_base.DMSLevel2bBase
-            Association
-        """
-        # TODO: Should this move to the jwst base class?
-        raise NotImplementedError("stpipe does not yet implement load_as_level2_asn")
-        # asn = LoadAsLevel2Asn.load(obj, basename=self.output_file)
-        # update_key_value(asn, 'expname', (), mod_func=self.make_input_path)
-        # return asn
-
-    def load_as_level3_asn(self, obj):
-        """Load object as an association
-
-        Loads the specified object into a Level3 association.
-        If necessary, prepend `Step.input_dir` to all members.
-
-        Parameters
-        ----------
-        obj : object
-            Object to load as a Level3 association
-
-        Returns
-        -------
-        association : jwst.associations.lib.rules_level3_base.DMS_Level3_Base
-            Association
-        """
-        # TODO: Should this move to the jwst base class?
-        raise NotImplementedError("stpipe does not yet implement load_as_level3_asn")
-        # asn = LoadAsAssociation.load(obj)
-        # update_key_value(asn, 'expname', (), mod_func=self.make_input_path)
-        # return asn
 
     def _set_input_dir(self, input, exclusive=True):
         """Set the input directory
@@ -1204,52 +1176,18 @@ class Step():
                 # Not a file-checkable object. Ignore.
                 pass
 
-    def record_step_status(self, datamodel, cal_step, success=True):
-        """Record whether or not a step completed in meta.cal_step
-
-        Parameters
-        ----------
-        datamodel : `~jwst.datamodels.Datamodel` instance
-            This is the datamodel or container of datamodels to modify in place
-
-        cal_step : str
-            The attribute in meta.cal_step for recording the status of the step
-
-        success : bool
-            If True, then 'COMPLETE' is recorded.  If False, then 'SKIPPED'
-        """
-        if success:
-            status = 'COMPLETE'
-        else:
-            status = 'SKIPPED'
-            self.skip = True
-
-        # TODO: We don't have access to ModelContainer yet:
-        # if isinstance(datamodel, ModelContainer):
-        #     for model in datamodel:
-        #         model.meta.cal_step._instance[cal_step] = status
-        # else:
-        #     datamodel.meta.cal_step._instance[cal_step] = status
-        datamodel.meta.cal_step._instance[cal_step] = status
-
-        # TODO: standardize cal_step naming to point to the offical step name
-
-    @ClassInstanceMethod
-    def get_pars(step, full_spec=True):
+    def get_pars(self, full_spec=True):
         """Retrieve the configuration parameters of a step
 
         Parameters
         ----------
-        step : `Step`-derived class or instance
-            The class or instance to retrieve the parameters for.
-
         full_spec : bool
             Return all parameters, including parent-specified parameters.
-            If `False`, return only parameters specific to the class/instance.
+            If `False`, return only parameters specific to the step.
 
         Returns
         -------
-        pars : dict
+        dict
             Keys are the parameters and values are the values.
         """
         from . import cmdline
@@ -1258,15 +1196,14 @@ class Step():
             spec_file_func = config_parser.get_merged_spec_file
         else:
             spec_file_func = config_parser.load_spec_file
-        spec = spec_file_func(step)
+        spec = spec_file_func(self)
         if spec is None:
             return {}
         instance_pars = {}
         for key in spec:
-            if hasattr(step, key):
-                value = getattr(step, key)
-                if not isinstance(value, property):
-                    instance_pars[key] = value
+            if hasattr(self, key):
+                value = getattr(self, key)
+                instance_pars[key] = value
         pars = config_parser.config_from_dict(instance_pars, spec, allow_missing=True)
 
         # Convert the config to a pure dict.
@@ -1278,38 +1215,17 @@ class Step():
                 pars_dict[key] = value
         return pars_dict
 
-    @ClassInstanceMethod
-    def get_pars_model(step, full_spec=True):
-        """Return Step parameters as StepParsModel
+    def export_config(self, filename, include_metadata=False):
+        """
+        Export this step's parameters to an ASDF config file.
 
         Parameters
         ----------
-        step : `Step`-derived class or instance
-            The `Step` or `Step` instance to retrieve the parameters model for.
-
-        full_spec : bool
-            Return all parameters, including parent-specified parameters.
-            If `False`, return only parameters specific to the class/instance.
-
-        Returns
-        -------
-        model : `StepParsModel`
-            The `StepParsModel`.
+        filename : str or pathlib.PurePath
+            Path to config file.
         """
-        # TODO: We don't have access to StepParsModel yet:
-        raise NotImplementedError("stpipe does not yet implement get_pars_model")
-        # pars_model = StepParsModel()
-        # pars_model.parameters.instance.update(step.get_pars(full_spec=full_spec))
-
-        # # Update class and name.
-        # full_class_name = _full_class_name(step)
-        # pars_model.parameters.instance.update({
-        #     'class': full_class_name,
-        #     'name': getattr(step, 'name', full_class_name.split('.')[-1])
-        # })
-        # pars_model.meta.reftype = 'pars-' + pars_model.parameters.name.lower()
-
-        # return pars_model
+        with config.export_config(self).to_asdf(include_metadata=include_metadata) as af:
+            af.write_to(filename)
 
     def update_pars(self, parameters):
         """Update step parameters
@@ -1345,25 +1261,6 @@ class Step():
 # #########
 # Utilities
 # #########
-def _full_class_name(obj):
-    """Return the fully qualified class name
-
-    Parameters
-    ----------
-    obj : object
-        The object in question. Can be a class
-
-    Returns
-    class_name : str
-        The full name
-    """
-    cls = obj if inspect.isclass(obj) else obj.__class__
-    module = cls.__module__
-    if module is None or module == str.__class__.__module__:
-        return cls.__name__  # Avoid reporting __builtin__
-    else:
-        return module + '.' + cls.__name__
-
 
 def _get_suffix(suffix, step=None, default_suffix=None):
     """Retrieve either specified or pipeline-supplied suffix
