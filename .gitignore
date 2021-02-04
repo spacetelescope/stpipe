@@ -139,3 +139,5 @@ cython_debug/
 
 # setuptools_scm generated version file
 _version.py
+
+docs/source/api
