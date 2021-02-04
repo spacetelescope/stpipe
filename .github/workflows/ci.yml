@@ -86,4 +86,4 @@ jobs:
           python -m pip install --upgrade pip
           pip install tox
       - name: Run tox
-	run: tox -e build-docs
+        run: tox -e build-docs
