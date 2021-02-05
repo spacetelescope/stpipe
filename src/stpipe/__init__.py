@@ -1,5 +1,9 @@
-from .step import Step
 from .pipeline import Pipeline
-from .linear_pipeline import LinearPipeline
+from .step import Step
+from . import _version
 
-__all__ = ['Step', 'Pipeline', 'LinearPipeline']
+
+__version__ = _version.version
+
+
+__all__ = ['Pipeline', 'Step', '__version__']

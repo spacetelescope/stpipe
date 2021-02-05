@@ -1,31 +1,3 @@
-# Copyright (C) 2010 Association of Universities for Research in Astronomy(AURA)
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#
-#     1. Redistributions of source code must retain the above copyright
-#       notice, this list of conditions and the following disclaimer.
-#
-#     2. Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following
-#       disclaimer in the documentation and/or other materials provided
-#       with the distribution.
-#
-#     3. The name of AURA and its representatives may not be used to
-#       endorse or promote products derived from this software without
-#       specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY AURA ``AS IS'' AND ANY EXPRESS OR IMPLIED
-# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL AURA BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-# OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
-# TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
-# DAMAGE.
 """
 Our configuration files are ConfigObj/INI files.
 """
@@ -36,20 +8,16 @@ import os.path
 import textwrap
 
 from asdf import open as asdf_open
-
 from asdf import ValidationError as AsdfValidationError
+from stdatamodels import DataModel
+from stdatamodels import s3_utils
 
 from .extern.configobj.configobj import (
     ConfigObj, Section, flatten_errors, get_extra_values)
 from .extern.configobj.validate import Validator, ValidateError, VdtTypeError
 
-# TODO: stdatamodels doesn't yet include StepParsModel.
-# from ..datamodels import DataModel, StepParsModel
-from stdatamodels import DataModel
-
-from stdatamodels import s3_utils
-
 from . import utilities
+from .config import StepConfig
 
 
 # Configure logger
@@ -143,13 +111,11 @@ def _load_config_file_filesystem(config_file):
     if not os.path.isfile(config_file):
         raise ValueError("Config file {0} not found.".format(config_file))
     try:
-        cfg = asdf_open(config_file)
+        with asdf_open(config_file) as asdf_file:
+            return _config_obj_from_asdf(asdf_file)
     except (AsdfValidationError, ValueError):
         logger.debug('Config file did not parse as ASDF. Trying as ConfigObj: %s', config_file)
         return ConfigObj(config_file, raise_errors=True)
-
-    # Seems to be ASDF. Create the configobj from that.
-    return _config_obj_from_asdf(cfg)
 
 
 def _load_config_file_s3(config_file):
@@ -158,24 +124,26 @@ def _load_config_file_s3(config_file):
 
     content = s3_utils.get_object(config_file)
     try:
-        cfg = asdf_open(content)
+        with asdf_open(content) as asdf_file:
+            return _config_obj_from_asdf(asdf_file)
     except (AsdfValidationError, ValueError):
         logger.debug('Config file did not parse as ASDF. Trying as ConfigObj: %s', config_file)
         content.seek(0)
         return ConfigObj(content, raise_errors=True)
 
-    # Seems to be ASDF. Create the configobj from that.
-    return _config_obj_from_asdf(cfg)
+
+def _config_obj_from_asdf(asdf_file):
+    config = StepConfig.from_asdf(asdf_file)
+    return _config_obj_from_step_config(config)
 
 
-def _config_obj_from_asdf(cfg):
-    # TODO: Should we move StepParsModel into stdatamodels?
-    raise NotImplementedError("stpipe doesn't have access to StepParsModel yet")
-    # configobj = ConfigObj()
-    # configobj.merge(cfg['parameters'])
-    # configobj.pars_model = StepParsModel(cfg)
-    # cfg.close()
-    # return configobj
+def _config_obj_from_step_config(config):
+    configobj = ConfigObj()
+    configobj.merge(config.parameters)
+    configobj.merge({"class": config.class_name, "name": config.name})
+    if len(config.steps) > 0:
+        configobj.merge({"steps": { s.name: _config_obj_from_step_config(s) for s in config.steps }})
+    return configobj
 
 
 def get_merged_spec_file(cls, preserve_comments=False):
