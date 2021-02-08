@@ -5,19 +5,15 @@ class StpipeException(Exception):
     pass
 
 
-class NoDataOnDetectorError(StpipeException):
-    """WCS solution indicates no data on detector
-
-    When WCS solutions are available, the solutions indicate that no data
-    will be present, raise this exception.
-
-    Specific example is for NIRSpec and the NRS2 detector. For various
-    configurations of the MSA, it is possible that no dispersed spectra will
-    appear on NRS2. This is not a failure of calibration, but needs to be
-    called out in order for the calling architecture to be aware of this.
+class StpipeExitException(StpipeException):
     """
+    An exception that carries an exit status that is
+    returned by stpipe CLI tools.
+    """
+    def __init__(self, exit_status, *args):
+        super().__init__(exit_status, *args)
+        self._exit_status = exit_status
 
-    def __init__(self, message=None):
-        if message is None:
-            message = 'WCS solution indicates that no science is in the data.'
-        super().__init__(message)
+    @property
+    def exit_status(self):
+        return self._exit_status

@@ -5,16 +5,18 @@ Run Steps from the command line
 
 Exit Status
 -----------
-    0:  Step completed satisfactorally
+    0:  Step completed satisfactorily
     1:  General error occurred
-    64: No science exists
+
+Other status codes are Step implementation-specific.
 """
 
 import sys
 
 import stpipe
-from stpipe.exceptions import NoDataOnDetectorError
 from stpipe import Step
+from stpipe.exceptions import StpipeExitException
+
 
 if __name__ == '__main__':
 
@@ -24,20 +26,8 @@ if __name__ == '__main__':
 
     try:
         step = Step.from_cmdline(sys.argv[1:])
-
-    except NoDataOnDetectorError:
-        #  No science data is present on a detector. This can happen
-        #  with NIRSpec and the NRS2 detector: Situations occur when no spectra
-        #  disperse across both detectors.
-        #
-        #  Special exit status is provided so that automatic processing can detect
-        #  this situation and act accordingly.
-        #
-        #  Full discussion: https://github.com/spacetelescope/jwst/issues/2336
-        import traceback
-        traceback.print_exc()
-        sys.exit(64)
-
+    except StpipeExitException as e:
+        sys.exit(e.exit_status)
     except Exception:
         import traceback
         traceback.print_exc()
