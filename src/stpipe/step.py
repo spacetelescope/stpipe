@@ -1223,6 +1223,10 @@ class Step:
         ----------
         filename : str or pathlib.PurePath
             Path to config file.
+
+        include_metadata : bool, optional
+            Set to True to include metadata that is required
+            for submission to CRDS.
         """
         with config.export_config(self).to_asdf(include_metadata=include_metadata) as af:
             af.write_to(filename)
