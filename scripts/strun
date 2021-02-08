@@ -15,6 +15,8 @@ import sys
 
 import stpipe
 from stpipe import Step
+from stpipe.exceptions import StpipeExitException
+
 
 if __name__ == '__main__':
 
@@ -24,6 +26,8 @@ if __name__ == '__main__':
 
     try:
         step = Step.from_cmdline(sys.argv[1:])
+    except StpipeExitException as e:
+        sys.exit(e.exit_status)
     except Exception:
         import traceback
         traceback.print_exc()
