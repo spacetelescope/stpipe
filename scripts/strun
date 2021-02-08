@@ -24,12 +24,6 @@ if __name__ == '__main__':
 
     try:
         step = Step.from_cmdline(sys.argv[1:])
-    except SystemExit as e:
-        import traceback
-        traceback.print_exc()
-        # Re-raising SystemExit allows Step code customize
-        # the exit status code.
-        raise
     except Exception:
         import traceback
         traceback.print_exc()
