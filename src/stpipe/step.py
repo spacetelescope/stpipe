@@ -43,7 +43,7 @@ class Step:
     post_hooks         = string_list(default=list())
     output_file        = output_file(default=None)   # File to save output to.
     output_dir         = string(default=None)        # Directory path for output files
-    output_ext         = string(default='.fits')     # Default type of output
+    output_ext         = string()                    # Default type of output
     output_use_model   = boolean(default=False)      # When saving use `DataModel.meta.filename`
     output_use_index   = boolean(default=True)       # Append index.
     save_results       = boolean(default=False)      # Force save results
