@@ -25,7 +25,6 @@ try:
     DISCOURAGED_TYPES = (fits.HDUList,)
 except ImportError:
     DISCOURAGED_TYPES = None
-#from stdatamodels import DataModel
 
 from . import config
 from . import config_parser
