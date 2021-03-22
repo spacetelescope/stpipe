@@ -49,7 +49,7 @@ class DataModel(abc.ABC):
         if cls is DataModel:
             mro = C.__mro__
             if (any([hasattr(CC, "crds_observatory") for CC in mro]) and
-                any([hasattr(C, "get_crds_parameters") for CC in mro]) and 
+                any([hasattr(C, "get_crds_parameters") for CC in mro]) and
                 any([hasattr(C, "save") for CC in mro])):
                 return True
         return False
