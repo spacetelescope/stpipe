@@ -29,7 +29,7 @@ class DataModel(abc.ABC):
     @abc.abstractmethod
     def get_crds_parameters(self):
         """
-        This should return a dictionary of key/value pairs corresponding to the 
+        This should return a dictionary of key/value pairs corresponding to the
         parkey values CRDS is using to match reference files. Typically it returns
         all metadata simple values.
         """
