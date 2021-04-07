@@ -1,7 +1,6 @@
 """
 Step
 """
-import abc
 from collections.abc import Sequence
 from contextlib import contextmanager
 from functools import partial
