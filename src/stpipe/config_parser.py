@@ -9,7 +9,7 @@ import textwrap
 
 from asdf import open as asdf_open
 from asdf import ValidationError as AsdfValidationError
-from stdatamodels import DataModel
+from .datamodel import DataModel
 from stdatamodels import s3_utils
 
 from .extern.configobj.configobj import (
