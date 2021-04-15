@@ -483,7 +483,7 @@ class Step:
 
         Parameters
         ----------
-        result : a datamodel that is an instance of AbstractDataModel or 
+        result : a datamodel that is an instance of AbstractDataModel or
                  collections.abc.Sequence
             One step result (potentially of many).
 
@@ -755,7 +755,7 @@ class Step:
         logger = log.delegator.log
         reftype = cls.get_config_reftype()
 
-        # If the dataset is not an operable instance of AbstractDataModel, 
+        # If the dataset is not an operable instance of AbstractDataModel,
         # log as such and return an empty config object
         try:
             model = cls._datamodels_open(dataset)

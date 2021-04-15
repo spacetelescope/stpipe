@@ -7,12 +7,12 @@ class AbstractDataModel(abc.ABC):
     data models so that each will be considered an appropriate subclass of this
     class without requiring that they inherit this class.
 
-    Any datamodel class instance that desires to be considered an instance of 
+    Any datamodel class instance that desires to be considered an instance of
     AbstractDataModel must implement the following methods.
 
     In addition, although it isn't yet checked (the best approach for supporting
-    this is still being considered), such instances must have a meta.filename 
-    attribute. 
+    this is still being considered), such instances must have a meta.filename
+    attribute.
     """
 
     @classmethod
