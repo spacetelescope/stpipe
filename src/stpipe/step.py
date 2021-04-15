@@ -30,7 +30,7 @@ from . import config_parser
 from . import crds_client
 from . import log
 from . import utilities
-from .datamodel import DataModel
+from .datamodel import AbstractDataModel
 from .format_template import FormatTemplate
 
 
@@ -347,7 +347,7 @@ class Step:
         for i, arg in enumerate(args):
             if isinstance(arg, discouraged_types):
                 self.log.error(
-                    "{0} {1} object.  Use stdatamodels.DataModel instead.".format(
+                    "{0} {1} object.  Use an instance of AbstractDataModel instead.".format(
                         msg, i))
 
     def run(self, *args):
@@ -447,7 +447,7 @@ class Step:
                 for idx, result in enumerate(results_to_save):
                     if len(results_to_save) <= 1:
                         idx = None
-                    if isinstance(result, DataModel):
+                    if isinstance(result, AbstractDataModel):
                         self.save_model(result, idx=idx)
                     elif hasattr(result, 'save'):
                         try:
@@ -483,7 +483,8 @@ class Step:
 
         Parameters
         ----------
-        result : stdatamodels.DataModel or collections.abc.Sequence
+        result : a datamodel that is an instance of AbstractDataModel or 
+                 collections.abc.Sequence
             One step result (potentially of many).
 
         reference_files_used : list of tuple
@@ -671,7 +672,7 @@ class Step:
         """
         override_name = crds_client.get_override_name(reference_file_type)
         path = getattr(self, override_name, None)
-        if isinstance(path, DataModel):
+        if isinstance(path, AbstractDataModel):
             return path
         else:
             return abspath(path) if path and path != 'N/A' else path
@@ -686,7 +687,7 @@ class Step:
 
         Parameters
         ----------
-        input_file : stdatamodels.DataModel
+        input_file : a datamodel that is an instance of AbstractDataModel
             A model of the input file.  Metadata on this input file
             will be used by the CRDS "bestref" algorithm to obtain a
             reference file.
@@ -701,7 +702,7 @@ class Step:
         """
         override = self.get_ref_override(reference_file_type)
         if override is not None:
-            if isinstance(override, DataModel):
+            if isinstance(override, AbstractDataModel):
                 self._reference_files_used.append(
                     (reference_file_type, override.override_handle))
                 return override
@@ -735,7 +736,7 @@ class Step:
         cls : stpipe.Step
             Either a class or instance of a class derived
             from `Step`.
-        dataset : stdatamodels.DataModel
+        dataset : A datamodel that is an instance of AbstractDataModel
             A model of the input file.  Metadata on this input file will
             be used by the CRDS "bestref" algorithm to obtain a reference
             file.
@@ -754,12 +755,12 @@ class Step:
         logger = log.delegator.log
         reftype = cls.get_config_reftype()
 
-        # If the dataset is not an operable DataModel, log as such and return
-        # an empty config object
+        # If the dataset is not an operable instance of AbstractDataModel, 
+        # log as such and return an empty config object
         try:
             model = cls._datamodels_open(dataset)
         except (IOError, TypeError, ValueError):
-            logger.warning('Input dataset is not a DataModel.')
+            logger.warning('Input dataset is not an instance of  AbstractDataModel.')
             disable = True
 
         # Check if retrieval should be attempted.
@@ -815,7 +816,7 @@ class Step:
 
         Parameters
         ----------
-        obj : str or DataModel
+        obj : str or instance of AbstractDataModel
             The object to base the name on. If a datamodel,
             use Datamodel.meta.filename.
 
@@ -833,7 +834,7 @@ class Step:
         if not exclusive or parent_input_filename is None:
             if isinstance(obj, str):
                 self._input_filename = obj
-            elif isinstance(obj, DataModel):
+            elif isinstance(obj, AbstractDataModel):
                 try:
                     self._input_filename = obj.meta.filename
                 except AttributeError:
@@ -854,7 +855,7 @@ class Step:
 
         Parameters
         ----------
-        model : stdatamodels.DataModel instance
+        model : a instance of AbstractDataModel
             The model to save.
 
         suffix : str
@@ -1112,7 +1113,7 @@ class Step:
 
         Returns
         -------
-        datamodel : DataModel
+        datamodel : instance of AbstractDataModel
             Object opened as a datamodel
         """
         # Use the parent method if available, since this step

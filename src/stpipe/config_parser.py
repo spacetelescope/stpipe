@@ -9,7 +9,6 @@ import textwrap
 
 from asdf import open as asdf_open
 from asdf import ValidationError as AsdfValidationError
-from .datamodel import DataModel
 from stdatamodels import s3_utils
 
 from .extern.configobj.configobj import (
@@ -18,6 +17,7 @@ from .extern.configobj.validate import Validator, ValidateError, VdtTypeError
 
 from . import utilities
 from .config import StepConfig
+from .datamodel import AbstractDataModel
 
 
 # Configure logger
@@ -79,7 +79,7 @@ def _get_output_file_check(root_dir):
 
 def _is_datamodel(value, default=None):
     """Verify that value is either is a DataModel."""
-    if isinstance(value, DataModel):
+    if isinstance(value, AbstractDataModel):
         return value
     else:
         raise VdtTypeError(value)
@@ -89,7 +89,7 @@ def _is_string_or_datamodel(value, default=None):
     """Verify that value is either a string (nominally a reference file path)
     or a DataModel (possibly one with no corresponding file.)
     """
-    if isinstance(value, DataModel):
+    if isinstance(value, AbstractDataModel):
         return value
     elif isinstance(value, str):
         return value

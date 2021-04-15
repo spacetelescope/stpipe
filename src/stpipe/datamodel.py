@@ -1,7 +1,7 @@
 
 import abc
 
-class DataModel(abc.ABC):
+class AbstractDataModel(abc.ABC):
     """
     This Abstract Base Class is intended to cover multiple implmentations of
     data models so that each will be considered an appropriate subclass of this
@@ -13,7 +13,7 @@ class DataModel(abc.ABC):
         """
         Psuedo subclass check based on these attributes and methods
         """
-        if cls is DataModel:
+        if cls is AbstractDataModel:
             mro = C.__mro__
             if (any([hasattr(CC, "crds_observatory") for CC in mro]) and
                 any([hasattr(CC, "get_crds_parameters") for CC in mro]) and
