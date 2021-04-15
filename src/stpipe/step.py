@@ -485,7 +485,7 @@ class Step:
         ----------
         result : a datamodel that is an instance of AbstractDataModel or
                  collections.abc.Sequence
-            One step result (potentially of many).
+                 One step result (potentially of many).
 
         reference_files_used : list of tuple
             List of reference files used when running the step, each
