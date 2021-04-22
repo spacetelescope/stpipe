@@ -3,7 +3,7 @@ import abc
 
 class AbstractDataModel(abc.ABC):
     """
-    This Abstract Base Class is intended to cover multiple implmentations of
+    This Abstract Base Class is intended to cover multiple implementations of
     data models so that each will be considered an appropriate subclass of this
     class without requiring that they inherit this class.
 
@@ -28,11 +28,13 @@ class AbstractDataModel(abc.ABC):
                 return True
         return False
 
+    @property
     @abc.abstractmethod
     def crds_observatory(self):
         """This should return a string identifying the observatory as CRDS expects it"""
         pass
 
+    @property
     @abc.abstractmethod
     def get_crds_parameters(self):
         """
@@ -40,7 +42,7 @@ class AbstractDataModel(abc.ABC):
         parkey values CRDS is using to match reference files. Typically it returns
         all metadata simple values.
         """
-
+    @property
     @abc.abstractmethod
     def save(self, path, dir_path=None, *args, **kwargs):
         """
@@ -48,12 +50,12 @@ class AbstractDataModel(abc.ABC):
 
         Parameters
         ----------
-        path : string or func
+        path : string or callable
             File path to save to.
-            If function, it takes one argument with is
+            If function, it takes one argument that is
             model.meta.filename and returns the full path string.
 
-        dir_path: string
+        dir_path : str
             Directory to save to. If not None, this will override
             any directory information in the `path`
 
