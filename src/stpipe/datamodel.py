@@ -34,7 +34,7 @@ class AbstractDataModel(abc.ABC):
         """This should return a string identifying the observatory as CRDS expects it"""
         pass
 
-    @property
+
     @abc.abstractmethod
     def get_crds_parameters(self):
         """
@@ -42,7 +42,7 @@ class AbstractDataModel(abc.ABC):
         parkey values CRDS is using to match reference files. Typically it returns
         all metadata simple values.
         """
-    @property
+
     @abc.abstractmethod
     def save(self, path, dir_path=None, *args, **kwargs):
         """
