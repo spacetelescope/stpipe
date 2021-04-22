@@ -1,10 +1,10 @@
-0.2.0 (Unreleased)
+0.2.0 (2021-04-22)
 ==================
 
 - Remove the default value of ``output_ext`` so subclsses can define it. [#17]
 
 - Remove specific dependency on stdatamodels DataModel class. [#20]
-  
+
 0.1.0 (2021-02-08)
 ==================
 
