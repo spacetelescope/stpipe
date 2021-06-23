@@ -5,6 +5,11 @@
   config_file and step-specific flags during a step.call() to properly
   merge dicts of step flags [#22]
 
+- Drop the ``stspec`` command-line tool, which is no longer relevant
+  now that config files are stored in ASDF format.  See ``strun --save-parameters``
+  or the ``Step.export_config`` method for options for generating
+  ASDF config files. [#25]
+
 0.2.0 (2021-04-22)
 ==================
 
