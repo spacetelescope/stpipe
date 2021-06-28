@@ -139,10 +139,10 @@ def _config_obj_from_asdf(asdf_file):
 
 def _config_obj_from_step_config(config):
     configobj = ConfigObj()
-    configobj.merge(config.parameters)
-    configobj.merge({"class": config.class_name, "name": config.name})
+    merge_config(configobj, config.parameters)
+    merge_config(configobj, {"class": config.class_name, "name": config.name})
     if len(config.steps) > 0:
-        configobj.merge({"steps": { s.name: _config_obj_from_step_config(s) for s in config.steps }})
+        merge_config(configobj, {"steps": { s.name: _config_obj_from_step_config(s) for s in config.steps }})
     return configobj
 
 
@@ -223,16 +223,26 @@ def merge_config(into, new):
     Merges a configuration tree into another one.
 
     Unlike merge in configobj itself, this one updates inline
-    comments.
+    comments and does not treat non-dict Mappings as config
+    sections.
 
     Parameters
     ----------
     into : `configobj.Section`
         The configuration tree to merge into
 
-    new : `configobj.Section`
+    new : `configobj.Section` or dict
         The source of new configuration values
     """
+    if isinstance(new, Section):
+        defaults = new.defaults
+        inline_comments = new.inline_comments
+        comments = new.comments
+    else:
+        defaults = set()
+        inline_comments = {}
+        comments = {}
+
     for key, val in new.items():
         if isinstance(val, Section):
             if key not in into:
@@ -240,10 +250,14 @@ def merge_config(into, new):
                     into, into.depth + 1, into.main, name=key)
                 into[key] = section
             merge_config(into[key], val)
-        elif key not in new.defaults:
-            into[key] = val
-            into.inline_comments[key] = new.inline_comments[key]
-            into.comments[key] = new.comments[key]
+        elif key not in defaults:
+            # The unrepr flag is configured to only allow dicts to be
+            # treated as config sections.  This prevents other
+            # Mappings (such as DataModel, used in reference overrides)
+            # from being converted.
+            into.__setitem__(key, val, unrepr=not isinstance(val, dict))
+            into.inline_comments[key] = inline_comments.get(key)
+            into.comments[key] = comments.get(key)
 
 
 def config_from_dict(d, spec=None, root_dir=None, allow_missing=False):
@@ -268,7 +282,7 @@ def config_from_dict(d, spec=None, root_dir=None, allow_missing=False):
     """
     config = ConfigObj()
 
-    config.update(d)
+    merge_config(config, d)
 
     if spec:
         validate(config, spec, root_dir=root_dir, allow_missing=allow_missing)

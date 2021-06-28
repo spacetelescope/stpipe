@@ -578,7 +578,7 @@ class Step:
         else:
             config_file = None
 
-        crds_config.merge(kwargs)
+        config_parser.merge_config(crds_config, kwargs)
 
         if 'class' in crds_config:
             del crds_config['class']
