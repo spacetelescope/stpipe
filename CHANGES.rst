@@ -10,6 +10,8 @@
   or the ``Step.export_config`` method for options for generating
   ASDF config files. [#25]
 
+- Prevent ConfigObj from treating DataModel as a config section. [#26]
+
 0.2.0 (2021-04-22)
 ==================
 
