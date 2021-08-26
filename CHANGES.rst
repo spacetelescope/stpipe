@@ -1,3 +1,8 @@
+0.2.1 (2021-08-26)
+==================
+
+- Workaround for setuptools_scm issues with recent versions of pip. [#27]
+
 0.2.0 (2021-04-22)
 ==================
 
