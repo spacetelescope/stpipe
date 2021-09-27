@@ -54,28 +54,39 @@ def config_file(tmpdir):
 @pytest.fixture
 def mock_step_crds(monkeypatch):
     """Mock various crds calls from Step"""
-
-    def mock_get_config_from_reference(dataset, disable=None):
-        if dataset == 'step':
-            config = cp.config_from_dict({'str1': 'from crds', 'str2': 'from crds', 'str3': 'from crds'})
-        elif dataset == 'pipe':
-            config = cp.config_from_dict({
-                'str1': 'from crds', 'str2': 'from crds', 'str3': 'from crds',
-                'steps' : {
-                    'step1': {'str1': 'from crds', 'str2': 'from crds', 'str3': 'from crds'},
-                }
-            })
-        else:
-            raise RuntimeError(f'No return defined for {dataset}')
+    def mock_get_config_from_reference_pipe(dataset, disable=None):
+        config = cp.config_from_dict({
+            'str1': 'from crds', 'str2': 'from crds', 'str3': 'from crds',
+            'steps' : {
+                'step1': {'str1': 'from crds', 'str2': 'from crds', 'str3': 'from crds'},
+            }
+        })
         return config
 
-    monkeypatch.setattr(SimpleStep, 'get_config_from_reference', mock_get_config_from_reference)
+    def mock_get_config_from_reference_step(dataset, disable=None):
+        config = cp.config_from_dict({'str1': 'from crds', 'str2': 'from crds', 'str3': 'from crds'})
+        return config
+
+    monkeypatch.setattr(SimplePipe, 'get_config_from_reference', mock_get_config_from_reference_pipe)
+    monkeypatch.setattr(SimpleStep, 'get_config_from_reference', mock_get_config_from_reference_step)
 
 
 # #####
 # Tests
 # #####
-def test_build_config_pip_default():
+def test_build_config_pipe_crds(mock_step_crds):
+    """Test override of a CRDS configuration"""
+    config, config_file = SimplePipe.build_config('science.fits')
+    assert not config_file
+    assert config['str1'] == 'from crds'
+    assert config['str2'] == 'from crds'
+    assert config['str3'] == 'from crds'
+    assert config['steps']['step1']['str1'] == 'from crds'
+    assert config['steps']['step1']['str2'] == 'from crds'
+    assert config['steps']['step1']['str3'] == 'from crds'
+
+
+def test_build_config_pipe_default():
     """Test for empty config"""
     config, config_file = SimplePipe.build_config(None)
     assert not config_file
@@ -84,7 +95,7 @@ def test_build_config_pip_default():
 
 def test_build_config_step_config_file(mock_step_crds, config_file):
     """Test that local config overrides defaults and CRDS-supplied file"""
-    config, returned_config_file = SimpleStep.build_config('step', config_file=config_file)
+    config, returned_config_file = SimpleStep.build_config('science.fits', config_file=config_file)
     assert returned_config_file == config_file
     assert config['str1'] == 'from config'
     assert config['str2'] == 'from config'
@@ -93,7 +104,7 @@ def test_build_config_step_config_file(mock_step_crds, config_file):
 
 def test_build_config_step_crds(mock_step_crds):
     """Test override of a CRDS configuration"""
-    config, config_file = SimpleStep.build_config('step')
+    config, config_file = SimpleStep.build_config('science.fits')
     assert not config_file
     assert len(config) == 3
     assert config['str1'] == 'from crds'
@@ -109,7 +120,7 @@ def test_build_config_step_default():
 
 def test_build_config_step_kwarg(mock_step_crds, config_file):
     """Test that kwargs override everything"""
-    config, returned_config_file = SimpleStep.build_config('step', config_file=config_file, str1='from kwarg')
+    config, returned_config_file = SimpleStep.build_config('science.fits', config_file=config_file, str1='from kwarg')
     assert returned_config_file == config_file
     assert config['str1'] == 'from kwarg'
     assert config['str2'] == 'from config'
