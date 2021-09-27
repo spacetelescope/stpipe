@@ -34,7 +34,33 @@ class SimplePipe(Pipeline):
 
 
 @pytest.fixture()
-def config_file(tmpdir):
+def config_file_pipe(tmpdir):
+    """Create a config file"""
+    config_file = str(tmpdir / 'simple_pipe.asdf')
+
+    tree = {
+        'class': 'test_step.SimplePipe',
+        'name': 'SimplePipe',
+        'parameters': {
+            'str1' : 'from config',
+            'str2' : 'from config'
+        },
+        'steps' : [
+            {'class': 'test_step.SimpleStep',
+             'name': 'step1',
+             'parameters': {
+                 'str1' : 'from config',
+                 'str2' : 'from config'
+             }},
+        ]
+    }
+    af = asdf.AsdfFile(tree)
+    af.write_to(config_file)
+    return config_file
+
+
+@pytest.fixture()
+def config_file_step(tmpdir):
     """Create a config file"""
     config_file = str(tmpdir / 'simple_step.asdf')
 
@@ -74,6 +100,18 @@ def mock_step_crds(monkeypatch):
 # #####
 # Tests
 # #####
+def test_build_config_pipe_config_file(mock_step_crds, config_file_pipe):
+    """Test that local config overrides defaults and CRDS-supplied file"""
+    config, returned_config_file = SimplePipe.build_config('science.fits', config_file=config_file_pipe)
+    assert returned_config_file == config_file_pipe
+    assert config['str1'] == 'from config'
+    assert config['str2'] == 'from config'
+    assert config['str3'] == 'from crds'
+    assert config['steps']['step1']['str1'] == 'from config'
+    assert config['steps']['step1']['str2'] == 'from config'
+    assert config['steps']['step1']['str3'] == 'from crds'
+
+
 def test_build_config_pipe_crds(mock_step_crds):
     """Test override of a CRDS configuration"""
     config, config_file = SimplePipe.build_config('science.fits')
@@ -93,10 +131,23 @@ def test_build_config_pipe_default():
     assert not len(config)
 
 
-def test_build_config_step_config_file(mock_step_crds, config_file):
+def test_build_config_pipe_kwarg(mock_step_crds, config_file_pipe):
+    """Test that kwargs override everything"""
+    config, returned_config_file = SimplePipe.build_config('science.fits', config_file=config_file_pipe,
+                                                           str1='from kwarg', steps={'step1': {'str1': 'from kwarg'}})
+    assert returned_config_file == config_file_pipe
+    assert config['str1'] == 'from kwarg'
+    assert config['str2'] == 'from config'
+    assert config['str3'] == 'from crds'
+    assert config['steps']['step1']['str1'] == 'from kwarg'
+    assert config['steps']['step1']['str2'] == 'from config'
+    assert config['steps']['step1']['str3'] == 'from crds'
+
+
+def test_build_config_step_config_file(mock_step_crds, config_file_step):
     """Test that local config overrides defaults and CRDS-supplied file"""
-    config, returned_config_file = SimpleStep.build_config('science.fits', config_file=config_file)
-    assert returned_config_file == config_file
+    config, returned_config_file = SimpleStep.build_config('science.fits', config_file=config_file_step)
+    assert returned_config_file == config_file_step
     assert config['str1'] == 'from config'
     assert config['str2'] == 'from config'
     assert config['str3'] == 'from crds'
@@ -118,10 +169,11 @@ def test_build_config_step_default():
     assert not config_file
     assert not len(config)
 
-def test_build_config_step_kwarg(mock_step_crds, config_file):
+
+def test_build_config_step_kwarg(mock_step_crds, config_file_step):
     """Test that kwargs override everything"""
-    config, returned_config_file = SimpleStep.build_config('science.fits', config_file=config_file, str1='from kwarg')
-    assert returned_config_file == config_file
+    config, returned_config_file = SimpleStep.build_config('science.fits', config_file=config_file_step, str1='from kwarg')
+    assert returned_config_file == config_file_step
     assert config['str1'] == 'from kwarg'
     assert config['str2'] == 'from config'
     assert config['str3'] == 'from crds'
