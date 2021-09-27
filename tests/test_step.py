@@ -2,11 +2,14 @@
 import pytest
 
 import asdf
+
 import stpipe.config_parser as cp
+from stpipe.pipeline import Pipeline
 from stpipe.step import Step
 
 
 class SimpleStep(Step):
+    """A Step with parameters"""
     spec = """
         str1 = string(default='default')
         str2 = string(default='default')
@@ -15,8 +18,20 @@ class SimpleStep(Step):
         output_ext = string(default='simplestep')
     """
 
+class SimplePipeline(Pipeline):
+    """A Pipeline with parameters and one step"""
+    spec = """
+        str1 = string(default='default')
+        str2 = string(default='default')
+        str3 = string(default='default')
+        str4 = string(default='default')
+        output_ext = string(default='simplestep')
+    """
 
-def test_build_config_config_file(mock_step_crds, config_file):
+    step_defs = {'step1': SimpleStep}
+
+
+def test_build_config_step_config_file(mock_step_crds, config_file):
     """Test that local config overrides defaults and CRDS-supplied file"""
     config, returned_config_file = SimpleStep.build_config('science.fits', config_file=config_file)
     assert returned_config_file == config_file
@@ -25,7 +40,7 @@ def test_build_config_config_file(mock_step_crds, config_file):
     assert config['str3'] == 'from crds'
 
 
-def test_build_config_crds(mock_step_crds):
+def test_build_config_step_crds(mock_step_crds):
     """Test override of a CRDS configuration"""
     config, config_file = SimpleStep.build_config('science.fits')
     assert not config_file
@@ -35,13 +50,13 @@ def test_build_config_crds(mock_step_crds):
     assert config['str3'] == 'from crds'
 
 
-def test_build_config_default():
+def test_build_config_step_default():
     """Test for empty config"""
     config, config_file = SimpleStep.build_config(None)
     assert not config_file
     assert not len(config)
 
-def test_build_config_kwarg(mock_step_crds, config_file):
+def test_build_config_step_kwarg(mock_step_crds, config_file):
     """Test that kwargs override everything"""
     config, returned_config_file = SimpleStep.build_config('science.fits', config_file=config_file, str1='from kwarg')
     assert returned_config_file == config_file
