@@ -1293,7 +1293,7 @@ class Step:
         else:
             config_file = None
 
-        config_parser.merge_config(config, kwargs)
+        config_parser.merge_config(config, config_parser.config_from_dict(kwargs))
 
         return config, config_file
 

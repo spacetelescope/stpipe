@@ -42,10 +42,10 @@ def config_file_pipe(tmpdir):
         'class': 'test_step.SimplePipe',
         'name': 'SimplePipe',
         'parameters': {
-            'str1' : 'from config',
-            'str2' : 'from config'
+            'str1': 'from config',
+            'str2': 'from config'
         },
-        'steps' : [
+        'steps': [
             {'class': 'test_step.SimpleStep',
              'name': 'step1',
              'parameters': {
@@ -68,8 +68,8 @@ def config_file_step(tmpdir):
         'class': 'test_step.SimpleStep',
         'name': 'SimpleStep',
         'parameters': {
-            'str1' : 'from config',
-            'str2' : 'from config'
+            'str1': 'from config',
+            'str2': 'from config'
         }
     }
     af = asdf.AsdfFile(tree)
