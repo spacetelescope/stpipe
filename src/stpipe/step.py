@@ -46,6 +46,7 @@ class Step:
     output_ext         = string()                    # Default type of output
     output_use_model   = boolean(default=False)      # When saving use `DataModel.meta.filename`
     output_use_index   = boolean(default=True)       # Append index.
+    output_use_format  = boolean(default=True)       # Apply default formatting rules to filename
     save_results       = boolean(default=False)      # Force save results
     skip               = boolean(default=False)      # Skip this step
     suffix             = string(default=None)        # Default suffix for output files
@@ -448,10 +449,16 @@ class Step:
                     if len(results_to_save) <= 1:
                         idx = None
                     if isinstance(result, AbstractDataModel):
-                        self.save_model(result, idx=idx)
+                        if self.output_use_format:
+                            self.save_model(result, idx=idx)
+                        else:
+                            self.save_model(result, idx=idx, format=False)
                     elif hasattr(result, 'save'):
                         try:
-                            output_path = self.make_output_path(idx=idx)
+                            if self.output_use_format:
+                                output_path = self.make_output_path(idx=idx)
+                            else:
+                                output_path = self.make_output_path(idx=idx, format=False)
                         except AttributeError:
                             self.log.warning(
                                 '`save_results` has been requested,'
