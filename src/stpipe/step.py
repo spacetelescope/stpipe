@@ -46,7 +46,6 @@ class Step:
     output_ext         = string()                    # Default type of output
     output_use_model   = boolean(default=False)      # When saving use `DataModel.meta.filename`
     output_use_index   = boolean(default=True)       # Append index.
-    output_use_format  = boolean(default=True)       # Apply default formatting rules to filename
     save_results       = boolean(default=False)      # Force save results
     skip               = boolean(default=False)      # Skip this step
     suffix             = string(default=None)        # Default suffix for output files
@@ -56,6 +55,10 @@ class Step:
     # Nickname used to refer to this class in lieu of the fully-qualified class
     # name.  Must be globally unique!
     class_alias = None
+
+    # Default formatting of output filenames unless overridden, typically with
+    # a format string provided along with output_use_model
+    name_format = None
 
     # Correction parameters. These store and use whatever information a Step
     # may need to perform its operations without re-calculating, or to use
@@ -449,16 +452,10 @@ class Step:
                     if len(results_to_save) <= 1:
                         idx = None
                     if isinstance(result, AbstractDataModel):
-                        if self.output_use_format:
-                            self.save_model(result, idx=idx)
-                        else:
-                            self.save_model(result, idx=idx, format=False)
+                        self.save_model(result, idx=idx, format=self.name_format)
                     elif hasattr(result, 'save'):
                         try:
-                            if self.output_use_format:
-                                output_path = self.make_output_path(idx=idx)
-                            else:
-                                output_path = self.make_output_path(idx=idx, format=False)
+                            output_path = self.make_output_path(idx=idx, name_format=self.name_format)
                         except AttributeError:
                             self.log.warning(
                                 '`save_results` has been requested,'
