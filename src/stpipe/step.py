@@ -56,6 +56,12 @@ class Step:
     # name.  Must be globally unique!
     class_alias = None
 
+    # String defining the format of the output name, which defines how
+    # **components are inserted into the output file name. If None, use the
+    # default formatting, which is to append Step.suffix to the name. If False,
+    # use basepath as its own format string, containing {suffix}.
+    name_format = None
+
     # Correction parameters. These store and use whatever information a Step
     # may need to perform its operations without re-calculating, or to use
     # from a previous run of the Step.  The structure is up to each Step.
@@ -448,10 +454,10 @@ class Step:
                     if len(results_to_save) <= 1:
                         idx = None
                     if isinstance(result, AbstractDataModel):
-                        self.save_model(result, idx=idx)
+                        self.save_model(result, idx=idx, format=self.name_format)
                     elif hasattr(result, 'save'):
                         try:
-                            output_path = self.make_output_path(idx=idx)
+                            output_path = self.make_output_path(idx=idx, name_format=self.name_format)
                         except AttributeError:
                             self.log.warning(
                                 '`save_results` has been requested,'
