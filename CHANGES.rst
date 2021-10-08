@@ -16,6 +16,8 @@
   output filename formatting by using an input format string rather than
   the default formatting. [#29]
 
+- Fix wiping out substep parameters settings when using Step.call [#28]
+
 0.2.1 (2021-08-26)
 ==================
 
