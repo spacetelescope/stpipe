@@ -12,6 +12,10 @@
 
 - Prevent ConfigObj from treating DataModel as a config section. [#26]
 
+- Added Step class attribute ``name_format`` to provide Steps control over
+  output filename formatting by using an input format string rather than
+  the default formatting. [#29]
+
 0.2.1 (2021-08-26)
 ==================
 
