@@ -56,8 +56,10 @@ class Step:
     # name.  Must be globally unique!
     class_alias = None
 
-    # Default formatting of output filenames unless overridden, typically with
-    # a format string provided along with output_use_model
+    # String defining the format of the output name, which defines how
+    # **components are inserted into the output file name. If None, use the
+    # default formatting, which is to append Step.suffix to the name. If False,
+    # use basepath as its own format string, containing {suffix}.
     name_format = None
 
     # Correction parameters. These store and use whatever information a Step
