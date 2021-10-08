@@ -568,29 +568,16 @@ class Step:
         a new instance but simply runs the existing instance of the `Step`
         class.
         """
-        logger_name = cls.__name__
-        log_cls = log.getLogger(logger_name)
+        filename = None
         if len(args) > 0:
             filename = args[0]
-            crds_config = cls.get_config_from_reference(filename)
-        else:
-            log_cls.info("No filename given, cannot retrieve config from CRDS")
-            crds_config = config_parser.ConfigObj()
-        if 'config_file' in kwargs:
-            config_file = kwargs['config_file']
-            del kwargs['config_file']
-            config_from_file = config_parser.load_config_file(config_file)
-            config_parser.merge_config(crds_config, config_from_file)
-        else:
-            config_file = None
+        config, config_file = cls.build_config(filename, **kwargs)
 
-        config_parser.merge_config(crds_config, kwargs)
+        if 'class' in config:
+            del config['class']
 
-        if 'class' in crds_config:
-            del crds_config['class']
-
-        name = crds_config.get('name', None)
-        instance = cls.from_config_section(crds_config,
+        name = config.get('name', None)
+        instance = cls.from_config_section(config,
             name=name, config_file=config_file)
 
         return instance.run(*args)
@@ -1267,6 +1254,50 @@ class Step:
                         getattr(self, step_name).update_pars(step_parameters)
             else:
                 self.log.debug(f'Parameter {parameter} is not valid for step {self}. Ignoring.')
+
+    @classmethod
+    def build_config(cls, input, **kwargs):
+        """Build the ConfigObj to initialize a Step
+
+        A Step config is built in the following order:
+
+        - CRDS parameter reference file
+        - Local parameter reference file
+        - Step keyword arguments
+
+        Parameters
+        ----------
+        input : str or None
+            Input file
+
+        kwargs : dict
+            Keyword arguments that specify Step parameters.
+
+        Returns
+        -------
+        config, config_file : ConfigObj, str
+            The configuration and the config filename.
+        """
+        logger_name = cls.__name__
+        log_cls = log.getLogger(logger_name)
+        if input:
+            config = cls.get_config_from_reference(input)
+        else:
+            log_cls.info("No filename given, cannot retrieve config from CRDS")
+            config = config_parser.ConfigObj()
+        if 'config_file' in kwargs:
+            config_file = kwargs['config_file']
+            del kwargs['config_file']
+            config_from_file = config_parser.load_config_file(config_file)
+            config_parser.merge_config(config, config_from_file)
+        else:
+            config_file = None
+
+        config_kwargs = config_parser.ConfigObj()
+        config_parser.merge_config(config_kwargs, kwargs)
+        config_parser.merge_config(config, config_kwargs)
+
+        return config, config_file
 
 
 # #########
