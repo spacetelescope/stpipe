@@ -1257,13 +1257,13 @@ class Step:
 
     @classmethod
     def build_config(cls, input, **kwargs):
-        """Build the ConfigObj to instantiation a Step
+        """Build the ConfigObj to initialize a Step
 
         A Step config is built in the following order:
 
         - CRDS parameter reference file
         - Local parameter reference file
-        - `Step.call` keyword arguments
+        - Step keyword arguments
 
         Parameters
         ----------
@@ -1276,7 +1276,7 @@ class Step:
         Returns
         -------
         config, config_file : ConfigObj, str
-            The configuration
+            The configuration and the config filename.
         """
         logger_name = cls.__name__
         log_cls = log.getLogger(logger_name)
