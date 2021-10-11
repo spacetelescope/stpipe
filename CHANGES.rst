@@ -1,4 +1,4 @@
-0.3.0 (unreleased)
+0.3.0 (2021-10-11)
 ==================
 
 - Change ConfigObj.update() to merge() when combining user-provided
