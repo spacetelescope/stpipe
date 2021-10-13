@@ -576,6 +576,10 @@ class Step:
         if 'class' in config:
             del config['class']
 
+        if 'logcfg' in config:
+            log.load_configuration(config['logcfg'])
+            del config['logcfg']
+
         name = config.get('name', None)
         instance = cls.from_config_section(config,
             name=name, config_file=config_file)
