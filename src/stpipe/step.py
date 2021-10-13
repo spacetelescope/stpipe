@@ -577,7 +577,12 @@ class Step:
             del config['class']
 
         if 'logcfg' in config:
-            log.load_configuration(config['logcfg'])
+            try:
+                log.load_configuration(config['logcfg'])
+            except Exception as e:
+                raise ValueError(
+                    f"Error parsing logging config {config['logcfg']}:\n{e}"
+                )
             del config['logcfg']
 
         name = config.get('name', None)
