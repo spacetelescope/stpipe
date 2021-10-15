@@ -120,7 +120,8 @@ def _override_config_from_args(config, args):
             set_value(subconf.setdefault(root, {}), rest, val)
         else:
             val, comment = config._handle_value(val)
-            subconf[root] = FromCommandLine(val)
+            if val in ['input_file', 'output_file']:  # or isinstance(val, str)
+                subconf[root] = FromCommandLine(val)
 
     for key, val in vars(args).items():
         if val is not None:
