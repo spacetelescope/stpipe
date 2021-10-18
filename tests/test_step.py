@@ -211,15 +211,14 @@ def test_logcfg_routing(tmpdir):
     with open(logcfg_file,'w') as f:
         f.write(cfg)
 
-    # config, config_file = LoggingPipeline.build_config(None)
-    # pipe = LoggingPipeline(config_file=config_file)
     LoggingPipeline.call(logcfg=logcfg_file)
-    # pipe.closeout()
+
     logdict = logging.Logger.manager.loggerDict
     for log in logdict:
-        if not isinstance(logdict[log],logging.PlaceHolder):
+        if not isinstance(logdict[log], logging.PlaceHolder):
             for handler in logdict[log].handlers:
-                if isinstance(handler,logging.FileHandler):
+                if isinstance(handler, logging.FileHandler):
+                    logdict[log].removeHandler(handler)
                     handler.close()
 
     if os.path.isfile(tmpdir / 'myrun.log'):
