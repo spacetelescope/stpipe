@@ -1,7 +1,7 @@
 """Test step.Step"""
 import pytest
-
 import asdf
+import logging
 
 import stpipe.config_parser as cp
 from stpipe.pipeline import Pipeline
@@ -10,6 +10,8 @@ from stpipe.step import Step
 # ######################
 # Data and Fixture setup
 # ######################
+
+
 class SimpleStep(Step):
     """A Step with parameters"""
     spec = """
@@ -19,6 +21,7 @@ class SimpleStep(Step):
         str4 = string(default='default')
         output_ext = string(default='simplestep')
     """
+
 
 class SimplePipe(Pipeline):
     """A Pipeline with parameters and one step"""
@@ -31,6 +34,51 @@ class SimplePipe(Pipeline):
     """
 
     step_defs = {'step1': SimpleStep}
+
+
+class LoggingPipeline(Pipeline):
+    """ A Pipeline that utilizes self.log
+        to log a warning
+    """
+    spec = """
+        str1 = string(default='default')
+        output_ext = string(default='simplestep')
+    """
+
+    def process(self):
+        self.log.warning(f"This step has called out a warning.")
+
+        self.log.warning(f"{self.log}  {self.log.handlers}")
+        for handler in self.log.handlers:
+            if isinstance(handler, logging.FileHandler):
+                handler.close()
+                self.log.removeHandler(handler)
+        return
+
+    def _datamodels_open(self, **kwargs):
+        pass
+
+
+@pytest.fixture()
+def logcfg_file(tmpdir):
+    """Create a logcfg file"""
+    logcfg_file = str(tmpdir / 'stpipe-log.cfg')
+
+    cfg = f"""[*]\nlevel = INFO\nhandler = file:{tmpdir}/myrun.log"""
+
+    with open(logcfg_file,'w') as f:
+        f.write(cfg)
+    return logcfg_file
+
+
+@pytest.fixture()
+def run_logcfg_routing(tmpdir, logcfg_file):
+    config, config_file = LoggingPipeline.build_config(None)
+    pipe = LoggingPipeline(config_file=config_file)
+    result = pipe.call(logcfg=logcfg_file)
+    pipe.closeout()
+    return result
+
 
 
 @pytest.fixture()
@@ -177,3 +225,11 @@ def test_build_config_step_kwarg(mock_step_crds, config_file_step):
     assert config['str1'] == 'from kwarg'
     assert config['str2'] == 'from config'
     assert config['str3'] == 'from crds'
+
+
+def test_logcfg_routing(run_logcfg_routing):#, tmpdir):
+    if os.path.isfile(tmpdir / 'myrun.log'):
+        with open(tmpdir / 'myrun.log', 'r') as f:
+            fulltext = '\n'.join([line for line in f])
+
+    assert 'called out a warning' in fulltext
