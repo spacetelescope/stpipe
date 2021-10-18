@@ -2,6 +2,7 @@
 import pytest
 import asdf
 import logging
+import os
 
 import stpipe.config_parser as cp
 from stpipe.pipeline import Pipeline
@@ -49,39 +50,12 @@ class LoggingPipeline(Pipeline):
         self.log.warning(f"This step has called out a warning.")
 
         self.log.warning(f"{self.log}  {self.log.handlers}")
-        for handler in self.log.handlers:
-            if isinstance(handler, logging.FileHandler):
-                handler.close()
-                self.log.removeHandler(handler)
         return
 
     def _datamodels_open(self, **kwargs):
         pass
 
 
-@pytest.fixture()
-def logcfg_file(tmpdir):
-    """Create a logcfg file"""
-    logcfg_file = str(tmpdir / 'stpipe-log.cfg')
-
-    cfg = f"""[*]\nlevel = INFO\nhandler = file:{tmpdir}/myrun.log"""
-
-    with open(logcfg_file,'w') as f:
-        f.write(cfg)
-    return logcfg_file
-
-
-@pytest.fixture()
-def run_logcfg_routing(tmpdir, logcfg_file):
-    config, config_file = LoggingPipeline.build_config(None)
-    pipe = LoggingPipeline(config_file=config_file)
-    result = pipe.call(logcfg=logcfg_file)
-    pipe.closeout()
-    return result
-
-
-
-@pytest.fixture()
 def config_file_pipe(tmpdir):
     """Create a config file"""
     config_file = str(tmpdir / 'simple_pipe.asdf')
@@ -107,7 +81,7 @@ def config_file_pipe(tmpdir):
     return config_file
 
 
-@pytest.fixture()
+
 def config_file_step(tmpdir):
     """Create a config file"""
     config_file = str(tmpdir / 'simple_step.asdf')
@@ -227,7 +201,20 @@ def test_build_config_step_kwarg(mock_step_crds, config_file_step):
     assert config['str3'] == 'from crds'
 
 
-def test_logcfg_routing(run_logcfg_routing):#, tmpdir):
+def test_logcfg_routing(tmpdir):
+
+    cfg = f"""[*]\nlevel = INFO\nhandler = file:{tmpdir}/myrun.log"""
+
+    logcfg_file = str(tmpdir / 'stpipe-log.cfg')
+
+    with open(logcfg_file,'w') as f:
+        f.write(cfg)
+
+    # config, config_file = LoggingPipeline.build_config(None)
+    # pipe = LoggingPipeline(config_file=config_file)
+    LoggingPipeline.call(logcfg=logcfg_file)
+    # pipe.closeout()
+
     if os.path.isfile(tmpdir / 'myrun.log'):
         with open(tmpdir / 'myrun.log', 'r') as f:
             fulltext = '\n'.join([line for line in f])
