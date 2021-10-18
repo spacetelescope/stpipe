@@ -214,6 +214,12 @@ def test_logcfg_routing(tmpdir):
     # pipe = LoggingPipeline(config_file=config_file)
     LoggingPipeline.call(logcfg=logcfg_file)
     # pipe.closeout()
+    logdict = logging.Logger.manager.loggerDict
+    for log in logdict:
+        if not isinstance(logdict[log],logging.PlaceHolder):
+            for handler in logdict[log].handlers:
+                if isinstance(handler,logging.FileHandler):
+                    handler.close()
 
     if os.path.isfile(tmpdir / 'myrun.log'):
         with open(tmpdir / 'myrun.log', 'r') as f:
