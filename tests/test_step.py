@@ -56,6 +56,7 @@ class LoggingPipeline(Pipeline):
         pass
 
 
+@pytest.fixture
 def config_file_pipe(tmpdir):
     """Create a config file"""
     config_file = str(tmpdir / 'simple_pipe.asdf')
@@ -81,7 +82,7 @@ def config_file_pipe(tmpdir):
     return config_file
 
 
-
+@pytest.fixture
 def config_file_step(tmpdir):
     """Create a config file"""
     config_file = str(tmpdir / 'simple_step.asdf')
