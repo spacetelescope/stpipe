@@ -1,3 +1,8 @@
+0.4.0 (unreleased)
+==================
+
+- Add keyword 'logcfg' to Step.call() to set logging configuration [#32]
+
 0.3.0 (2021-10-11)
 ==================
 
@@ -17,8 +22,6 @@
   the default formatting. [#29]
 
 - Fix wiping out substep parameters settings when using Step.call [#28]
-
-- Add keyword 'logcfg' to Step.call() to set logging configuration [#32]
 
 0.2.1 (2021-08-26)
 ==================

@@ -580,9 +580,9 @@ class Step:
             try:
                 log.load_configuration(config['logcfg'])
             except Exception as e:
-                raise ValueError(
-                    f"Error parsing logging config {config['logcfg']}:\n{e}"
-                )
+                raise RuntimeError(
+                    f"Error parsing logging config {config['logcfg']}"
+                ) from e
             del config['logcfg']
 
         name = config.get('name', None)

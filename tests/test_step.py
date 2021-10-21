@@ -221,8 +221,7 @@ def test_logcfg_routing(tmpdir):
                     logdict[log].removeHandler(handler)
                     handler.close()
 
-    if os.path.isfile(tmpdir / 'myrun.log'):
-        with open(tmpdir / 'myrun.log', 'r') as f:
-            fulltext = '\n'.join([line for line in f])
+    with open(tmpdir / 'myrun.log', 'r') as f:
+        fulltext = '\n'.join([line for line in f])
 
     assert 'called out a warning' in fulltext
