@@ -122,6 +122,8 @@ def _override_config_from_args(config, args):
             val, comment = config._handle_value(val)
             if isinstance(val, str):
                 subconf[root] = FromCommandLine(val)
+            else:
+                subconf[root] = val
 
     for key, val in vars(args).items():
         if val is not None:
@@ -242,6 +244,7 @@ def just_the_step_from_cmdline(args, cls=None):
     parser2 = _build_arg_parser_from_spec(spec, step_class, parent=parser1)
 
     args = parser2.parse_args(args)
+
 
     if cls is None:
         del args.cfg_file_or_class
