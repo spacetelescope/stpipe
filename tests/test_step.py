@@ -220,7 +220,9 @@ def test_build_config_step_kwarg(mock_step_crds, config_file_step):
 
 
 def test_step_list_args(mock_step_crds, config_file_list_arg_step):
-    """Test that local config overrides defaults and CRDS-supplied file"""
+    """ Test that list arguments, provided as comma-separated values are parsed
+        correctly.
+    """
     config, returned_config_file = ListArgStep.build_config(
         'science.fits',
         config_file=config_file_list_arg_step
