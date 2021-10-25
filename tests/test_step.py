@@ -1,7 +1,6 @@
 """Test step.Step"""
 import pytest
-
-import numpy as np
+import logging
 import asdf
 
 import stpipe.config_parser as cp
@@ -33,6 +32,25 @@ class SimplePipe(Pipeline):
     """
 
     step_defs = {'step1': SimpleStep}
+
+
+class LoggingPipeline(Pipeline):
+    """ A Pipeline that utilizes self.log
+        to log a warning
+    """
+    spec = """
+        str1 = string(default='default')
+        output_ext = string(default='simplestep')
+    """
+
+    def process(self):
+        self.log.warning(f"This step has called out a warning.")
+
+        self.log.warning(f"{self.log}  {self.log.handlers}")
+        return
+
+    def _datamodels_open(self, **kwargs):
+        pass
 
 
 class ListArgStep(Step):
@@ -290,3 +308,28 @@ def test_step_list_args(mock_step_crds, config_file_list_arg_step):
         )
     assert (e.value.args[0] == "Config parameter 'output_shape': the value "
             "\"1500.5\" is of the wrong type.")
+
+
+def test_logcfg_routing(tmpdir):
+
+    cfg = f"""[*]\nlevel = INFO\nhandler = file:{tmpdir}/myrun.log"""
+
+    logcfg_file = str(tmpdir / 'stpipe-log.cfg')
+
+    with open(logcfg_file,'w') as f:
+        f.write(cfg)
+
+    LoggingPipeline.call(logcfg=logcfg_file)
+
+    logdict = logging.Logger.manager.loggerDict
+    for log in logdict:
+        if not isinstance(logdict[log], logging.PlaceHolder):
+            for handler in logdict[log].handlers:
+                if isinstance(handler, logging.FileHandler):
+                    logdict[log].removeHandler(handler)
+                    handler.close()
+
+    with open(tmpdir / 'myrun.log', 'r') as f:
+        fulltext = '\n'.join([line for line in f])
+
+    assert 'called out a warning' in fulltext
