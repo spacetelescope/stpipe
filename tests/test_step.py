@@ -1,7 +1,6 @@
 """Test step.Step"""
 import pytest
-
-import numpy as np
+import logging
 import asdf
 
 import stpipe.config_parser as cp
