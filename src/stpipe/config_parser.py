@@ -214,7 +214,7 @@ def load_spec_file(cls, preserve_comments=False):
         spec_file = utilities.find_spec_file(cls)
     if spec_file:
         return ConfigObj(spec_file, _inspec=not preserve_comments,
-                         raise_errors=True)
+                         raise_errors=True, list_values=False)
     return
 
 

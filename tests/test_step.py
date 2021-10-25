@@ -1,18 +1,17 @@
 """Test step.Step"""
 import pytest
+
+import numpy as np
 import asdf
-import logging
-import os
 
 import stpipe.config_parser as cp
 from stpipe.pipeline import Pipeline
 from stpipe.step import Step
+from stpipe import cmdline
 
 # ######################
 # Data and Fixture setup
 # ######################
-
-
 class SimpleStep(Step):
     """A Step with parameters"""
     spec = """
@@ -22,7 +21,6 @@ class SimpleStep(Step):
         str4 = string(default='default')
         output_ext = string(default='simplestep')
     """
-
 
 class SimplePipe(Pipeline):
     """A Pipeline with parameters and one step"""
@@ -37,26 +35,21 @@ class SimplePipe(Pipeline):
     step_defs = {'step1': SimpleStep}
 
 
-class LoggingPipeline(Pipeline):
-    """ A Pipeline that utilizes self.log
-        to log a warning
-    """
+class ListArgStep(Step):
+    """A Step with parameters"""
     spec = """
-        str1 = string(default='default')
-        output_ext = string(default='simplestep')
+        output_shape = int_list(min=2, max=2, default=None)  # [y, x] - numpy convention
+        crpix = float_list(min=2, max=2, default=None)
+        crval = float_list(min=2, max=2, default=None)
+        rotation = float(default=None)
+        pixfrac = float(default=1.0)
+        pixel_scale = float(default=0.0065)
+        pixel_scale_ratio = float(default=0.65)
+        output_ext = string(default='listargstep')
     """
 
-    def process(self):
-        self.log.warning(f"This step has called out a warning.")
 
-        self.log.warning(f"{self.log}  {self.log.handlers}")
-        return
-
-    def _datamodels_open(self, **kwargs):
-        pass
-
-
-@pytest.fixture
+@pytest.fixture()
 def config_file_pipe(tmpdir):
     """Create a config file"""
     config_file = str(tmpdir / 'simple_pipe.asdf')
@@ -82,7 +75,7 @@ def config_file_pipe(tmpdir):
     return config_file
 
 
-@pytest.fixture
+@pytest.fixture()
 def config_file_step(tmpdir):
     """Create a config file"""
     config_file = str(tmpdir / 'simple_step.asdf')
@@ -93,6 +86,25 @@ def config_file_step(tmpdir):
         'parameters': {
             'str1': 'from config',
             'str2': 'from config'
+        }
+    }
+    with asdf.AsdfFile(tree) as af:
+        af.write_to(config_file)
+    return config_file
+
+
+@pytest.fixture()
+def config_file_list_arg_step(tmpdir):
+    """Create a config file"""
+    config_file = str(tmpdir / 'list_arg_step.asdf')
+
+    tree = {
+        'class': 'test_step.ListArgStep',
+        'name': 'ListArgStep',
+        'parameters': {
+            'rotation': None,
+            'pixel_scale_ratio': 1.1,
+
         }
     }
     with asdf.AsdfFile(tree) as af:
@@ -116,8 +128,13 @@ def mock_step_crds(monkeypatch):
         config = cp.config_from_dict({'str1': 'from crds', 'str2': 'from crds', 'str3': 'from crds'})
         return config
 
+    def mock_get_config_from_reference_list_arg_step(dataset, disable=None):
+        config = cp.config_from_dict({'rotation': '15', 'pixel_scale': '0.85'})
+        return config
+
     monkeypatch.setattr(SimplePipe, 'get_config_from_reference', mock_get_config_from_reference_pipe)
     monkeypatch.setattr(SimpleStep, 'get_config_from_reference', mock_get_config_from_reference_step)
+    monkeypatch.setattr(ListArgStep, 'get_config_from_reference', mock_get_config_from_reference_list_arg_step)
 
 
 # #####
@@ -202,26 +219,74 @@ def test_build_config_step_kwarg(mock_step_crds, config_file_step):
     assert config['str3'] == 'from crds'
 
 
-def test_logcfg_routing(tmpdir):
+def test_step_list_args(mock_step_crds, config_file_list_arg_step):
+    """ Test that list arguments, provided as comma-separated values are parsed
+        correctly.
+    """
+    config, returned_config_file = ListArgStep.build_config(
+        'science.fits',
+        config_file=config_file_list_arg_step
+    )
+    assert returned_config_file == config_file_list_arg_step
+    c, *_ = cmdline.just_the_step_from_cmdline(
+        ['filename.fits',
+         '--output_shape', '1500,1300',
+         '--crpix=123,456',
+         '--pixel_scale=0.75',
+         '--config-file', returned_config_file],
+        ListArgStep
+    )
+    assert c.rotation is None
+    assert c.pixel_scale == 0.75
+    assert c.pixel_scale_ratio == 1.1
+    assert c.pixfrac == 1
+    assert c.output_shape == [1500, 1300]
+    assert c.crpix == [123, 456]
 
-    cfg = f"""[*]\nlevel = INFO\nhandler = file:{tmpdir}/myrun.log"""
+    with pytest.raises(ValueError) as e:
+        cmdline.just_the_step_from_cmdline(
+                ['filename.fits',
+                 '--output_shape', '1500,1300,90',
+                 '--crpix=123,456',
+                 '--pixel_scale=0.75',
+                 '--config-file', returned_config_file],
+                ListArgStep
+        )
+    assert (e.value.args[0] == "Config parameter 'output_shape': the value "
+            "\"['1500', '1300', '90']\" is too long.")
 
-    logcfg_file = str(tmpdir / 'stpipe-log.cfg')
+    with pytest.raises(ValueError) as e:
+        cmdline.just_the_step_from_cmdline(
+                ['filename.fits',
+                 '--output_shape', '1500,',
+                 '--crpix=123,456',
+                 '--pixel_scale=0.75',
+                 '--config-file', returned_config_file],
+                ListArgStep
+        )
+    assert (e.value.args[0] == "Config parameter 'output_shape': the value "
+            "\"['1500']\" is too short.")
 
-    with open(logcfg_file,'w') as f:
-        f.write(cfg)
+    with pytest.raises(ValueError) as e:
+        cmdline.just_the_step_from_cmdline(
+                ['filename.fits',
+                 '--output_shape', '1500',
+                 '--crpix=123,456',
+                 '--pixel_scale=0.75',
+                 '--config-file', returned_config_file],
+                ListArgStep
+        )
+    assert (e.value.args[0] == "Config parameter 'output_shape': the value "
+            "\"1500\" is of the wrong type.")
 
-    LoggingPipeline.call(logcfg=logcfg_file)
-
-    logdict = logging.Logger.manager.loggerDict
-    for log in logdict:
-        if not isinstance(logdict[log], logging.PlaceHolder):
-            for handler in logdict[log].handlers:
-                if isinstance(handler, logging.FileHandler):
-                    logdict[log].removeHandler(handler)
-                    handler.close()
-
-    with open(tmpdir / 'myrun.log', 'r') as f:
-        fulltext = '\n'.join([line for line in f])
-
-    assert 'called out a warning' in fulltext
+    with pytest.raises(ValueError) as e:
+        cmdline.just_the_step_from_cmdline(
+                ['filename.fits',
+                 '--output_shape', '1500.5,1300.2',
+                 '--crpix=123,456',
+                 '--pixel_scale=0.75',
+                 '--config-file', returned_config_file],
+                ListArgStep
+        )
+    assert (e.value.args[0] == "Config parameter 'output_shape': the value "
+            "\"1500.5\" is of the wrong type.")

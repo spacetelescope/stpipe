@@ -1,7 +1,8 @@
-0.4.0 (unreleased)
+0.3.1 (unreleased)
 ==================
 
-- Add keyword 'logcfg' to Step.call() to set logging configuration [#32]
+- Fig a bug that prevented support for list arguments. [#33]
+
 
 0.3.0 (2021-10-11)
 ==================
