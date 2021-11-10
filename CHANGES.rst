@@ -3,7 +3,9 @@
 
 - Fig a bug that prevented support for list arguments. [#33]
 
-- Add keyword 'logcfg' to Step.call() to set logging configuration [#32]
+- Add keyword 'logcfg' to Step.call() to set logging configuration. [#32]
+
+- Add Step.log_records to make log output available to subclasses. [#35]
 
 0.3.0 (2021-10-11)
 ==================

@@ -333,3 +333,10 @@ def test_logcfg_routing(tmpdir):
         fulltext = '\n'.join([line for line in f])
 
     assert 'called out a warning' in fulltext
+
+
+def test_log_records():
+    pipeline = LoggingPipeline()
+    pipeline.run()
+
+    assert any(r.message == "This step has called out a warning." for r in pipeline.log_records)

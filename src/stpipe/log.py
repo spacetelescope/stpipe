@@ -1,6 +1,7 @@
 """
 Logging setup etc.
 """
+from contextlib import contextmanager
 import fnmatch
 import io
 import logging
@@ -248,6 +249,34 @@ class DelegationHandler(logging.Handler):
                 (isinstance(log, logging.Logger) and
                  log.name.startswith(STPIPE_ROOT_LOGGER)))
         self._logs[threading.current_thread()] = log
+
+
+class RecordingHandler(logging.Handler):
+    """
+    A handler that simply accumulates LogRecord instances.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._log_records = []
+
+    @property
+    def log_records(self):
+        return self._log_records
+
+    def emit(self, record):
+        self._log_records.append(record)
+
+
+@contextmanager
+def record_logs(level=logging.NOTSET):
+    handler = RecordingHandler(level=level)
+    logger = getLogger(STPIPE_ROOT_LOGGER)
+    logger.addHandler(handler)
+    try:
+        yield handler.log_records
+    finally:
+        logger.removeHandler(handler)
+
 
 # Install the delegation handler on the root logger.  The Step class
 # uses the `delegator` instance to change what the current Step logger

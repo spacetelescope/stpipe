@@ -295,6 +295,9 @@ class Step:
             variables on the new Step instance.
         """
         self._reference_files_used = []
+        # A list of logging.LogRecord emitted to the stpipe root logger
+        # during the most recent call to Step.run.
+        self._log_records = []
         self._input_filename = None
         self._input_dir = None
         self._keywords = kws
@@ -356,6 +359,17 @@ class Step:
                     "{0} {1} object.  Use an instance of AbstractDataModel instead.".format(
                         msg, i))
 
+    @property
+    def log_records(self):
+        """
+        Retrieve logs from the most recent run of this step.
+
+        Returns
+        -------
+        list of logging.LogRecord
+        """
+        return self._log_records
+
     def run(self, *args):
         """
         Run handles the generic setup and teardown that happens with
@@ -364,119 +378,122 @@ class Step:
         """
         gc.collect()
 
-        # Make generic log messages go to this step's logger
-        orig_log = log.delegator.log
-        log.delegator.log = self.log
+        with log.record_logs() as log_records:
+            self._log_records = log_records
 
-        step_result = None
+            # Make generic log messages go to this step's logger
+            orig_log = log.delegator.log
+            log.delegator.log = self.log
 
-        self.log.info(
-            'Step {0} running with args {1}.'.format(
-                self.name, args))
-
-        self.log.info(
-            f'Step {self.name} parameters are: {self.get_pars()}'
-        )
-
-        if len(args):
-            self.set_primary_input(args[0])
-
-        try:
-            # Default output file configuration
-            if self.output_file is not None:
-                self.save_results = True
-
-            if self.suffix is None:
-                self.suffix = self.default_suffix()
-
-            hook_args = args
-            for pre_hook in self._pre_hooks:
-                hook_results = pre_hook.run(*hook_args)
-                if hook_results is not None:
-                    hook_args = hook_results
-            args = hook_args
-
-            self._reference_files_used = []
-
-            # Warn if passing in objects that should be
-            # discouraged.
-            self._check_args(args, DISCOURAGED_TYPES, "Passed")
-
-            # Run the Step-specific code.
-            if self.skip:
-                self.log.info('Step skipped.')
-                step_result = args[0]
-            else:
-                if self.prefetch_references:
-                    self.prefetch(*args)
-                try:
-                    step_result = self.process(*args)
-                except TypeError as e:
-                    if "process() takes exactly" in str(e):
-                        raise TypeError(
-                            "Incorrect number of arguments to step"
-                        )
-                    raise
-
-            # Warn if returning a discouraged object
-            self._check_args(step_result, DISCOURAGED_TYPES, "Returned")
-
-            # Run the post hooks
-            for post_hook in self._post_hooks:
-                hook_results = post_hook.run(step_result)
-                if hook_results is not None:
-                    step_result = hook_results
-
-            # Update meta information
-            if not isinstance(step_result, Sequence):
-                results = [step_result]
-            else:
-                results = step_result
-
-            # The finalize_result hook allows subclasses to add
-            # metadata (like the cal code package version) before
-            # the result is saved.
-            for result in results:
-                self.finalize_result(result, self._reference_files_used)
-
-            self._reference_files_used = []
-
-            # Save the output file if one was specified
-            if not self.skip and self.save_results:
-
-                # Setup the save list.
-                if not isinstance(step_result, (list, tuple)):
-                    results_to_save = [step_result]
-                else:
-                    results_to_save = step_result
-
-                for idx, result in enumerate(results_to_save):
-                    if len(results_to_save) <= 1:
-                        idx = None
-                    if isinstance(result, AbstractDataModel):
-                        self.save_model(result, idx=idx, format=self.name_format)
-                    elif hasattr(result, 'save'):
-                        try:
-                            output_path = self.make_output_path(idx=idx, name_format=self.name_format)
-                        except AttributeError:
-                            self.log.warning(
-                                '`save_results` has been requested,'
-                                ' but cannot determine filename.'
-                            )
-                            self.log.warning(
-                                'Specify an output file with `--output_file`'
-                                ' or set `--save_results=false`'
-                            )
-                        else:
-                            self.log.info(
-                                'Saving file {0}'.format(output_path)
-                            )
-                            result.save(output_path, overwrite=True)
+            step_result = None
 
             self.log.info(
-                'Step {0} done'.format(self.name))
-        finally:
-            log.delegator.log = orig_log
+                'Step {0} running with args {1}.'.format(
+                    self.name, args))
+
+            self.log.info(
+                f'Step {self.name} parameters are: {self.get_pars()}'
+            )
+
+            if len(args):
+                self.set_primary_input(args[0])
+
+            try:
+                # Default output file configuration
+                if self.output_file is not None:
+                    self.save_results = True
+
+                if self.suffix is None:
+                    self.suffix = self.default_suffix()
+
+                hook_args = args
+                for pre_hook in self._pre_hooks:
+                    hook_results = pre_hook.run(*hook_args)
+                    if hook_results is not None:
+                        hook_args = hook_results
+                args = hook_args
+
+                self._reference_files_used = []
+
+                # Warn if passing in objects that should be
+                # discouraged.
+                self._check_args(args, DISCOURAGED_TYPES, "Passed")
+
+                # Run the Step-specific code.
+                if self.skip:
+                    self.log.info('Step skipped.')
+                    step_result = args[0]
+                else:
+                    if self.prefetch_references:
+                        self.prefetch(*args)
+                    try:
+                        step_result = self.process(*args)
+                    except TypeError as e:
+                        if "process() takes exactly" in str(e):
+                            raise TypeError(
+                                "Incorrect number of arguments to step"
+                            )
+                        raise
+
+                # Warn if returning a discouraged object
+                self._check_args(step_result, DISCOURAGED_TYPES, "Returned")
+
+                # Run the post hooks
+                for post_hook in self._post_hooks:
+                    hook_results = post_hook.run(step_result)
+                    if hook_results is not None:
+                        step_result = hook_results
+
+                # Update meta information
+                if not isinstance(step_result, Sequence):
+                    results = [step_result]
+                else:
+                    results = step_result
+
+                # The finalize_result hook allows subclasses to add
+                # metadata (like the cal code package version) before
+                # the result is saved.
+                for result in results:
+                    self.finalize_result(result, self._reference_files_used)
+
+                self._reference_files_used = []
+
+                # Save the output file if one was specified
+                if not self.skip and self.save_results:
+
+                    # Setup the save list.
+                    if not isinstance(step_result, (list, tuple)):
+                        results_to_save = [step_result]
+                    else:
+                        results_to_save = step_result
+
+                    for idx, result in enumerate(results_to_save):
+                        if len(results_to_save) <= 1:
+                            idx = None
+                        if isinstance(result, AbstractDataModel):
+                            self.save_model(result, idx=idx, format=self.name_format)
+                        elif hasattr(result, 'save'):
+                            try:
+                                output_path = self.make_output_path(idx=idx, name_format=self.name_format)
+                            except AttributeError:
+                                self.log.warning(
+                                    '`save_results` has been requested,'
+                                    ' but cannot determine filename.'
+                                )
+                                self.log.warning(
+                                    'Specify an output file with `--output_file`'
+                                    ' or set `--save_results=false`'
+                                )
+                            else:
+                                self.log.info(
+                                    'Saving file {0}'.format(output_path)
+                                )
+                                result.save(output_path, overwrite=True)
+
+                self.log.info(
+                    'Step {0} done'.format(self.name))
+            finally:
+                log.delegator.log = orig_log
 
         return step_result
 
