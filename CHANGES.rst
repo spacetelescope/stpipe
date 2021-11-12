@@ -1,4 +1,4 @@
-0.3.1 (unreleased)
+0.3.1 (2021-11-12)
 ==================
 
 - Fig a bug that prevented support for list arguments. [#33]
