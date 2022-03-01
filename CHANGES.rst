@@ -3,6 +3,8 @@
 
 - Pass header-only model to steps for CRDS fetching to reduce memory usage [#38]
 
+- For classmethods, use the delegator logger. [#37]
+
 0.3.1 (2021-11-12)
 ==================
 
