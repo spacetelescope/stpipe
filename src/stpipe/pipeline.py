@@ -162,24 +162,28 @@ class Pipeline(Step):
         #
         # Iterate over the steps in the pipeline
         with cls._datamodels_open(dataset, asn_n_members=1) as model:
-            for cal_step in cls.step_defs.keys():
-                cal_step_class = cls.step_defs[cal_step]
-                refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(model)
-            #
-            # Now merge any config parameters from the step cfg file
-            log.debug(f'Retrieving pipeline {reftype.upper()} parameters from CRDS')
-            try:
-                ref_file = crds_client.get_reference_file(model.get_crds_parameters(),
-                                                        reftype,
-                                                        model.crds_observatory)
-            except (AttributeError, crds_client.CrdsError):
-                log.debug(f'{reftype.upper()}: No parameters found')
+            input_class = model.__class__()
+            metadata = input_class
+            metadata.update(model, only='PRIMARY')
+
+        for cal_step in cls.step_defs.keys():
+            cal_step_class = cls.step_defs[cal_step]
+            refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(metadata)
+        #
+        # Now merge any config parameters from the step cfg file
+        log.debug(f'Retrieving pipeline {reftype.upper()} parameters from CRDS')
+        try:
+            ref_file = crds_client.get_reference_file(metadata.get_crds_parameters(),
+                                                    reftype,
+                                                    metadata.crds_observatory)
+        except (AttributeError, crds_client.CrdsError):
+            log.debug(f'{reftype.upper()}: No parameters found')
+        else:
+            if ref_file != 'N/A':
+                log.info(f'{reftype.upper()} parameters found: {ref_file}')
+                refcfg = cls.merge_pipeline_config(refcfg, ref_file)
             else:
-                if ref_file != 'N/A':
-                    log.info(f'{reftype.upper()} parameters found: {ref_file}')
-                    refcfg = cls.merge_pipeline_config(refcfg, ref_file)
-                else:
-                    log.debug(f'No {reftype.upper()} reference files found.')
+                log.debug(f'No {reftype.upper()} reference files found.')
 
         return refcfg
 
