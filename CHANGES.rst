@@ -1,6 +1,9 @@
 0.3.0 (unreleased)
 ==================
 
+0.3.0 (22-03-29)
+================
+
 - Change ConfigObj.update() to merge() when combining user-provided
   config_file and step-specific flags during a step.call() to properly
   merge dicts of step flags [#22]
