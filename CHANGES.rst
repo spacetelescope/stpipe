@@ -1,5 +1,8 @@
-0.3.2 (unreleased)
+0.3.3 (unreleased)
 ==================
+
+0.3.2 (22-03-29)
+================
 
 - Pass header-only model to steps for CRDS fetching to reduce memory usage [#38]
 
