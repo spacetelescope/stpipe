@@ -163,17 +163,10 @@ class Pipeline(Step):
         # Iterate over the steps in the pipeline
         with cls._datamodels_open(dataset, asn_n_members=1) as model:
             if isinstance(model, Sequence):
-                for exposure in model.meta.asn_table.products[0].members:
-                    if exposure.exptype.upper() == "SCIENCE":
-                        first_exposure = exposure.expname
-                        break
-                else:
-                    first_exposure = self.meta.asn_table.products[0].members[0].expname
-
-                with cls._datamodels_open(first_exposure) as meta_source:
-                    input_class = meta_source.__class__()
+                for contained_model in model:
+                    input_class = contained_model.__class__()
                     metadata = input_class
-                    metadata.update(meta_source)
+                    metadata.update(contained_model, only='PRIMARY')
             else:
                 input_class = model.__class__()
                 metadata = input_class
