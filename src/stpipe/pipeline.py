@@ -8,9 +8,13 @@ from .extern.configobj.configobj import Section, ConfigObj
 
 from . import config_parser
 from . import crds_client
-from .log import log
+from . import log
 from .step import get_disable_crds_steppars, Step
 
+
+# For classmethods, the logger to use is the
+# delegator, since the pipeline has not yet been instantiated.
+logger = log.delegator.log
 
 class Pipeline(Step):
     """
@@ -154,11 +158,11 @@ class Pipeline(Step):
         if disable is None:
             disable = get_disable_crds_steppars()
         if disable:
-            log.debug(f'{reftype.upper()}: CRDS parameter reference retrieval disabled.')
+            logger.debug(f'{reftype.upper()}: CRDS parameter reference retrieval disabled.')
             return refcfg
 
 
-        log.debug('Retrieving all substep parameters from CRDS')
+        logger.debug('Retrieving all substep parameters from CRDS')
         #
         # Iterate over the steps in the pipeline
         with cls._datamodels_open(dataset, asn_n_members=1) as model:
@@ -177,19 +181,19 @@ class Pipeline(Step):
             refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(metadata)
         #
         # Now merge any config parameters from the step cfg file
-        log.debug(f'Retrieving pipeline {reftype.upper()} parameters from CRDS')
+        logger.debug(f'Retrieving pipeline {reftype.upper()} parameters from CRDS')
         try:
             ref_file = crds_client.get_reference_file(metadata.get_crds_parameters(),
                                                     reftype,
                                                     metadata.crds_observatory)
         except (AttributeError, crds_client.CrdsError):
-            log.debug(f'{reftype.upper()}: No parameters found')
+            logger.debug(f'{reftype.upper()}: No parameters found')
         else:
             if ref_file != 'N/A':
-                log.info(f'{reftype.upper()} parameters found: {ref_file}')
+                logger.info(f'{reftype.upper()} parameters found: {ref_file}')
                 refcfg = cls.merge_pipeline_config(refcfg, ref_file)
             else:
-                log.debug(f'No {reftype.upper()} reference files found.')
+                logger.debug(f'No {reftype.upper()} reference files found.')
 
         return refcfg
 
