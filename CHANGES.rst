@@ -3,6 +3,9 @@
 
 - Pass header-only model to steps for CRDS fetching to reduce memory usage [#38]
 
+- Ensure product header is passed for CRDS fetching instead of empty
+  ModelContainer header [#50]
+
 0.3.1 (2021-11-12)
 ==================
 
