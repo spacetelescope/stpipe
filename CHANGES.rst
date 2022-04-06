@@ -1,6 +1,9 @@
 0.3.3 (unreleased)
 ==================
 
+- Ensure product header is passed for CRDS fetching instead of empty
+  ModelContainer header [#50]
+
 0.3.2 (22-03-29)
 ================
 

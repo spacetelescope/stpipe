@@ -166,9 +166,15 @@ class Pipeline(Step):
         #
         # Iterate over the steps in the pipeline
         with cls._datamodels_open(dataset, asn_n_members=1) as model:
-            input_class = model.__class__()
-            metadata = input_class
-            metadata.update(model, only='PRIMARY')
+            if isinstance(model, Sequence):
+                for contained_model in model:
+                    input_class = contained_model.__class__()
+                    metadata = input_class
+                    metadata.update(contained_model, only='PRIMARY')
+            else:
+                input_class = model.__class__()
+                metadata = input_class
+                metadata.update(model, only='PRIMARY')
 
         for cal_step in cls.step_defs.keys():
             cal_step_class = cls.step_defs[cal_step]
