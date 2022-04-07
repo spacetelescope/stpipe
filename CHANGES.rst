@@ -1,11 +1,15 @@
-0.3.3 (unreleased)
+
+0.3.4 (unreleased)
+==================
+
+0.3.3 (2022-04-07)
 ==================
 
 - Ensure product header is passed for CRDS fetching instead of empty
   ModelContainer header [#50]
 
-0.3.2 (22-03-29)
-================
+0.3.2 (2022-03-29)
+==================
 
 - Pass header-only model to steps for CRDS fetching to reduce memory usage [#38]
 
