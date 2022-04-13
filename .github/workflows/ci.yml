@@ -30,11 +30,6 @@ jobs:
             python-version: 3.8
             toxenv: py38
 
-          - name: Python 3.7
-            runs-on: ubuntu-latest
-            python-version: 3.7
-            toxenv: py37
-
           - name: Coverage
             runs-on: ubuntu-latest
             python-version: 3.8
