@@ -425,7 +425,7 @@ class Step:
                     if isinstance(args[0], AbstractDataModel):
                         if self.class_alias is not None:
                             try:
-                                args[0].meta.cal_step.instance[self.class_alias] = 'SKIPPED'
+                                args[0][f"meta.cal_step.{self.class_alias}"] = 'SKIPPED'
                             except AttributeError as e:
                                 self.log.info(f"Could not record skip into DataModel header: {e}")
                     step_result = args[0]
