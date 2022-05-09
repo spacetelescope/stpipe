@@ -422,6 +422,12 @@ class Step:
                 # Run the Step-specific code.
                 if self.skip:
                     self.log.info('Step skipped.')
+                    if isinstance(args[0], AbstractDataModel):
+                        if self.class_alias is not None:
+                            try:
+                                args[0].meta.cal_step.instance[self.class_alias] = 'SKIPPED'
+                            except AttributeError as e:
+                                self.log.info(f"Could not record skip into DataModel header: {e}")
                     step_result = args[0]
                 else:
                     if self.prefetch_references:
@@ -779,7 +785,7 @@ class Step:
         try:
             model = cls._datamodels_open(dataset)
         except (IOError, TypeError, ValueError):
-            logger.warning('Input dataset is not an instance of  AbstractDataModel.')
+            logger.warning('Input dataset is not an instance of AbstractDataModel.')
             disable = True
 
         # Check if retrieval should be attempted.
