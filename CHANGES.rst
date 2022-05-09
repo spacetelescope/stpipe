@@ -3,6 +3,8 @@
 
 - Update astropy min version to 5.0.4. [#52]
 
+- Update datamodel with 'SKIPPED' status when step.skip set to True [#53]
+
 0.3.3 (2022-04-07)
 ==================
 
