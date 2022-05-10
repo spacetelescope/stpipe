@@ -187,8 +187,11 @@ class Pipeline(Step):
                     metadata.update(contained_model, only='PRIMARY')
             else:
                 input_class = model.__class__()
-                metadata = input_class
-                metadata.update(model, only='PRIMARY')
+                if model.meta.telescope == 'JWST':
+                    metadata = input_class
+                    metadata.update(model, only='PRIMARY')
+                else:
+                    metadata = model
 
         for cal_step in cls.step_defs.keys():
             cal_step_class = cls.step_defs[cal_step]
