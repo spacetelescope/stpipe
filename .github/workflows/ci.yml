@@ -61,6 +61,8 @@ jobs:
         with:
           fetch-depth: 0
       - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
       - uses: actions/cache@v3
         id: tox_cache
         with:
