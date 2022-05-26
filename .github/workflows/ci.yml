@@ -48,8 +48,9 @@ jobs:
       fail-fast: false
       matrix:
         runs-on: [ ubuntu-latest, macos-latest ]
-        toxenv: [ py38, py39, py310 ]
         include:
+          - toxenv: py37
+            python-version: 3.7
           - toxenv: py38
             python-version: 3.8
           - toxenv: py39
@@ -82,8 +83,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        toxenv: [ coverage, jwst-cov, romancal-cov ]
-        python-version: [ 3.9 ]
         include:
           - toxenv: coverage
             name: test base library with coverage
@@ -91,6 +90,7 @@ jobs:
             name: test JWST pipeline with coverage
           - toxenv: romancal-cov
             name: test Roman pipeline with coverage
+        python-version: [ 3.9 ]
     steps:
       - uses: actions/checkout@v2
         with:
