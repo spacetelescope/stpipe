@@ -48,10 +48,8 @@ jobs:
       fail-fast: false
       matrix:
         runs-on: [ ubuntu-latest, macos-latest ]
-        toxenv: [ py37, py38, py39, py310 ]
+        toxenv: [ py38, py39, py310 ]
         include:
-          - toxenv: py37
-            python-version: 3.7
           - toxenv: py38
             python-version: 3.8
           - toxenv: py39
