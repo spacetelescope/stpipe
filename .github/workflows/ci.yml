@@ -110,6 +110,9 @@ jobs:
           path: .tox
           key: tox-${{ matrix.toxenv }}-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
       - run: tox -e ${{ matrix.toxenv }}
+      - uses: codecov/codecov-action@v2
+        with:
+          file: ./coverage.xml
   # Kept in a separate job because it needs extra system dependencies
   # that can't be installed by tox.
   build-docs:
