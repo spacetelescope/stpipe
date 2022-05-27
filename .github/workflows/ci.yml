@@ -121,7 +121,6 @@ jobs:
       - run: tox -e ${{ matrix.toxenv }}
         env:
           CRDS_SERVER_URL: ${{ matrix.crds-server }}
-      - run: coverage report -m
       - uses: codecov/codecov-action@v2
         with:
           file: ./coverage.xml
