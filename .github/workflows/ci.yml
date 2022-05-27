@@ -12,6 +12,12 @@ on:
     # * is a special character in YAML so you have to quote this string
     - cron: '0 9 * * 1'
 
+env:
+  CRDS_SERVER_URL: https://jwst-crds.stsci.edu
+  CRDS_PATH: ~/crds_cache
+  CRDS_CLIENT_RETRY_COUNT: 3
+  CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
+
 jobs:
   lint:
     name: ${{ matrix.name }}
@@ -87,10 +93,13 @@ jobs:
         include:
           - toxenv: coverage
             name: test base library with coverage
+            crds-server: https://jwst-crds.stsci.edu
           - toxenv: jwst-cov
             name: test JWST pipeline with coverage
+            crds-server: https://jwst-crds.stsci.edu
           - toxenv: romancal-cov
             name: test Roman pipeline with coverage
+            crds-server: https://roman-crds-test.stsci.edu
     steps:
       - uses: actions/checkout@v2
         with:
@@ -110,6 +119,8 @@ jobs:
           path: .tox
           key: tox-${{ matrix.toxenv }}-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
       - run: tox -e ${{ matrix.toxenv }}
+        env:
+          CRDS_SERVER_URL: ${{ matrix.crds-server }}
       - uses: codecov/codecov-action@v2
         with:
           file: ./coverage.xml
