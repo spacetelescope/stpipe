@@ -99,7 +99,8 @@ jobs:
             crds-server: https://jwst-crds.stsci.edu
           - toxenv: romancal-cov
             name: test Roman pipeline with coverage
-            crds-server: https://roman-crds-test.stsci.edu
+            crds-server: https://jwst-crds.stsci.edu
+#            crds-server: https://roman-crds-test.stsci.edu
     steps:
       - uses: actions/checkout@v2
         with:
