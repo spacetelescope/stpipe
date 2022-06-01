@@ -14,7 +14,7 @@ on:
 
 env:
   CRDS_SERVER_URL: https://jwst-crds.stsci.edu
-  CRDS_PATH: ~/crds_cache
+  CRDS_PATH: $HOME/crds_cache
   CRDS_CLIENT_RETRY_COUNT: 3
   CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
 
@@ -99,8 +99,7 @@ jobs:
             crds-server: https://jwst-crds.stsci.edu
           - toxenv: romancal-cov
             name: test Roman pipeline with coverage
-            crds-server: https://jwst-crds.stsci.edu
-#            crds-server: https://roman-crds-test.stsci.edu
+            crds-server: https://roman-crds-test.stsci.edu
     steps:
       - uses: actions/checkout@v2
         with:
