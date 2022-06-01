@@ -13,7 +13,6 @@ on:
     - cron: '0 9 * * 1'
 
 env:
-  CRDS_SERVER_URL: https://jwst-crds.stsci.edu
   CRDS_PATH: $HOME/crds_cache
   CRDS_CLIENT_RETRY_COUNT: 3
   CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
@@ -93,10 +92,9 @@ jobs:
         include:
           - toxenv: coverage
             name: test base library with coverage
-            crds-server: https://jwst-crds.stsci.edu
           - toxenv: jwst-cov
             name: test JWST pipeline with coverage
-            crds-server: https://jwst-crds.stsci.edu
+            crds-server: https://jwst-crds-pub.stsci.edu
           - toxenv: romancal-cov
             name: test Roman pipeline with coverage
             crds-server: https://roman-crds-test.stsci.edu
