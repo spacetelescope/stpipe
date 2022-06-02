@@ -5,6 +5,8 @@
 
 - Update datamodel with 'SKIPPED' status when step.skip set to True [#53]
 
+- Update CI workflows to cache test environments and depend upon style and security checks [#55]
+
 0.3.3 (2022-04-07)
 ==================
 
