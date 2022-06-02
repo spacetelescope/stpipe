@@ -94,7 +94,7 @@ jobs:
             name: test base library with coverage
           - toxenv: jwst-cov
             name: test JWST pipeline with coverage
-            crds-server: https://jwst-crds-pub.stsci.edu
+            crds-server: https://jwst-crds.stsci.edu
           - toxenv: romancal-cov
             name: test Roman pipeline with coverage
             crds-server: https://roman-crds-test.stsci.edu
