@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+# this file exists to support an editable PEP517 install
+
 from setuptools import setup
 
-setup(use_scm_version={"write_to": "src/stpipe/_version.py"})
+setup()

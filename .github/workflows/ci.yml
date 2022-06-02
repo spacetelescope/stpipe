@@ -28,8 +28,8 @@ jobs:
         with:
           path: ${{ env.pythonLocation }}
           key: style-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
-      - run: pip install pyproject-flake8
-      - run: pflake8 --count src
+      - run: pip install flake8
+      - run: flake8 --count src
   audit:
     name: Bandit security audit
     runs-on: ubuntu-latest
