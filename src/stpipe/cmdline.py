@@ -278,12 +278,15 @@ def just_the_step_from_cmdline(args, cls=None):
     # This updates config (a ConfigObj) with the values from the command line arguments
     # Config is empty if class specified, otherwise contains values from config file specified
     # on command line
+
+    config = step_class.finalize_config(config, name=name, config_file=config_file)
+
     _override_config_from_args(config, args)
 
     # This is where the step is instantiated
     try:
         step = step_class.from_config_section(
-            config, name=name, config_file=config_file)
+            config, name=name)
     except config_parser.ValidationError as e:
         # If the configobj validator failed, print usage information.
         _print_important_message("ERROR PARSING CONFIGURATION:", str(e))

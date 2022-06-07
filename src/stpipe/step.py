@@ -237,6 +237,47 @@ class Step:
             Any parameters found in the config file fragment will be
             set as member variables on the returned `Step` instance.
         """
+
+        config = cls.finalize_config(config, name=None, config_file=None)
+
+        step = cls(
+            name=name,
+            parent=parent,
+            config_file=config_file,
+            _validate_kwds=False,
+            **config)
+
+        return step
+
+    @classmethod
+    def finalize_config(cls, config, name=None, config_file=None):
+        """Load default config, merge with config_file if present, then validate.
+
+        Parameters
+        ----------
+        config : configobj.Section instance
+            The config file fragment containing parameters for this
+            step only.
+        parent : Step instance, optional
+            The parent step of this step.  Used to determine a
+            fully-qualified name for this step, and to determine
+            the mode in which to run this step.
+        name : str, optional
+            If provided, use that name for the returned instance.
+            If not provided, try the following (in order):
+            - The ``name`` parameter in the config file fragment
+            - The name of returned class
+        config_file : str, optional
+            The path to the config file that created this step, if
+            any.  This is used to resolve relative file name
+            parameters in the config file.
+
+        Returns
+        -------
+        config : configobj.Section instance
+            The product of merging the default spec with the config_file
+            present, if any.
+        """
         if not name:
             if config.get('name'):
                 name = config['name']
@@ -260,14 +301,7 @@ class Step:
         if 'name' in config:
             del config['name']
 
-        step = cls(
-            name=name,
-            parent=parent,
-            config_file=config_file,
-            _validate_kwds=False,
-            **config)
-
-        return step
+        return config
 
     def __init__(self, name=None, parent=None, config_file=None,
                  _validate_kwds=True, **kws):

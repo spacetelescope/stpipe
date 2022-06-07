@@ -95,7 +95,7 @@ class Pipeline(Step):
                     cfg2 = config_parser.load_config_file(
                         join(dirname(config_file or ''), cfg.get('config_file')))
                     del cfg['config_file']
-                    config_parser.merge_config(cfg, cfg2)
+                    config_parser.merge_config(cfg2, cfg)
                     steps[key] = cfg2
 
         return config
