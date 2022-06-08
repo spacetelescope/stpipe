@@ -37,7 +37,8 @@ class Pipeline(Step):
         # Configure all of the steps
         for key, val in self.step_defs.items():
             cfg = self.steps.get(key)
-            self._override_stepconfig_from_cmd_args(key, cfg, self.cmd_args)
+            if self.cmd_args is not None:
+                self._override_stepconfig_from_cmd_args(key, cfg, self.cmd_args)
             if cfg is not None:
                 new_step = val.from_config_section(
                     cfg, parent=self, name=key,

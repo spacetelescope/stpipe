@@ -208,7 +208,7 @@ class Step:
 
     @classmethod
     def from_config_section(cls, config, parent=None, name=None,
-                            config_file=None, *args):
+                            config_file=None, **kwargs):
         """
         Create a step from a configuration file fragment.
 
@@ -366,6 +366,9 @@ class Step:
         # Store the config file path so config filenames can be resolved
         # against it.
         self.config_file = config_file
+
+        # Create placeholder for any command line arguments.
+        self.cmd_args = kws.get('cmd_args', None)
 
         # Setup the hooks
         if len(self.pre_hooks) or len(self.post_hooks):
