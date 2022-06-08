@@ -367,8 +367,9 @@ class Step:
         # against it.
         self.config_file = config_file
 
-        # Create placeholder for any command line arguments.
-        self.cmd_args = kws.get('cmd_args', None)
+        # Create placeholder for any parameter-setting arguments, either from
+        # the command line for strun, or in a steps dict for .call().
+        self.param_args = kws.get('param_args', None)
 
         # Setup the hooks
         if len(self.pre_hooks) or len(self.post_hooks):
@@ -647,7 +648,7 @@ class Step:
 
         name = config.get('name', None)
         instance = cls.from_config_section(config,
-            name=name, config_file=config_file)
+            name=name, config_file=config_file, param_args=kwargs)
 
         return instance.run(*args)
 

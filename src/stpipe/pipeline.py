@@ -3,7 +3,7 @@ Pipeline
 """
 from collections.abc import Sequence
 from os.path import dirname, join
-
+from argparse import Namespace
 from .extern.configobj.configobj import Section, ConfigObj
 
 from . import config_parser
@@ -37,8 +37,17 @@ class Pipeline(Step):
         # Configure all of the steps
         for key, val in self.step_defs.items():
             cfg = self.steps.get(key)
-            if self.cmd_args is not None:
-                self._override_stepconfig_from_cmd_args(key, cfg, self.cmd_args)
+            if self.param_args is not None:
+                if isinstance(self.param_args, Namespace):
+                    self._override_stepconfig_from_param_args(key, cfg, self.param_args)
+                elif isinstance(self.param_args, dict):
+                    allsteps_dict = self.param_args.get('steps', {})
+                    step_dict = allsteps_dict.get(key, {})
+                    for item in step_dict:
+                        cfg[item] = step_dict[item]
+                else:
+                    # Can this ever be reached?
+                    raise ValueError(f"Cannot parse arguments to Pipeline: {self.param_args}")
             if cfg is not None:
                 new_step = val.from_config_section(
                     cfg, parent=self, name=key,
@@ -229,7 +238,7 @@ class Pipeline(Step):
 
     @classmethod
     def from_config_section(cls, config, parent=None, name=None,
-                            config_file=None, cmd_args=None):
+                            config_file=None, param_args=None):
         """
         Create a step from a configuration file fragment.
 
@@ -266,7 +275,7 @@ class Pipeline(Step):
             parent=parent,
             config_file=config_file,
             _validate_kwds=False,
-            cmd_args=cmd_args,
+            param_args=param_args,
             **config)
 
         return step
@@ -348,7 +357,7 @@ class Pipeline(Step):
             self.log.info(f"{how} for {reftype.upper()} reference file is '{refpath}'.")
             crds_client.check_reference_open(refpath)
 
-    def _override_stepconfig_from_cmd_args(self, stepname, stepcfg, cmd_args):
+    def _override_stepconfig_from_param_args(self, stepname, stepcfg, param_args):
         """After step config is built from any CRDS or user provided pars files,
         overwrite cfg with command line specified parameter values
 
@@ -356,19 +365,19 @@ class Pipeline(Step):
         ----------
         stepname : str
             Step name provided in step_defs, used to pull relevant pars
-            from cmd_args Namespace
+            from param_args Namespace
 
         stepcfg : ConfigObj
             The configobj built from step_pars files but not yet including
             possible command line values
 
-        cmd_args : argparse.Namespace
+        param_args : argparse.Namespace
             The parsed set of command line arguments
         """
-        for arg in vars(cmd_args):
+        for arg in vars(param_args):
             if f'steps.{stepname}' in arg:
-                if vars(cmd_args)[arg] is not None:
-                    stepcfg.merge({arg.split('.')[-1]: vars(cmd_args)[arg]})
+                if vars(param_args)[arg] is not None:
+                    stepcfg.merge({arg.split('.')[-1]: vars(param_args)[arg]})
 
     def get_pars(self, full_spec=True):
         """Retrieve the configuration parameters of a pipeline

@@ -286,7 +286,7 @@ def just_the_step_from_cmdline(args, cls=None):
     # This is where the step is instantiated
     try:
         step = step_class.from_config_section(
-            config, name=name, cmd_args=args)
+            config, name=name, param_args=args)
     except config_parser.ValidationError as e:
         # If the configobj validator failed, print usage information.
         _print_important_message("ERROR PARSING CONFIGURATION:", str(e))
