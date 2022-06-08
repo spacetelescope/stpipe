@@ -37,6 +37,7 @@ class Pipeline(Step):
         # Configure all of the steps
         for key, val in self.step_defs.items():
             cfg = self.steps.get(key)
+            self._override_stepconfig_from_cmd_args(key, cfg, self.cmd_args)
             if cfg is not None:
                 new_step = val.from_config_section(
                     cfg, parent=self, name=key,
@@ -225,6 +226,50 @@ class Pipeline(Step):
         config_parser.merge_config(refcfg, pipeline_cfg)
         return refcfg
 
+    @classmethod
+    def from_config_section(cls, config, parent=None, name=None,
+                            config_file=None, cmd_args=None):
+        """
+        Create a step from a configuration file fragment.
+
+        Parameters
+        ----------
+        config : configobj.Section instance
+            The config file fragment containing parameters for this
+            step only.
+        parent : Step instance, optional
+            The parent step of this step.  Used to determine a
+            fully-qualified name for this step, and to determine
+            the mode in which to run this step.
+        name : str, optional
+            If provided, use that name for the returned instance.
+            If not provided, try the following (in order):
+            - The ``name`` parameter in the config file fragment
+            - The name of returned class
+        config_file : str, optional
+            The path to the config file that created this step, if
+            any.  This is used to resolve relative file name
+            parameters in the config file.
+
+        Returns
+        -------
+        step : instance of cls
+            Any parameters found in the config file fragment will be
+            set as member variables on the returned `Step` instance.
+        """
+
+        config = cls.finalize_config(config, name, config_file)
+
+        step = cls(
+            name=name,
+            parent=parent,
+            config_file=config_file,
+            _validate_kwds=False,
+            cmd_args=cmd_args,
+            **config)
+
+        return step
+
     def set_input_filename(self, path):
         self._input_filename = path
         for key in self.step_defs:
@@ -301,6 +346,28 @@ class Pipeline(Step):
             how = "Override" if reftype in ovr_refs else "Prefetch"
             self.log.info(f"{how} for {reftype.upper()} reference file is '{refpath}'.")
             crds_client.check_reference_open(refpath)
+
+    def _override_stepconfig_from_cmd_args(self, stepname, stepcfg, cmd_args):
+        """After step config is built from any CRDS or user provided pars files,
+        overwrite cfg with command line specified parameter values
+
+        Parameters
+        ----------
+        stepname : str
+            Step name provided in step_defs, used to pull relevant pars
+            from cmd_args Namespace
+
+        stepcfg : ConfigObj
+            The configobj built from step_pars files but not yet including
+            possible command line values
+
+        cmd_args : argparse.Namespace
+            The parsed set of command line arguments
+        """
+        for arg in vars(cmd_args):
+            if f'steps.{stepname}' in arg:
+                if vars(cmd_args)[arg] is not None:
+                    stepcfg.merge({arg.split('.')[-1]: vars(cmd_args)[arg]})
 
     def get_pars(self, full_spec=True):
         """Retrieve the configuration parameters of a pipeline

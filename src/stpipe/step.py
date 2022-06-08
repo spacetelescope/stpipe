@@ -208,7 +208,7 @@ class Step:
 
     @classmethod
     def from_config_section(cls, config, parent=None, name=None,
-                            config_file=None):
+                            config_file=None, *args):
         """
         Create a step from a configuration file fragment.
 
