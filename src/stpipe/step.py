@@ -240,6 +240,8 @@ class Step:
 
         config = cls.finalize_config(config, name=None, config_file=None)
 
+        log.log.critical(f"config: {config}\n\n")
+
         step = cls(
             name=name,
             parent=parent,
@@ -250,7 +252,7 @@ class Step:
         return step
 
     @classmethod
-    def finalize_config(cls, config, name=None, config_file=None, validate=True):
+    def finalize_config(cls, config, name=None, config_file=None):
         """Load default config, merge with config_file if present, then validate.
 
         Parameters
@@ -293,9 +295,8 @@ class Step:
 
         spec = cls.load_spec_file()
         config = cls.merge_config(config, config_file)
-        if validate:
-            config_parser.validate(
-                config, spec, root_dir=dirname(config_file or ''))
+        config_parser.validate(
+            config, spec, root_dir=dirname(config_file or ''))
 
         if 'config_file' in config:
             del config['config_file']
