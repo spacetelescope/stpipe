@@ -279,7 +279,7 @@ def just_the_step_from_cmdline(args, cls=None):
     # Config is empty if class specified, otherwise contains values from config file specified
     # on command line
 
-    config = step_class.finalize_config(config, config_file=config_file)
+    config = step_class.finalize_config(config, config_file=config_file, validate=False)
 
     _override_config_from_args(config, args)
 
