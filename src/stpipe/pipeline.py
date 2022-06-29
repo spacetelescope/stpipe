@@ -102,12 +102,15 @@ class Pipeline(Step):
             if cfg is not None:
                 # If a config_file is specified, load those values and
                 # then override them with our values.
+                cfg3 = cfg.copy()
                 if cfg.get('config_file'):
                     cfg2 = config_parser.load_config_file(
                         join(dirname(config_file or ''), cfg.get('config_file')))
                     del cfg['config_file']
+                    del cfg3['config_file']
                     config_parser.merge_config(cfg, cfg2)
-                    steps[key] = cfg2
+                    config_parser.merge_config(cfg, cfg3)
+                    steps[key] = cfg
 
         return config
 
