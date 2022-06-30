@@ -271,6 +271,11 @@ class Pipeline(Step):
             set as member variables on the returned `Step` instance.
         """
 
+        #spec = cls.load_spec_file()
+        #config_parser.validate(
+        #    config, spec, root_dir=dirname(config_file or ''))
+
+
         config = cls.finalize_config(config, name, config_file)
 
         step = cls(
