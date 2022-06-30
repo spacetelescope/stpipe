@@ -258,6 +258,12 @@ def just_the_step_from_cmdline(args, cls=None):
     positional = args.args
     del args.args
 
+    log.log.critical(f"Config pre-args:\n {config}\n\n {config_file}\n\n\n")
+    _override_config_from_args(config, args)
+
+    log.log.critical(f"Config post-args, pre-file merge:\n {config}\n\n {config_file}\n\n\n")
+    config = step_class.merge_config(config, config_file)
+
     if len(positional):
         input_file = positional[0]
         if args.input_dir:
@@ -279,12 +285,12 @@ def just_the_step_from_cmdline(args, cls=None):
     # Config is empty if class specified, otherwise contains values from config file specified
     # on command line
 
-    config = step_class.finalize_config(config, config_file=config_file)
-
-    _override_config_from_args(config, args)
-
     # This is where the step is instantiated
     try:
+        #_override_config_from_args(config, args)
+
+        step_class.finalize_config(config, config_file=config_file, merge=False)
+
         step = step_class.from_config_section(
             config, name=name, param_args=args)
     except config_parser.ValidationError as e:
