@@ -813,7 +813,6 @@ class Step:
                 for par, value in ref.items()
                 if par not in ['class', 'name']
             }
-            logger.info(f'{reftype.upper()} parameters are {ref_pars}')
 
             return ref
         else:
