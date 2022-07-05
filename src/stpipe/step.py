@@ -813,7 +813,7 @@ class Step:
                 for par, value in ref.items()
                 if par not in ['class', 'name']
             }
-            logger.debug(f'{reftype.upper()} parameters are {ref_pars}')
+            logger.debug(f'{reftype.upper()} parameters retrieved from CRDS: {ref_pars}')
 
             return ref
         else:
