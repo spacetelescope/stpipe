@@ -7,6 +7,8 @@
 
 - Update CI workflows to cache test environments and depend upon style and security checks [#55]
 
+- Remove log dump of any CRDS-retrieved PARS-reference files [#60]
+
 0.3.3 (2022-04-07)
 ==================
 
