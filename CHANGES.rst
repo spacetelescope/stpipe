@@ -11,6 +11,8 @@
   CRDS or the user), and either command line (for strun) or step parameter dictionary (for interactive
   session Pipeline.call()) parameter specifications [#57]
 
+- Remove log dump of any CRDS-retrieved PARS-reference files [#60]
+
 0.3.3 (2022-04-07)
 ==================
 
