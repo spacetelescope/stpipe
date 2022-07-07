@@ -10,7 +10,7 @@
 
 - Update datamodel with 'SKIPPED' status when step.skip set to True [#53]
 
-- Update CI workflows to cache test environments and depend upon style and security checks [#55]
+- Update CI workflows to cache test environments and depend upon style and security checks [#55, #58]
 
 - Correctly handle config merges of default spec, any possible step-pars files (from
   CRDS or the user), and either command line (for strun) or step parameter dictionary (for interactive

@@ -18,112 +18,117 @@ env:
   CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
 
 jobs:
-  lint:
-    name: ${{ matrix.name }}
+  style:
+    name: Code style checks
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - toxenv: style
-            name: Code style checks
-          - toxenv: bandit
-            name: Bandit security audit
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
       - uses: actions/setup-python@v2
       - uses: actions/cache@v3
-        id: tox_cache
         with:
           path: ${{ env.pythonLocation }}
-          key: tox-install-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
-      - run: pip install tox
-        if: steps.tox_cache.outputs.cache-hit != 'true'
+          key: style-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install pyproject-flake8
+      - run: pflake8 --count src
+  audit:
+    name: Bandit security audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
       - uses: actions/cache@v3
         with:
-          path: .tox
-          key: tox-${{ matrix.toxenv }}-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
-      - run: tox -e ${{ matrix.toxenv }}
+          path: ${{ env.pythonLocation }}
+          key: audit-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install bandit
+      - run: bandit -r -ll src
   test:
     name: test
-    needs: [ lint ]
-    runs-on: ${{ matrix.runs-on }}
+    needs: [ style, audit ]
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ ubuntu-latest, macos-latest ]
-        toxenv: [ py38, py39, py310 ]
-        include:
-          - toxenv: py38
-            python-version: 3.8
-          - toxenv: py39
-            python-version: 3.9
-          - toxenv: py310
-            python-version: "3.10"
+        python: [ 3.8, 3.9, '3.10' ]
+        os: [ ubuntu-latest, macos-latest ]
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
       - uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python }}
       - uses: actions/cache@v3
-        id: tox_cache
         with:
           path: ${{ env.pythonLocation }}
-          key: tox-install-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
-      - run: pip install tox
-        if: steps.tox_cache.outputs.cache-hit != 'true'
-      - uses: actions/cache@v3
-        with:
-          path: .tox
-          key: tox-${{ matrix.toxenv }}-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
-      - run: tox -e ${{ matrix.toxenv }}
+          key: test-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install ".[test]" pytest-xdist
+      - run: pip freeze
+      - run: pytest -n auto
   test_with_coverage:
-    name: ${{ matrix.name }}
-    needs: [ lint ]
+    name: test base library with coverage
+    needs: [ style, audit ]
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        toxenv: [ coverage, jwst-cov, romancal-cov ]
-        python-version: [ 3.9 ]
-        include:
-          - toxenv: coverage
-            name: test base library with coverage
-          - toxenv: jwst-cov
-            name: test JWST pipeline with coverage
-            crds-server: https://jwst-crds.stsci.edu
-          - toxenv: romancal-cov
-            name: test Roman pipeline with coverage
-            crds-server: https://roman-crds-test.stsci.edu
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
       - uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.9
       - uses: actions/cache@v3
-        id: tox_cache
         with:
           path: ${{ env.pythonLocation }}
-          key: tox-install-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
-      - run: pip install tox
-        if: steps.tox_cache.outputs.cache-hit != 'true'
-      - uses: actions/cache@v3
-        with:
-          path: .tox
-          key: tox-${{ matrix.toxenv }}-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
-      - run: tox -e ${{ matrix.toxenv }}
-        env:
-          CRDS_SERVER_URL: ${{ matrix.crds-server }}
+          key: test-coverage-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install ".[test]" pytest-xdist pytest-cov
+      - run: pip freeze
+      - run: pytest -n auto --cov-report=xml --cov=src/stpipe
+      - run: coverage report -m
       - uses: codecov/codecov-action@v2
         with:
           file: ./coverage.xml
-  # Kept in a separate job because it needs extra system dependencies
-  # that can't be installed by tox.
+  test_jwst_with_coverage:
+    name: test JWST pipeline with coverage
+    needs: [ style, audit ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - uses: actions/cache@v3
+        with:
+          path: ${{ env.pythonLocation }}
+          key: test-coverage-jwst-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install ".[test]" pytest-xdist pytest-cov
+      - run: pip install "jwst[test] @ git+https://github.com/spacetelescope/jwst.git"
+      - run: pip freeze
+      - run: pytest -n auto --cov-report=xml --cov=src/stpipe --ignore-glob=timeconversion --ignore-glob=associations --pyargs jwst
+        env:
+          CRDS_SERVER_URL: https://jwst-crds.stsci.edu
+      - run: coverage report -m
+      - uses: codecov/codecov-action@v2
+        with:
+          file: ./coverage.xml
+  test_roman_with_coverage:
+    name: test Roman pipeline with coverage
+    needs: [ style, audit ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - uses: actions/cache@v3
+        with:
+          path: ${{ env.pythonLocation }}
+          key: test-coverage-roman-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install ".[test]" pytest-xdist pytest-cov
+      - run: pip install "romancal[test] @ git+https://github.com/spacetelescope/romancal.git"
+      - run: pip freeze
+      - run: pytest -n auto --cov-report=xml --cov=src/stpipe --pyargs romancal
+        env:
+          CRDS_SERVER_URL: https://roman-crds-test.stsci.edu
+      - run: coverage report -m
+      - uses: codecov/codecov-action@v2
+        with:
+          file: ./coverage.xml
   build-docs:
     name: Build documentation and check warnings
     needs: [ test ]
@@ -131,10 +136,13 @@ jobs:
     steps:
       - run: sudo apt-get install graphviz texlive-latex-extra dvipng
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.9
-      - run: pip install tox
-      - run: tox -e build-docs
+          python-version: 3.8
+      - uses: actions/cache@v3
+        with:
+          path: ${{ env.pythonLocation }}
+          key: build-docs-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
+      - run: pip install ".[docs]"
+      - run: sphinx-build -W docs/source build/docs
+
