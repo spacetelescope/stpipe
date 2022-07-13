@@ -2,7 +2,7 @@
 ==================
 
 - Add special behavior for ModelContainers during setting of skipped steps'
-  meta keyword [#61]
+  meta keyword [#62]
 
 0.4.0 (2022-07-05)
 ==================
