@@ -1,4 +1,4 @@
-0.4.1 (unreleased)
+0.4.1 (2022-07-14)
 ==================
 
 - Add special behavior for ModelContainers during setting of skipped steps'
