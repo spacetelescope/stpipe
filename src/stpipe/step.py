@@ -240,8 +240,6 @@ class Step:
 
         config = cls.finalize_config(config, name=None, config_file=None)
 
-        log.log.critical(f"config: {config}\n\n")
-
         step = cls(
             name=name,
             parent=parent,
