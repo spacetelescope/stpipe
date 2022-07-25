@@ -181,16 +181,16 @@ class Pipeline(Step):
         # Iterate over the steps in the pipeline
         with cls._datamodels_open(dataset, asn_n_members=1) as model:
             if isinstance(model, Sequence):
-                for contained_model in model:
-                    crds_parameters = model.get_crds_parameters()
-                    crds_observatory = model.crds_observatory
+                crds_parameters = model._models.get_crds_parameters()
+                crds_observatory = model.crds_observatory
             else:
                 crds_parameters = model.get_crds_parameters()
                 crds_observatory = model.crds_observatory
 
         for cal_step in cls.step_defs.keys():
             cal_step_class = cls.step_defs[cal_step]
-            refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(model)
+            refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(crds_parameters,
+                                                                                 crds_observatory=crds_observatory)
         #
         # Now merge any config parameters from the step cfg file
         logger.debug(f'Retrieving pipeline {reftype.upper()} parameters from CRDS')

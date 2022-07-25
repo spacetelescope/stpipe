@@ -800,7 +800,9 @@ class Step:
         return crds_client.check_reference_open(reference_name)
 
     @classmethod
-    def get_config_from_reference(cls, dataset, disable=None):
+    def get_config_from_reference(cls, dataset,
+                                  disable=None,
+                                  crds_observatory=None):
         """Retrieve step parameters from reference database
 
         Parameters
@@ -814,7 +816,8 @@ class Step:
             file.
         disable: bool or None
             Do not retrieve parameters from CRDS. If None, check global settings.
-
+        crds_observatory : str
+            Observatory name ('jwst' or 'roman').
         Returns
         -------
         step_parameters : configobj
@@ -827,13 +830,22 @@ class Step:
         logger = log.delegator.log
         reftype = cls.get_config_reftype()
 
-        # If the dataset is not an operable instance of AbstractDataModel,
-        # log as such and return an empty config object
-        try:
-            model = cls._datamodels_open(dataset)
-        except (IOError, TypeError, ValueError):
-            logger.warning('Input dataset is not an instance of AbstractDataModel.')
-            disable = True
+        if isinstance(dataset, dict):
+            # crds_parameters was passed as input from pipeline.py
+            crds_parameters = dataset
+            crds_observatory = crds_observatory
+            if crds_observatory is None:
+                raise ValueError("Need a valid name for crds_observatory.")
+        else:
+            # If the dataset is not an operable instance of AbstractDataModel,
+            # log as such and return an empty config object
+            try:
+                model = cls._datamodels_open(dataset)
+                crds_parameters = model.get_crds_parameters()
+                crds_observatory = model.crds_observatory
+            except (IOError, TypeError, ValueError):
+                logger.warning('Input dataset is not an instance of AbstractDataModel.')
+                disable = True
 
         # Check if retrieval should be attempted.
         if disable is None:
@@ -845,9 +857,9 @@ class Step:
         # Retrieve step parameters from CRDS
         logger.debug(f'Retrieving step {reftype.upper()} parameters from CRDS')
         try:
-            ref_file = crds_client.get_reference_file(model.get_crds_parameters(),
+            ref_file = crds_client.get_reference_file(crds_parameters,
                                                       reftype,
-                                                      model.crds_observatory)
+                                                      crds_observatory)
         except (AttributeError, crds_client.CrdsError):
             logger.debug(f'{reftype.upper()}: No parameters found')
             return config_parser.ConfigObj()
