@@ -1,7 +1,10 @@
 0.4.2 (unreleased)
 ==================
 
--
+- Refactored ``Step.crds_get_config_from_reference`` and
+  ``Pipeline.get_config_from_reference`` to reduce memory when the input to
+  a pipeline is an association file, i.e. a ``ModelContainer``. In this case
+  the crds parameters are retrieved from the first model which is already opened. [#63]
 
 0.4.1 (2022-07-14)
 ==================

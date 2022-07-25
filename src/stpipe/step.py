@@ -818,6 +818,7 @@ class Step:
             Do not retrieve parameters from CRDS. If None, check global settings.
         crds_observatory : str
             Observatory name ('jwst' or 'roman').
+
         Returns
         -------
         step_parameters : configobj

@@ -141,7 +141,7 @@ class Pipeline(Step):
         return spec
 
     @classmethod
-    def get_config_from_reference(cls, dataset, disable=None):
+    def get_config_from_reference(cls, dataset, disable=None, crds_observatory=None):
         """Retrieve step parameters from reference database
 
         Parameters
@@ -157,6 +157,9 @@ class Pipeline(Step):
 
         disable: bool or None
             Do not retrieve parameters from CRDS. If None, check global settings.
+
+        crds_observatory : str
+            Observatory name ('jwst' or 'roman').
 
         Returns
         -------
