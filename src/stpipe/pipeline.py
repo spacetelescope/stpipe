@@ -141,7 +141,7 @@ class Pipeline(Step):
         return spec
 
     @classmethod
-    def get_config_from_reference(cls, dataset, disable=None):
+    def get_config_from_reference(cls, dataset, disable=None, crds_observatory=None):
         """Retrieve step parameters from reference database
 
         Parameters
@@ -157,6 +157,9 @@ class Pipeline(Step):
 
         disable: bool or None
             Do not retrieve parameters from CRDS. If None, check global settings.
+
+        crds_observatory : str
+            Observatory name ('jwst' or 'roman').
 
         Returns
         -------
@@ -181,25 +184,23 @@ class Pipeline(Step):
         # Iterate over the steps in the pipeline
         with cls._datamodels_open(dataset, asn_n_members=1) as model:
             if isinstance(model, Sequence):
-                for contained_model in model:
-                    input_class = contained_model.__class__()
-                    metadata = input_class
-                    metadata.update(contained_model, only='PRIMARY')
+                crds_parameters = model._models[0].get_crds_parameters()
+                crds_observatory = model.crds_observatory
             else:
-                input_class = model.__class__()
-                metadata = input_class
-                metadata.update(model, only='PRIMARY')
+                crds_parameters = model.get_crds_parameters()
+                crds_observatory = model.crds_observatory
 
         for cal_step in cls.step_defs.keys():
             cal_step_class = cls.step_defs[cal_step]
-            refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(metadata)
+            refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(crds_parameters,
+                                                                                 crds_observatory=crds_observatory)
         #
         # Now merge any config parameters from the step cfg file
         logger.debug(f'Retrieving pipeline {reftype.upper()} parameters from CRDS')
         try:
-            ref_file = crds_client.get_reference_file(metadata.get_crds_parameters(),
-                                                    reftype,
-                                                    metadata.crds_observatory)
+            ref_file = crds_client.get_reference_file(crds_parameters,
+                                                      reftype,
+                                                      crds_observatory)
         except (AttributeError, crds_client.CrdsError):
             logger.debug(f'{reftype.upper()}: No parameters found')
         else:
