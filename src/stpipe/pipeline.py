@@ -181,7 +181,7 @@ class Pipeline(Step):
         # Iterate over the steps in the pipeline
         with cls._datamodels_open(dataset, asn_n_members=1) as model:
             if isinstance(model, Sequence):
-                crds_parameters = model._models.get_crds_parameters()
+                crds_parameters = model._models[0].get_crds_parameters()
                 crds_observatory = model.crds_observatory
             else:
                 crds_parameters = model.get_crds_parameters()
