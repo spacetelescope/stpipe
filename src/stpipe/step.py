@@ -842,6 +842,9 @@ class Step:
             # log as such and return an empty config object
             try:
                 model = cls._datamodels_open(dataset)
+                if isinstance(dataset, Sequence):
+                    # Pull out first model in ModelContainer
+                    model = model[0]
                 crds_parameters = model.get_crds_parameters()
                 crds_observatory = model.crds_observatory
             except (IOError, TypeError, ValueError):
