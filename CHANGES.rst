@@ -6,6 +6,10 @@
   a pipeline is an association file, i.e. a ``ModelContainer``. In this case
   the crds parameters are retrieved from the first model which is already opened. [#63]
 
+- Added a small edit to ``Step.get_config_from_reference`` to run datamodel
+  methods on the first contained model in a ModelContainer, rather than the
+  ModelContainer itself [#67]
+
 0.4.1 (2022-07-14)
 ==================
 
