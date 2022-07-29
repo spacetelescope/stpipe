@@ -1,4 +1,4 @@
-0.4.2 (unreleased)
+0.4.2 (2022-07-29)
 ==================
 
 - Refactored ``Step.crds_get_config_from_reference`` and
