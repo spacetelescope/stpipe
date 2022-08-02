@@ -560,7 +560,7 @@ class Step:
         Parameters
         ----------
         result : a datamodel that is an instance of AbstractDataModel or
-                 stdatamodels.
+                 stdatamodels.ModelList
                  One step result (potentially of many).
 
         reference_files_used : list of tuple
