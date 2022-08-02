@@ -1,3 +1,9 @@
+0.4.3 (unreleased)
+==================
+
+- Check against stdatamodels abstract parent class ``ModelList`` for pipeline
+  flow specific to ``ModelContainer`` rather than generic ``Sequence`` [#68]
+
 0.4.2 (2022-07-29)
 ==================
 
