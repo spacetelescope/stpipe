@@ -129,20 +129,3 @@ jobs:
       - uses: codecov/codecov-action@v2
         with:
           file: ./coverage.xml
-  build-docs:
-    name: Build documentation and check warnings
-    needs: [ test ]
-    runs-on: ubuntu-latest
-    steps:
-      - run: sudo apt-get install graphviz texlive-latex-extra dvipng
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-      - uses: actions/cache@v3
-        with:
-          path: ${{ env.pythonLocation }}
-          key: build-docs-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
-      - run: pip install ".[docs]"
-      - run: sphinx-build -W docs/source build/docs
-
