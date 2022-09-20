@@ -56,3 +56,4 @@ html_use_index = True
 # Enable nitpicky mode - which ensures that all references in the docs
 # resolve.
 nitpicky = True
+nitpick_ignore = []
