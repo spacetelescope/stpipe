@@ -23,11 +23,11 @@ sys.path.insert(0, str(REPO_ROOT / "src" / "stpipe"))
 # values here:
 with open(REPO_ROOT / "pyproject.toml", "rb") as configuration_file:
     conf = tomli.load(configuration_file)
-setup_cfg = conf['project']
+setup_metadata = conf['project']
 
-project = setup_cfg["name"]
-author = f'{setup_cfg["authors"][0]["name"]} <{setup_cfg["authors"][0]["email"]}>'
-copyright = f'{datetime.datetime.now().year}, {author}'
+project = setup_metadata["name"]
+author = f'{setup_metadata["authors"][0]["name"]} <{setup_metadata["authors"][0]["email"]}>'
+copyright = f'{datetime.now().year}, {author}'
 
 package = importlib.import_module(setup_metadata["name"])
 version = package.__version__.split("-", 1)[0]
