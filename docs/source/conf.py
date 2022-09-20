@@ -25,7 +25,7 @@ with open(REPO_ROOT / "pyproject.toml", "rb") as configuration_file:
     conf = tomli.load(configuration_file)
 setup_cfg = conf['project']
 
-project = setup_metadata["name"]
+project = setup_cfg["name"]
 author = f'{setup_cfg["authors"][0]["name"]} <{setup_cfg["authors"][0]["email"]}>'
 copyright = f'{datetime.datetime.now().year}, {author}'
 
