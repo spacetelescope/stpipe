@@ -26,10 +26,11 @@ with open(REPO_ROOT / "pyproject.toml", "rb") as configuration_file:
 setup_metadata = conf['project']
 
 project = setup_metadata["name"]
-author = f'{setup_metadata["authors"][0]["name"]} <{setup_metadata["authors"][0]["email"]}>'
+primary_author = setup_metadata["authors"][0]
+author = f'{primary_author["name"]} <{primary_author["email"]}>'
 copyright = f'{datetime.now().year}, {author}'
 
-package = importlib.import_module(setup_metadata["name"])
+package = importlib.import_module(project)
 version = package.__version__.split("-", 1)[0]
 release = package.__version__
 
