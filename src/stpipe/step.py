@@ -1380,15 +1380,44 @@ class Step:
         else:
             log_cls.info("No filename given, cannot retrieve config from CRDS")
             config = config_parser.ConfigObj()
+
         if 'config_file' in kwargs:
             config_file = kwargs['config_file']
             del kwargs['config_file']
             config_from_file = config_parser.load_config_file(config_file)
             config_parser.merge_config(config, config_from_file)
+            config_dir = os.path.dirname(config_file)
         else:
             config_file = None
+            config_dir = ''
 
         config_kwargs = config_parser.ConfigObj()
+
+        # load and merge configuration files for each step they are provided:
+        steps = {}
+        if 'steps' in kwargs:
+            for step, pars in kwargs['steps'].items():
+                if 'config_file' in pars:
+                    step_config_file = os.path.join(config_dir, pars['config_file'])
+                    cfgd = config_parser.load_config_file(step_config_file)
+                    if 'name' in cfgd:
+                        if cfgd['name'] != step:
+                            raise ValueError(
+                                "Step name from configuration file "
+                                f"'{step_config_file}' does not match step "
+                                "name in the 'steps' argument."
+                            )
+                        del cfgd['name']
+                    cfgd.pop('class', None)
+                    cfgd.update(pars)
+                    steps[step] = cfgd
+                else:
+                    steps[step] = pars
+
+            kwargs = {k : v for k, v in kwargs.items() if k != 'steps'}
+            if steps:
+                kwargs['steps'] = steps
+
         config_parser.merge_config(config_kwargs, kwargs)
         config_parser.merge_config(config, config_kwargs)
 
