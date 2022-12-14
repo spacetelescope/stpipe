@@ -1,3 +1,10 @@
+0.4.3 (unreleased)
+==================
+
+- Load and merge configuration files for each step they are provided when
+  running pipeline in interactive mode using ``Step.call()``. [#74]
+
+
 0.4.2 (2022-07-29)
 ==================
 
