@@ -4,6 +4,10 @@
 - Load and merge configuration files for each step they are provided when
   running pipeline in interactive mode using ``Step.call()``. [#74]
 
+- Restored support for step list arguments by removing code that was
+  overwriting processed and validated command line arguments with their
+  raw values. [#73]
+
 
 0.4.2 (2022-07-29)
 ==================

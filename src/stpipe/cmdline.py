@@ -245,7 +245,6 @@ def just_the_step_from_cmdline(args, cls=None):
 
     args = parser2.parse_args(args)
 
-
     if cls is None:
         del args.cfg_file_or_class
     else:
@@ -258,6 +257,9 @@ def just_the_step_from_cmdline(args, cls=None):
     positional = args.args
     del args.args
 
+    # This updates config (a ConfigObj) with the values from the command line arguments
+    # Config is empty if class specified, otherwise contains values from config file specified
+    # on command line
     _override_config_from_args(config, args)
 
     config = step_class.merge_config(config, config_file)
@@ -278,18 +280,11 @@ def just_the_step_from_cmdline(args, cls=None):
             config = parameter_cfg
     else:
         log.log.info("No input file specified, unable to retrieve parameters from CRDS")
-    #
-    # This updates config (a ConfigObj) with the values from the command line arguments
-    # Config is empty if class specified, otherwise contains values from config file specified
-    # on command line
-
 
     # This is where the step is instantiated
     try:
-        step_class.finalize_config(config, config_file=config_file, merge=False)
-
         step = step_class.from_config_section(
-            config, name=name, param_args=args)
+            config, name=name, config_file=config_file)
     except config_parser.ValidationError as e:
         # If the configobj validator failed, print usage information.
         _print_important_message("ERROR PARSING CONFIGURATION:", str(e))
@@ -336,7 +331,6 @@ def step_from_cmdline(args, cls=None):
         will be set as member variables on the returned `Step`
         instance.
     """
-
     step, step_class, positional, debug_on_exception = \
         just_the_step_from_cmdline(args, cls)
 
