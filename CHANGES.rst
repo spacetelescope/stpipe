@@ -1,4 +1,4 @@
-0.4.3 (unreleased)
+0.4.3 (2022-12-15)
 ==================
 
 - Load and merge configuration files for each step they are provided when
