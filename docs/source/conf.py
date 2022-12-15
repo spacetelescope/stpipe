@@ -1,11 +1,9 @@
-from pathlib import Path
-import os
-import sys
-from configparser import ConfigParser
-from datetime import datetime
 import importlib
-
 import stsci_rtd_theme
+import sys
+import tomli
+from datetime import datetime
+from pathlib import Path
 
 
 def setup(app):
@@ -19,19 +17,20 @@ REPO_ROOT = Path(__file__).parent.parent.parent
 
 # Modules that automodapi will document need to be available
 # in the path:
-sys.path.insert(0, str(REPO_ROOT/"src"/"stpipe"))
+sys.path.insert(0, str(REPO_ROOT / "src" / "stpipe"))
 
-# Read the package's setup.cfg so that we can use relevant
+# Read the package's `pyproject.toml` so that we can use relevant
 # values here:
-conf = ConfigParser()
-conf.read(REPO_ROOT/"setup.cfg")
-setup_metadata = dict(conf.items("metadata"))
+with open(REPO_ROOT / "pyproject.toml", "rb") as configuration_file:
+    conf = tomli.load(configuration_file)
+setup_metadata = conf['project']
 
 project = setup_metadata["name"]
-author = setup_metadata["author"]
-copyright = f"{datetime.now().year}, {author}"
+primary_author = setup_metadata["authors"][0]
+author = f'{primary_author["name"]} <{primary_author["email"]}>'
+copyright = f'{datetime.now().year}, {author}'
 
-package = importlib.import_module(setup_metadata["name"])
+package = importlib.import_module(project)
 version = package.__version__.split("-", 1)[0]
 release = package.__version__
 

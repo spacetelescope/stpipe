@@ -21,6 +21,8 @@
   methods on the first contained model in a ModelContainer, rather than the
   ModelContainer itself [#67]
 
+- Moved build configuration from ``setup.cfg`` to ``pyproject.toml`` to support PEP621 [#56]
+
 0.4.1 (2022-07-14)
 ==================
 
