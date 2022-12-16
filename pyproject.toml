@@ -40,7 +40,9 @@ test = [
 
 [project.entry-points]
 asdf_extensions = { stpipe = 'stpipe.integration:StpipeExtension' }
-console_scripts = { stpipe = 'stpipe.cli.main:main' }
+
+[project.scripts]
+stpipe = 'stpipe.cli.main:main'
 
 [build-system]
 requires = [
