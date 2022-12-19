@@ -76,16 +76,18 @@ testpaths = [
 
 [tool.ruff]
 select = [
-    'E402',
-    'E501',
-    'E711',
-    'E722',
-    'F',
-    'W',
+    'E402', # module level import not at top of file
+    'E501', # line too long
+    'E711', # comparison to None should be ‘if cond is None:’
+    'E722', # do not use bare except, specify exception instead
+    'F', # flakes
+    'W', # whitespace / deprecation
 ]
 line-length = 130
 extend-exclude = [
     'docs',
     'src/stpipe/extern',
 ]
-extend-ignore = ['W605']
+extend-ignore = [
+    'W605', # invalid escape sequence
+]
