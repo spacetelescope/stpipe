@@ -73,3 +73,19 @@ norecursedirs = [
 testpaths = [
     'tests',
 ]
+
+[tool.ruff]
+select = [
+    'E402',
+    'E501',
+    'E711',
+    'E722',
+    'F',
+    'W',
+]
+line-length = 130
+extend-exclude = [
+    'docs',
+    'src/stpipe/extern',
+]
+extend-ignore = ['W605']
