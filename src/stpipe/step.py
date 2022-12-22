@@ -260,12 +260,23 @@ class Step:
         if 'name' in config:
             del config['name']
 
+        # cmdline.FromCommandLine instances should not be passed to
+        # steps. Instead, convert them back to strings.
+        from . import cmdline
+
+        kwargs = {}
+        for k in config:
+            if isinstance(config[k], cmdline.FromCommandLine):
+                kwargs[k] = str(config[k])
+            else:
+                kwargs[k] = config[k]
+
         step = cls(
             name=name,
             parent=parent,
             config_file=config_file,
             _validate_kwds=False,
-            **config)
+            **kwargs)
 
         return step
 
