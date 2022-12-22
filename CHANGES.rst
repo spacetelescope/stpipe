@@ -1,7 +1,7 @@
 0.4.5 (unreleased)
 ==================
 
--
+- convert FromCommandLine instances to str before using as keyword arguments to Step [#78]
 
 0.4.4 (2022-12-16)
 ==================
