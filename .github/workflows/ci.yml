@@ -40,7 +40,6 @@ jobs:
       - run: tox -e ${{ matrix.toxenv }}
   test:
     name: ${{ matrix.toxenv }} (Python ${{ matrix.python-version }}, ${{ matrix.os }})
-    needs: [ check ]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
