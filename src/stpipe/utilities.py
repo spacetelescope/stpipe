@@ -56,7 +56,7 @@ def import_class(full_name, subclassof=object, config_file=None):
         full_name = full_name.strip()
         package_name, sep, class_name = full_name.rpartition('.')
         if not package_name:
-            raise ImportError("{0} is not a Python class".format(full_name))
+            raise ImportError(f"{full_name} is not a Python class")
         imported = __import__(
             package_name, globals(), locals(), [class_name, ], level=0)
 
@@ -64,12 +64,11 @@ def import_class(full_name, subclassof=object, config_file=None):
 
         if not isinstance(step_class, type):
             raise TypeError(
-                'Object {0} from package {1} is not a class'.format(
-                    class_name, package_name))
+                f'Object {class_name} from package {package_name} is not a class')
         elif not issubclass(step_class, subclassof):
             raise TypeError(
-                'Class {0} from package {1} is not a subclass of {2}'.format(
-                    class_name, package_name, subclassof.__name__))
+                f'Class {class_name} from package {package_name} is not a '
+                f'subclass of {subclassof.__name__}')
     finally:
         if config_file is not None:
             del sys.path[0]

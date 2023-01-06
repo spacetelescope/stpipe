@@ -100,8 +100,7 @@ class Step:
             override_name = crds_client.get_override_name(reference_file_type)
             spec[override_name] = 'is_string_or_datamodel(default=None)'
             spec.inline_comments[override_name] = (
-                '# Override the {0} reference file'.format(
-                    reference_file_type))
+                f'# Override the {reference_file_type} reference file')
         return spec
 
     @classmethod
@@ -186,8 +185,8 @@ class Step:
             if not issubclass(step_class, cls):
                 raise TypeError(
                     "Configuration file does not match the "
-                    "expected step class.  Expected {0}, "
-                    "got {1}".format(cls, step_class))
+                    "expected step class.  Expected {}, "
+                    "got {}".format(cls, step_class))
         else:
             step_class = cls
 
@@ -338,7 +337,7 @@ class Step:
         self.log.setLevel(log.logging.DEBUG)
 
         # Log the fact that we have been init-ed.
-        self.log.info('{0} instance created.'.format(self.__class__.__name__))
+        self.log.info(f'{self.__class__.__name__} instance created.')
 
         # Store the config file path so config filenames can be resolved
         # against it.
@@ -367,7 +366,7 @@ class Step:
         for i, arg in enumerate(args):
             if isinstance(arg, discouraged_types):
                 self.log.error(
-                    "{0} {1} object.  Use an instance of AbstractDataModel instead.".format(
+                    "{} {} object.  Use an instance of AbstractDataModel instead.".format(
                         msg, i))
 
     @property
@@ -399,8 +398,8 @@ class Step:
             step_result = None
 
             self.log.info(
-                'Step {0} running with args {1}.'.format(
-                    self.name, args))
+                f'Step {self.name} running with args {args}.'
+            )
 
             self.log.info(
                 f'Step {self.name} parameters are: {self.get_pars()}'
@@ -510,12 +509,12 @@ class Step:
                                 )
                             else:
                                 self.log.info(
-                                    'Saving file {0}'.format(output_path)
+                                    f'Saving file {output_path}'
                                 )
                                 result.save(output_path, overwrite=True)
 
                 self.log.info(
-                    'Step {0} done'.format(self.name))
+                    f'Step {self.name} done')
             finally:
                 log.delegator.log = orig_log
 
@@ -818,7 +817,7 @@ class Step:
                     model = model[0]
                 crds_parameters = model.get_crds_parameters()
                 crds_observatory = model.crds_observatory
-            except (IOError, TypeError, ValueError):
+            except (OSError, TypeError, ValueError):
                 logger.warning('Input dataset is not an instance of AbstractDataModel.')
                 disable = True
 
@@ -984,7 +983,7 @@ class Step:
                     **components
                 )
             )
-            self.log.info('Saved model in {}'.format(output_path))
+            self.log.info(f'Saved model in {output_path}')
 
         return output_path
 

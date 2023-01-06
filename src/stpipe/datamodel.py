@@ -1,4 +1,3 @@
-
 import abc
 
 class AbstractDataModel(abc.ABC):

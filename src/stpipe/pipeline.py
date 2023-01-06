@@ -108,8 +108,7 @@ class Pipeline(Step):
         for key, val in cls.step_defs.items():
             if not issubclass(val, Step):
                 raise TypeError(
-                    "Entry {0!r} in step_defs is not a Step subclass"
-                    .format(key))
+                    f"Entry {key!r} in step_defs is not a Step subclass")
             stepspec = val.load_spec_file(preserve_comments=preserve_comments)
             steps[key] = Section(steps, steps.depth + 1, steps.main, name=key)
 
@@ -246,10 +245,10 @@ class Pipeline(Step):
             with self.open_model(input_file, asn_n_members=1,
                                 asn_exptypes=["science"]) as model:
                 self._precache_references_opened(model)
-        except (ValueError, TypeError, IOError):
+        except (ValueError, TypeError, OSError):
             self.log.info(
-                'First argument {0} does not appear to be a '
-                'model'.format(input_file))
+                f'First argument {input_file} does not appear to be a '
+                'model')
 
     def _precache_references_opened(self, model_or_container):
         """Pre-fetches references for `model_or_container`.

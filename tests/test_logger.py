@@ -18,7 +18,7 @@ def test_configuration(tmpdir):
 
     configuration = """
 [.]
-handler = file:{0}
+handler = file:{}
 break_level = ERROR
 level = WARNING
 format = '%(message)s'
@@ -40,7 +40,7 @@ format = '%(message)s'
 
     logging.shutdown()
 
-    with open(logfilename, 'r') as fd:
+    with open(logfilename) as fd:
         lines = [x.strip() for x in fd.readlines()]
 
     assert lines == ['Shown', 'Breaking']
