@@ -90,6 +90,7 @@ line-length = 130
 extend-exclude = [
     'docs',
     'src/stpipe/extern',
+    'scripts/strun',
 ]
 extend-ignore = [
     'W605', # invalid escape sequence
