@@ -4,6 +4,8 @@
 - Remove use of deprecated ``pytest-openfiles`` ``pytest`` plugin. This has been replaced by
   catching ``ResourceWarning`` s. [#90]
 
+- Start using ``pre-commit`` to handle style checks. [#79]
+
 0.4.6 (2023-03-27)
 ==================
 
