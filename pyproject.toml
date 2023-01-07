@@ -101,3 +101,17 @@ profile = "black"
 filter_files = true
 line_length = 130
 extend_skip_glob = ["src/stpipe/extern/*"]
+
+[tool.black]
+line-length = 130
+force-exclude = '''
+^/(
+  (
+      \.eggs
+    | \.git
+    | \.pytest_cache
+    | \.tox
+    | src/stpipe/extern
+  )/
+)
+'''
