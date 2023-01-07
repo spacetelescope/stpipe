@@ -95,3 +95,9 @@ extend-exclude = [
 extend-ignore = [
     'W605', # invalid escape sequence
 ]
+
+[tool.isort]
+profile = "black"
+filter_files = true
+line_length = 130
+extend_skip_glob = ["src/stpipe/extern/*"]
