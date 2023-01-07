@@ -86,7 +86,7 @@ select = [
     'F', # flakes
     'W', # whitespace / deprecation
 ]
-line-length = 130
+line-length = 88
 extend-exclude = [
     'docs',
     'src/stpipe/extern',
@@ -99,11 +99,11 @@ extend-ignore = [
 [tool.isort]
 profile = "black"
 filter_files = true
-line_length = 130
+line_length = 88
 extend_skip_glob = ["src/stpipe/extern/*"]
 
 [tool.black]
-line-length = 130
+line-length = 88
 force-exclude = '''
 ^/(
   (
