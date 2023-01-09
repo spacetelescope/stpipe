@@ -115,3 +115,8 @@ force-exclude = '''
   )/
 )
 '''
+
+[tool.codespell]
+skip="*.pdf,*.fits,*.asdf,.tox,build,./tags,.git,docs/_build"
+# ignore-words-list="""
+# """
