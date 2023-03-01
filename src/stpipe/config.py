@@ -214,6 +214,6 @@ def _validate_asdf(asdf_file, schema_uri):
     asdf.ValidationError
     """
     # TODO: We should add a method on AsdfFile to facilitate this:
-    schema = asdf.schema.load_schema(schema_uri, asdf_file.resolver)
+    schema = asdf.schema.load_schema(schema_uri)
     tagged_tree = asdf.yamlutil.custom_tree_to_tagged_tree(asdf_file.tree, asdf_file)
     asdf.schema.validate(tagged_tree, asdf_file, schema)

@@ -40,7 +40,7 @@ test = [
 'tracker' = 'https://github.com/spacetelescope/stpipe/issues'
 
 [project.entry-points]
-asdf_extensions = { stpipe = 'stpipe.integration:StpipeExtension' }
+'asdf.resource_mappings' = {stpipe = 'stpipe.integration:get_resource_mappings'}
 
 [project.scripts]
 stpipe = 'stpipe.cli.main:main'
