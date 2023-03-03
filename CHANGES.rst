@@ -1,7 +1,8 @@
 0.4.6 (unreleased)
 ==================
 
--
+- add ``importlib.metadata`` as a dependency and update loading of entry_points to drop
+  usage of pkg_resources [#84]
 
 0.4.5 (2022-12-23)
 ==================
