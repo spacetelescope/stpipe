@@ -1,6 +1,7 @@
-from pkg_resources import iter_entry_points
 from collections import namedtuple
 import warnings
+
+from importlib_metadata import entry_points
 
 
 STEPS_GROUP = "stpipe.steps"
@@ -23,8 +24,8 @@ def get_steps():
     """
     steps = []
 
-    for entry_point in iter_entry_points(group=STEPS_GROUP):
-        package_name = entry_point.dist.project_name
+    for entry_point in entry_points(group=STEPS_GROUP):
+        package_name = entry_point.dist.name
         package_version = entry_point.dist.version
         package_steps = []
 
