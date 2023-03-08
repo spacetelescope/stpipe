@@ -13,13 +13,17 @@ on:
     - cron: '0 9 * * 1'
 
 jobs:
-  test:
+  check:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
     with:
       envs: |
         - linux: check-style
         - linux: check-security
         - linux: check-build
+  test:
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
+    with:
+      envs: |
         - linux: test-xdist
           python-version: '3.8'
         - macos: test-xdist
@@ -36,6 +40,10 @@ jobs:
           python-version: '3.11'
         - macos: test-xdist
           python-version: '3.11'
+  test_numpy:
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
+    with:
+      envs: |
         - linux: test-numpy122
           python-version: '3.10'
         - linux: test-numpy121
@@ -52,11 +60,16 @@ jobs:
           python-version: '3.8'
         - linux: test-numpy120
           python-version: '3.8'
+  test_coverage:
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
+    needs: [ test ]
+    with:
+      envs: |
         - linux: test-cov
           coverage: 'codecov'
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-  downstream:
+  test_downstream:
     name: ${{ matrix.toxenv }} (Python ${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     env:
