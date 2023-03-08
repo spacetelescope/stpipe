@@ -12,69 +12,61 @@ on:
     # * is a special character in YAML so you have to quote this string
     - cron: '0 9 * * 1'
 
-env:
-  CRDS_PATH: $HOME/crds_cache
-  CRDS_CLIENT_RETRY_COUNT: 3
-  CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
-
 jobs:
-  check:
-    name: ${{ matrix.toxenv }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        toxenv: [ check-style, check-security, check-build ]
-        python-version: [ '3.x' ]
-        os: [ ubuntu-latest ]
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path: pyproject.toml
-      - run: pip install tox
-      - run: tox -e ${{ matrix.toxenv }}
   test:
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
+    with:
+      posargs: '-n 4'
+      envs: |
+        - linux: check-style
+        - linux: check-security
+        - linux: check-build
+        - linux: test-xdist
+          python-version: '3.8'
+        - macos: test-xdist
+          python-version: '3.8'
+        - linux: test-xdist
+          python-version: '3.9'
+        - macos: test-xdist
+          python-version: '3.9'
+        - linux: test-xdist
+          python-version: '3.10'
+        - macos: test-xdist
+          python-version: '3.10'
+        - linux: test-xdist
+          python-version: '3.11'
+        - macos: test-xdist
+          python-version: '3.11'
+        - linux: test-numpy122
+          python-version: '3.10'
+        - linux: test-numpy121
+          python-version: '3.10'
+        - linux: test-numpy122
+          python-version: '3.9'
+        - linux: test-numpy121
+          python-version: '3.9'
+        - linux: test-numpy120
+          python-version: '3.9'
+        - linux: test-numpy122
+          python-version: '3.8'
+        - linux: test-numpy121
+          python-version: '3.8'
+        - linux: test-numpy120
+          python-version: '3.8'
+        - linux: test-cov
+          coverage: 'codecov'
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+  downstream:
     name: ${{ matrix.toxenv }} (Python ${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    env:
+      CRDS_PATH: /tmp/crds_cache
+      CRDS_CLIENT_RETRY_COUNT: 3
+      CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
     strategy:
-      fail-fast: false
       matrix:
-        toxenv: [ test-xdist ]
-        python-version: [ '3.8', '3.9', '3.10', '3.11' ]
-        os: [ ubuntu-latest, macos-latest ]
         include:
-          - toxenv: test-cov
-            os: ubuntu-latest
-            python-version: '3.11'
-          - toxenv: test-numpy122
-            os: ubuntu-latest
-            python-version: '3.10'
-          - toxenv: test-numpy121
-            os: ubuntu-latest
-            python-version: '3.10'
-          - toxenv: test-numpy122
-            os: ubuntu-latest
-            python-version: '3.9'
-          - toxenv: test-numpy121
-            os: ubuntu-latest
-            python-version: '3.9'
-          - toxenv: test-numpy120
-            os: ubuntu-latest
-            python-version: '3.9'
-          - toxenv: test-numpy122
-            os: ubuntu-latest
-            python-version: '3.8'
-          - toxenv: test-numpy121
-            os: ubuntu-latest
-            python-version: '3.8'
-          - toxenv: test-numpy120
-            os: ubuntu-latest
-            python-version: '3.8'
           - toxenv: test-jwst-xdist
             os: ubuntu-latest
             python-version: '3.x'
@@ -88,6 +80,8 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: 'pyproject.toml'
       - run: pip install tox
       - run: tox -e ${{ matrix.toxenv }}
       - if: ${{ contains(matrix.toxenv,'-cov') }}
