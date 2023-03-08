@@ -76,7 +76,7 @@ jobs:
         with:
           path: ${{ env.pythonLocation }}
           key: test-coverage-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
-      - run: pip install ".[test]" pytest-xdist pytest-cov
+      - run: pip install -e ".[test]" pytest-xdist pytest-cov
       - run: pip freeze
       - run: pytest -n auto --cov-report=xml --cov=src/stpipe
       - run: coverage report -m
@@ -96,7 +96,7 @@ jobs:
         with:
           path: ${{ env.pythonLocation }}
           key: test-coverage-jwst-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
-      - run: pip install ".[test]" pytest-xdist pytest-cov
+      - run: pip install -e ".[test]" pytest-xdist pytest-cov
       - run: pip install "jwst[test] @ git+https://github.com/spacetelescope/jwst.git"
       - run: pip freeze
       - run: pytest -n auto --cov-report=xml --cov=src/stpipe --ignore-glob=timeconversion --ignore-glob=associations --ignore-glob=scripts --pyargs jwst
@@ -119,7 +119,7 @@ jobs:
         with:
           path: ${{ env.pythonLocation }}
           key: test-coverage-roman-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('**/pyproject.toml', '**/setup.*') }}
-      - run: pip install ".[test]" pytest-xdist pytest-cov
+      - run: pip install -e ".[test]" pytest-xdist pytest-cov
       - run: pip install "romancal[test] @ git+https://github.com/spacetelescope/romancal.git"
       - run: pip freeze
       - run: pytest -n auto --cov-report=xml --cov=src/stpipe --pyargs romancal
