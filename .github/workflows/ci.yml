@@ -64,6 +64,7 @@ jobs:
       CRDS_CLIENT_RETRY_COUNT: 3
       CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
     strategy:
+      fail-fast: false
       matrix:
         include:
           - toxenv: test-jwst-xdist
