@@ -16,7 +16,6 @@ jobs:
   test:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
     with:
-      posargs: '-n 4'
       envs: |
         - linux: check-style
         - linux: check-security
