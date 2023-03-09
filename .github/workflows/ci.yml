@@ -62,7 +62,6 @@ jobs:
           python-version: '3.8'
   test_coverage:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
-    needs: [ test ]
     with:
       envs: |
         - linux: test-cov
