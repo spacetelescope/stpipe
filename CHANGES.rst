@@ -4,6 +4,7 @@
 - add ``importlib.metadata`` as a dependency and update loading of entry_points to drop
   usage of pkg_resources [#84]
 - update minimum python to 3.8 and ASDF version to 2.8 [#87]
+- replace legacy AsdfExtension with resource_mapping [#82]
 
 0.4.5 (2022-12-23)
 ==================

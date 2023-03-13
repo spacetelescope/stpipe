@@ -44,7 +44,7 @@ class LoggingPipeline(Pipeline):
     """
 
     def process(self):
-        self.log.warning(f"This step has called out a warning.")
+        self.log.warning("This step has called out a warning.")
 
         self.log.warning(f"{self.log}  {self.log.handlers}")
         return
