@@ -5,6 +5,7 @@
   usage of pkg_resources [#84]
 - update minimum python to 3.8 and ASDF version to 2.8 [#87]
 - replace legacy AsdfExtension with resource_mapping [#82]
+- update minimum version of ``asdf`` to ``2.13`` and add minimum dependency testing to CI [#75]
 
 0.4.5 (2022-12-23)
 ==================
