@@ -1,4 +1,4 @@
-0.4.6 (unreleased)
+0.4.6 (2023-03-27)
 ==================
 
 - add ``importlib.metadata`` as a dependency and update loading of entry_points to drop
