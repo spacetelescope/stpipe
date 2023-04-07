@@ -1,7 +1,10 @@
 import importlib
 import stsci_rtd_theme
 import sys
-import tomli
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
 from datetime import datetime
 from pathlib import Path
 
@@ -22,7 +25,7 @@ sys.path.insert(0, str(REPO_ROOT / "src" / "stpipe"))
 # Read the package's `pyproject.toml` so that we can use relevant
 # values here:
 with open(REPO_ROOT / "pyproject.toml", "rb") as configuration_file:
-    conf = tomli.load(configuration_file)
+    conf = tomllib.load(configuration_file)
 setup_metadata = conf['project']
 
 project = setup_metadata["name"]
