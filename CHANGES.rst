@@ -2,7 +2,7 @@
 ==================
 
 - Remove use of deprecated ``pytest-openfiles`` ``pytest`` plugin. This has been replaced by
-  catching ``ResourceWarning`` s. [#7526]
+  catching ``ResourceWarning`` s. [#90]
 
 0.4.6 (2023-03-27)
 ==================
