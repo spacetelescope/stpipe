@@ -6,10 +6,8 @@ import os
 import os.path
 import textwrap
 
-from . import config_parser
-from . import log
-from . import utilities
-from .step import get_disable_crds_steppars, Step
+from . import config_parser, log, utilities
+from .step import Step, get_disable_crds_steppars
 
 built_in_configuration_parameters = [
     'debug', 'logcfg', 'verbose'

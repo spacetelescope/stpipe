@@ -1,24 +1,21 @@
 """
 Our configuration files are ConfigObj/INI files.
 """
-from inspect import isclass
 import logging
 import os
 import os.path
 import textwrap
+from inspect import isclass
 
-from asdf import open as asdf_open
 from asdf import ValidationError as AsdfValidationError
+from asdf import open as asdf_open
 from stdatamodels import s3_utils
-
-from .extern.configobj.configobj import (
-    ConfigObj, Section, flatten_errors, get_extra_values)
-from .extern.configobj.validate import Validator, ValidateError, VdtTypeError
 
 from . import utilities
 from .config import StepConfig
 from .datamodel import AbstractDataModel
-
+from .extern.configobj.configobj import ConfigObj, Section, flatten_errors, get_extra_values
+from .extern.configobj.validate import ValidateError, Validator, VdtTypeError
 
 # Configure logger
 logger = logging.getLogger(__name__)

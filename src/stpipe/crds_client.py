@@ -10,11 +10,9 @@ general integration can be managed here.
 import re
 
 import crds
-from crds.core import config, heavy_client, log
+from crds.core import config, crds_cache_locking, heavy_client, log
 from crds.core.exceptions import CrdsError
-from crds.core import crds_cache_locking
 from stdatamodels import s3_utils
-
 
 __all__ = [
     "check_reference_open",

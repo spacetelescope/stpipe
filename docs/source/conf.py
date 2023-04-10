@@ -1,10 +1,13 @@
 import importlib
-import stsci_rtd_theme
 import sys
+
+import stsci_rtd_theme
+
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
+
 from datetime import datetime
 from pathlib import Path
 

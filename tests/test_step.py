@@ -1,12 +1,14 @@
 """Test step.Step"""
-import pytest
 import logging
+
 import asdf
+import pytest
 
 import stpipe.config_parser as cp
+from stpipe import cmdline
 from stpipe.pipeline import Pipeline
 from stpipe.step import Step
-from stpipe import cmdline
+
 
 # ######################
 # Data and Fixture setup

@@ -3,8 +3,8 @@ import subprocess
 import pytest
 
 import stpipe
-from stpipe.cli import handle_args
 from stpipe import entry_points
+from stpipe.cli import handle_args
 from stpipe.entry_points import StepInfo
 
 

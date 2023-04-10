@@ -3,8 +3,9 @@ Pre- and post-hooks
 """
 import types
 
-from .step import Step
 from . import utilities
+from .step import Step
+
 
 def hook_from_string(step, type, num, command):
     name = f'{type}_hook{num:d}'

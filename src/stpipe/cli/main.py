@@ -5,9 +5,8 @@ import argparse
 import sys
 import traceback
 
-from .list import ListCommand
 from ..exceptions import StpipeExitException
-
+from .list import ListCommand
 
 # New subclasses of Command must be imported
 # and appended to this list before they'll
@@ -83,8 +82,9 @@ def _print_versions():
     Print stpipe version as well as versions of any packages
     that register an stpipe.steps entry point.
     """
-    from .. import entry_points
     import stpipe
+
+    from .. import entry_points
 
     packages = sorted({(s.package_name, s.package_version) for s in entry_points.get_steps()}, key=lambda tup: tup[0])
 

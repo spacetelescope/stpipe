@@ -1,8 +1,7 @@
-from collections import namedtuple
 import warnings
+from collections import namedtuple
 
 from importlib_metadata import entry_points
-
 
 STEPS_GROUP = "stpipe.steps"
 

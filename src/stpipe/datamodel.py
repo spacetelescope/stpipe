@@ -1,5 +1,6 @@
 import abc
 
+
 class AbstractDataModel(abc.ABC):
     """
     This Abstract Base Class is intended to cover multiple implementations of

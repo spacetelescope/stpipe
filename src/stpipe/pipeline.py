@@ -3,13 +3,10 @@ Pipeline
 """
 from collections.abc import Sequence
 from os.path import dirname, join
-from .extern.configobj.configobj import Section, ConfigObj
 
-from . import config_parser
-from . import crds_client
-from . import log
-from .step import get_disable_crds_steppars, Step
-
+from . import config_parser, crds_client, log
+from .extern.configobj.configobj import ConfigObj, Section
+from .step import Step, get_disable_crds_steppars
 
 # For classmethods, the logger to use is the
 # delegator, since the pipeline has not yet been instantiated.

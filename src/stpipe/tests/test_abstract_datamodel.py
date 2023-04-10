@@ -3,7 +3,9 @@ Test that the AbstractDataModel interface works properly
 """
 
 import pytest
+
 from ..step import AbstractDataModel
+
 
 def test_roman_datamodel():
     roman_datamodels = pytest.importorskip("roman_datamodels.datamodels")

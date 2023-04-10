@@ -17,7 +17,6 @@ import stpipe
 from stpipe import Step
 from stpipe.exceptions import StpipeExitException
 
-
 if __name__ == '__main__':
 
     if '--version' in sys.argv:

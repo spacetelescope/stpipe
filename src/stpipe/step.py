@@ -1,23 +1,13 @@
 """
 Step
 """
+import gc
+import os
+import sys
 from collections.abc import Sequence
 from contextlib import contextmanager
 from functools import partial
-import gc
-import os
-from os.path import (
-    abspath,
-    basename,
-    dirname,
-    expanduser,
-    expandvars,
-    isfile,
-    join,
-    split,
-    splitext,
-)
-import sys
+from os.path import abspath, basename, dirname, expanduser, expandvars, isfile, join, split, splitext
 
 try:
     from astropy.io import fits
@@ -25,11 +15,7 @@ try:
 except ImportError:
     DISCOURAGED_TYPES = None
 
-from . import config
-from . import config_parser
-from . import crds_client
-from . import log
-from . import utilities
+from . import config, config_parser, crds_client, log, utilities
 from .datamodel import AbstractDataModel
 from .format_template import FormatTemplate
 

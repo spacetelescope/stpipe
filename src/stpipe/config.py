@@ -6,10 +6,9 @@ both until we replace configobj with traitlets.
 from copy import deepcopy
 from datetime import datetime
 
-from .utilities import get_fully_qualified_class_name
-
 import asdf
 
+from .utilities import get_fully_qualified_class_name
 
 _CONFIG_SCHEMA_URI = "http://stsci.edu/schemas/stpipe/step_config-1.0.0"
 _LEGACY_CONFIG_SCHEMA_URI = "http://stsci.edu/schemas/stpipe/step_config-0.1.0"

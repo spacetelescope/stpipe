@@ -2,13 +2,12 @@
 Implements the 'stpipe list' command, which lists available
 Step subclasses.
 """
-import sys
-
 import argparse
 import re
+import sys
 
-from .command import Command
 from .. import entry_points
+from .command import Command
 
 
 class ListCommand(Command):
