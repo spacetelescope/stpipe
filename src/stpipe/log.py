@@ -115,7 +115,7 @@ class LogConfig():
         elif handler_str == 'stderr':
             return logging.StreamHandler(sys.stderr)
         else:
-            raise ValueError("Can't parse handler {0!r}".format(handler_str))
+            raise ValueError(f"Can't parse handler {handler_str!r}")
 
     def apply(self, log):
         """

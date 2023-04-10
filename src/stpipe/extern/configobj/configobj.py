@@ -136,7 +136,7 @@ class UnknownType(Exception):
     pass
 
 
-class Builder(object):
+class Builder:
 
     def build(self, o):
         if m is None:
@@ -281,7 +281,7 @@ class UnreprError(ConfigObjError):
 
 
 
-class InterpolationEngine(object):
+class InterpolationEngine:
     """
     A helper class to help perform string interpolation.
 
@@ -726,7 +726,7 @@ class Section(dict):
 
     def iterkeys(self):
         """D.iterkeys() -> an iterator over the keys of D"""
-        return iter((self.scalars + self.sections))
+        return iter(self.scalars + self.sections)
 
     __iter__ = iterkeys
 
@@ -743,7 +743,7 @@ class Section(dict):
                 return self[key]
             except MissingInterpolationOption:
                 return dict.__getitem__(self, key)
-        return '{%s}' % ', '.join([('%s: %s' % (repr(key), repr(_getval(key))))
+        return '{%s}' % ', '.join([(f'{repr(key)}: {repr(_getval(key))}')
             for key in (self.scalars + self.sections)])
 
     __str__ = __repr__
@@ -1235,7 +1235,7 @@ class ConfigObj(Section):
                     content = h.readlines() or []
             elif self.file_error:
                 # raise an error if the file doesn't exist
-                raise IOError('Config file not found: "%s".' % self.filename)
+                raise OSError('Config file not found: "%s".' % self.filename)
             else:
                 # file doesn't already exist
                 if self.create_empty:
@@ -1361,8 +1361,8 @@ class ConfigObj(Section):
                 return self[key]
             except MissingInterpolationOption:
                 return dict.__getitem__(self, key)
-        return ('%s({%s})' % (self.__class__.__name__,
-                ', '.join([('%s: %s' % (repr(key), repr(_getval(key))))
+        return ('{}({{{}}})'.format(self.__class__.__name__,
+                ', '.join([(f'{repr(key)}: {repr(_getval(key))}')
                 for key in (self.scalars + self.sections)])))
 
 
@@ -1620,7 +1620,7 @@ class ConfigObj(Section):
             mat = self._keyword.match(line)
             if mat is None:
                 self._handle_error(
-                    'Invalid line ({0!r}) (matched as neither section nor keyword)'.format(line),
+                    f'Invalid line ({line!r}) (matched as neither section nor keyword)',
                     ParseError, infile, cur_index)
             else:
                 # is a keyword value
@@ -1728,7 +1728,7 @@ class ConfigObj(Section):
         """
         line = infile[cur_index]
         cur_index += 1
-        message = '{0} at line {1}.'.format(text, cur_index)
+        message = f'{text} at line {cur_index}.'
         error = ErrorClass(message, cur_index, line)
         if self.raise_errors:
             # raise the error - parsing stops here
@@ -1937,8 +1937,8 @@ class ConfigObj(Section):
                 # FIXME: Should these errors have a reference
                 #        to the already parsed ConfigObj ?
                 raise ConfigspecError('Parsing configspec failed: %s' % e)
-            except IOError as e:
-                raise IOError('Reading configspec failed: %s' % e)
+            except OSError as e:
+                raise OSError('Reading configspec failed: %s' % e)
 
         self.configspec = configspec
 
@@ -1979,7 +1979,7 @@ class ConfigObj(Section):
             val = self._decode_element(self._quote(this_entry))
         else:
             val = repr(this_entry)
-        return '%s%s%s%s%s' % (indent_string,
+        return '{}{}{}{}{}'.format(indent_string,
                                self._decode_element(self._quote(entry, multiline=False)),
                                self._a_to_u(' = '),
                                val,
@@ -1988,7 +1988,7 @@ class ConfigObj(Section):
 
     def _write_marker(self, indent_string, depth, entry, comment):
         """Write a section marker line"""
-        return '%s%s%s%s%s' % (indent_string,
+        return '{}{}{}{}{}'.format(indent_string,
                                self._a_to_u('[' * depth),
                                self._quote(self._decode_element(entry), multiline=False),
                                self._a_to_u(']' * depth),
@@ -2365,7 +2365,7 @@ class ConfigObj(Section):
 
 
 
-class SimpleVal(object):
+class SimpleVal:
     """
     A simple validator.
     Can be used to check that all members expected are present.

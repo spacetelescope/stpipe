@@ -117,7 +117,7 @@ class FormatTemplate(Formatter):
             dict of formats to pre-format the related values
             before insertion into the template.
         """
-        super(FormatTemplate, self).__init__()
+        super().__init__()
         self.separator = separator
         self.remove_unused = remove_unused
         self._used_keys = []
@@ -170,7 +170,7 @@ class FormatTemplate(Formatter):
                         )
                     )
             formatted_kwargs[key] = value
-        result = super(FormatTemplate, self).format(
+        result = super().format(
             format_string, **formatted_kwargs
         )
 

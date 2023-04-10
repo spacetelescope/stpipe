@@ -135,9 +135,9 @@ def get_override_name(reference_file_type):
     """
     if not re.match('^[_A-Za-z][_A-Za-z0-9]*$', reference_file_type):
         raise ValueError(
-            "{0!r} is not a valid reference file type name. "
-            "It must be an identifier".format(reference_file_type))
-    return "override_{0}".format(reference_file_type)
+            f"{reference_file_type!r} is not a valid reference file type name. "
+            "It must be an identifier")
+    return f"override_{reference_file_type}"
 
 
 def get_svn_version():

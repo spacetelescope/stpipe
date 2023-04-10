@@ -7,7 +7,7 @@ from .step import Step
 from . import utilities
 
 def hook_from_string(step, type, num, command):
-    name = '{0}_hook{1:d}'.format(type, num)
+    name = f'{type}_hook{num:d}'
 
     step_class = None
     try:

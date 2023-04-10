@@ -16,13 +16,13 @@ built_in_configuration_parameters = [
     ]
 
 def _print_important_message(header, message, no_wrap=None):
-    print(u'-' * 70)
+    print('-' * 70)
     print(textwrap.fill(header))
     print(textwrap.fill(
         message, initial_indent='    ', subsequent_indent='    '))
     if no_wrap:
         print(no_wrap)
-    print(u'-' * 70)
+    print('-' * 70)
 
 
 def _get_config_and_class(identifier):
@@ -40,7 +40,7 @@ def _get_config_and_class(identifier):
             step_class = utilities.import_class(utilities.resolve_step_class_alias(identifier), Step)
         except (ImportError, AttributeError, TypeError):
             raise ValueError(
-                '{0!r} is not a path to a config file or a Python Step '
+                '{!r} is not a path to a config file or a Python Step '
                 'class'.format(identifier))
         # Don't validate yet
         config = config_parser.config_from_dict({})
@@ -85,7 +85,7 @@ def _build_arg_parser_from_spec(spec, step_class, parent=None):
                 if argument[2:] in built_in_configuration_parameters:
                     raise ValueError(
                         "The Step's spec is trying to override a built-in "
-                        "parameter {0!r}".format(argument))
+                        f"parameter {argument!r}")
                 parser.add_argument(
                     "--" + ".".join(parts + [key]),
                     type=str, help=comment, metavar='')
@@ -212,8 +212,8 @@ def just_the_step_from_cmdline(args, cls=None):
             log_config = io.BytesIO(log.MAX_CONFIGURATION)
         elif known.logcfg is not None:
             if not os.path.exists(known.logcfg):
-                raise IOError(
-                    "Logging config {0!r} not found".format(known.logcfg))
+                raise OSError(
+                    f"Logging config {known.logcfg!r} not found")
             log_config = known.logcfg
 
         if log_config is not None:
@@ -221,8 +221,7 @@ def just_the_step_from_cmdline(args, cls=None):
                 log.load_configuration(log_config)
             except Exception as e:
                 raise ValueError(
-                    "Error parsing logging config {0!r}:\n{1}".format(
-                        log_config, e))
+                    f"Error parsing logging config {log_config!r}:\n{e}")
     except Exception as e:
         _print_important_message(
             "ERROR PARSING CONFIGURATION:", str(e))
@@ -297,8 +296,8 @@ def just_the_step_from_cmdline(args, cls=None):
         step.set_primary_input(positional[0])
         step.save_results = True
 
-    log.log.info("Hostname: {0}".format(os.uname()[1]))
-    log.log.info("OS: {0}".format(os.uname()[0]))
+    log.log.info(f"Hostname: {os.uname()[1]}")
+    log.log.info(f"OS: {os.uname()[0]}")
 
     # Save the step configuration
     if known.save_parameters:
@@ -343,7 +342,7 @@ def step_from_cmdline(args, cls=None):
             step.run(*positional)
     except Exception as e:
         _print_important_message(
-            "ERROR RUNNING STEP {0!r}:".format(step_class.__name__), str(e)
+            f"ERROR RUNNING STEP {step_class.__name__!r}:", str(e)
         )
 
         if debug_on_exception:

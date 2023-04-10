@@ -170,18 +170,15 @@ from stdatamodels import DataModel
 #TODO - #21 - six is part of the repo now, but we didn't switch over to it here
 # this could be replaced if six is used for compatibility, or there are no
 # more assertions about items being a string
-if sys.version_info < (3,):
-    string_type = basestring
-else:
-    string_type = str
-    # so tests that care about unicode on 2.x can specify unicode, and the same
-    # tests when run on 3.x won't complain about a undefined name "unicode"
-    # since all strings are unicode on 3.x we just want to pass it through
-    # unchanged
-    unicode = lambda x: x
-    # in python 3, all ints are equivalent to python 2 longs, and they'll
-    # never show "L" in the repr
-    long = int
+string_type = str
+# so tests that care about unicode on 2.x can specify unicode, and the same
+# tests when run on 3.x won't complain about a undefined name "unicode"
+# since all strings are unicode on 3.x we just want to pass it through
+# unchanged
+unicode = lambda x: x
+# in python 3, all ints are equivalent to python 2 longs, and they'll
+# never show "L" in the repr
+long = int
 
 _list_arg = re.compile(r'''
     (?:
@@ -297,7 +294,7 @@ def dottedQuadToNum(ip):
     try:
         return struct.unpack('!L',
             socket.inet_aton(ip.strip()))[0]
-    except socket.error:
+    except OSError:
         raise ValueError('Not a good dotted-quad IP: %s' % ip)
     return
 
@@ -350,7 +347,7 @@ def numToDottedQuad(num):
     try:
         return socket.inet_ntoa(
             struct.pack('!L', long(num)))
-    except (socket.error, struct.error, OverflowError):
+    except (OSError, struct.error, OverflowError):
         raise ValueError('Not a good numeric IP: %s' % num)
 
 
@@ -381,7 +378,7 @@ class VdtUnknownCheckError(ValidateError):
         Traceback (most recent call last):
         VdtUnknownCheckError: the check "yoda" is unknown.
         """
-        ValidateError.__init__(self, 'the check "%s" is unknown.' % (value,))
+        ValidateError.__init__(self, f'the check "{value}" is unknown.')
 
 
 class VdtParamError(SyntaxError):
@@ -393,7 +390,7 @@ class VdtParamError(SyntaxError):
         Traceback (most recent call last):
         VdtParamError: passed an incorrect value "jedi" for parameter "yoda".
         """
-        SyntaxError.__init__(self, 'passed an incorrect value "%s" for parameter "%s".' % (value, name))
+        SyntaxError.__init__(self, f'passed an incorrect value "{value}" for parameter "{name}".')
 
 
 class VdtTypeError(ValidateError):
@@ -405,7 +402,7 @@ class VdtTypeError(ValidateError):
         Traceback (most recent call last):
         VdtTypeError: the value "jedi" is of the wrong type.
         """
-        ValidateError.__init__(self, 'the value "%s" is of the wrong type.' % (value,))
+        ValidateError.__init__(self, f'the value "{value}" is of the wrong type.')
 
 
 class VdtValueError(ValidateError):
@@ -417,7 +414,7 @@ class VdtValueError(ValidateError):
         Traceback (most recent call last):
         VdtValueError: the value "jedi" is unacceptable.
         """
-        ValidateError.__init__(self, 'the value "%s" is unacceptable.' % (value,))
+        ValidateError.__init__(self, f'the value "{value}" is unacceptable.')
 
 
 class VdtValueTooSmallError(VdtValueError):
@@ -429,7 +426,7 @@ class VdtValueTooSmallError(VdtValueError):
         Traceback (most recent call last):
         VdtValueTooSmallError: the value "0" is too small.
         """
-        ValidateError.__init__(self, 'the value "%s" is too small.' % (value,))
+        ValidateError.__init__(self, f'the value "{value}" is too small.')
 
 
 class VdtValueTooBigError(VdtValueError):
@@ -441,7 +438,7 @@ class VdtValueTooBigError(VdtValueError):
         Traceback (most recent call last):
         VdtValueTooBigError: the value "1" is too big.
         """
-        ValidateError.__init__(self, 'the value "%s" is too big.' % (value,))
+        ValidateError.__init__(self, f'the value "{value}" is too big.')
 
 
 class VdtValueTooShortError(VdtValueError):
@@ -455,7 +452,7 @@ class VdtValueTooShortError(VdtValueError):
         """
         ValidateError.__init__(
             self,
-            'the value "%s" is too short.' % (value,))
+            f'the value "{value}" is too short.')
 
 
 class VdtValueTooLongError(VdtValueError):
@@ -467,10 +464,10 @@ class VdtValueTooLongError(VdtValueError):
         Traceback (most recent call last):
         VdtValueTooLongError: the value "jedie" is too long.
         """
-        ValidateError.__init__(self, 'the value "%s" is too long.' % (value,))
+        ValidateError.__init__(self, f'the value "{value}" is too long.')
 
 
-class Validator(object):
+class Validator:
     """
     Validator is an object that allows you to register a set of 'checks'.
     These checks take input and test that it conforms to the check.
@@ -644,7 +641,7 @@ class Validator(object):
             fun_kwargs = dict(fun_kwargs)
         else:
             fun_name, fun_args, fun_kwargs, default = self._parse_check(check)
-            fun_kwargs = dict([(str(key), value) for (key, value) in list(fun_kwargs.items())])
+            fun_kwargs = {str(key): value for (key, value) in list(fun_kwargs.items())}
             self._cache[check] = fun_name, list(fun_args), dict(fun_kwargs), default
         return fun_name, fun_args, fun_kwargs, default
 
@@ -1469,4 +1466,4 @@ if __name__ == '__main__':
     failures, tests = doctest.testmod(
         m, globs=globs,
         optionflags=doctest.IGNORE_EXCEPTION_DETAIL | doctest.ELLIPSIS)
-    assert not failures, '{} failures out of {} tests'.format(failures, tests)
+    assert not failures, f'{failures} failures out of {tests} tests'

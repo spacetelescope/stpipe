@@ -46,7 +46,7 @@ def _get_input_file_check(root_dir):
         path = os.path.abspath(path)
         if not os.path.exists(path):
             raise ValidateError(
-                "Path {0!r} does not exist".format(path))
+                f"Path {path!r} does not exist")
 
         return path
 
@@ -109,7 +109,7 @@ def load_config_file(config_file):
 
 def _load_config_file_filesystem(config_file):
     if not os.path.isfile(config_file):
-        raise ValueError("Config file {0} not found.".format(config_file))
+        raise ValueError(f"Config file {config_file} not found.")
     try:
         with asdf_open(config_file) as asdf_file:
             return _config_obj_from_asdf(asdf_file)
@@ -120,7 +120,7 @@ def _load_config_file_filesystem(config_file):
 
 def _load_config_file_s3(config_file):
     if not s3_utils.object_exists(config_file):
-        raise ValueError("Config file {0} not found.".format(config_file))
+        raise ValueError(f"Config file {config_file} not found.")
 
     content = s3_utils.get_object(config_file)
     try:
@@ -359,8 +359,7 @@ def validate(config, spec, section=None, validator=None, root_dir=None, allow_mi
                         err = 'missing'
 
                 messages.append(
-                    "Config parameter {0!r}: {1}".format(
-                        section_string, err))
+                    f"Config parameter {section_string!r}: {err}")
 
         extra_values = get_extra_values(config)
         if extra_values:
@@ -370,8 +369,7 @@ def validate(config, spec, section=None, validator=None, root_dir=None, allow_mi
             else:
                 sections = '/'.join(sections)
             messages.append(
-                "Extra value {0!r} in {1}".format(
-                    name, sections))
+                f"Extra value {name!r} in {sections}")
 
         if len(messages):
             raise ValidationError('\n'.join(messages))
