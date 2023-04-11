@@ -229,7 +229,7 @@ class DelegationHandler(logging.Handler):
     """
     A handler that delegates messages along to the currently active
     `Step` logger.  It only delegates messages that come from outside
-    of the `stpipe` heirarchy, in order to prevent infinite recursion.
+    of the `stpipe` hierarchy, in order to prevent infinite recursion.
 
     Since we could be multi-threaded and each thread may be running a
     different thread, we need to manage a dictionary mapping the

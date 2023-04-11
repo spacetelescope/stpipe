@@ -18,7 +18,7 @@ class AbstractDataModel(abc.ABC):
     @classmethod
     def __subclasshook__(cls, C):
         """
-        Psuedo subclass check based on these attributes and methods
+        Pseudo subclass check based on these attributes and methods
         """
         if cls is AbstractDataModel:
             mro = C.__mro__
