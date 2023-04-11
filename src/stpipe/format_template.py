@@ -111,7 +111,7 @@ class FormatTemplate(Formatter):
         ----------
         separator : str
             For key/value pairs given that do not have a
-            replacement field, the values are appened to
+            replacement field, the values are appended to
             the string using this separator.
 
         key_formats : {key: format(, ...)}

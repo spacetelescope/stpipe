@@ -848,7 +848,7 @@ class Section(dict):
         unless ``raise_errors=False``, in which case set the return value to
         ``False``.
 
-        Any unrecognised keyword arguments you pass to walk, will be pased on
+        Any unrecognised keyword arguments you pass to walk, will be passed on
         to the function you pass in.
 
         Note: if ``call_on_sections`` is ``True`` then - on encountering a
