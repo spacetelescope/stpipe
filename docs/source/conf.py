@@ -29,12 +29,12 @@ sys.path.insert(0, str(REPO_ROOT / "src" / "stpipe"))
 # values here:
 with open(REPO_ROOT / "pyproject.toml", "rb") as configuration_file:
     conf = tomllib.load(configuration_file)
-setup_metadata = conf['project']
+setup_metadata = conf["project"]
 
 project = setup_metadata["name"]
 primary_author = setup_metadata["authors"][0]
 author = f'{primary_author["name"]} <{primary_author["email"]}>'
-copyright = f'{datetime.now().year}, {author}'
+copyright = f"{datetime.now().year}, {author}"
 
 package = importlib.import_module(project)
 version = package.__version__.split("-", 1)[0]

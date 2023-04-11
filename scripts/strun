@@ -17,9 +17,8 @@ import stpipe
 from stpipe import Step
 from stpipe.exceptions import StpipeExitException
 
-if __name__ == '__main__':
-
-    if '--version' in sys.argv:
+if __name__ == "__main__":
+    if "--version" in sys.argv:
         sys.stdout.write(f"{stpipe.__version__}\n")
         sys.exit(0)
 
@@ -29,5 +28,6 @@ if __name__ == '__main__':
         sys.exit(e.exit_status)
     except Exception:
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

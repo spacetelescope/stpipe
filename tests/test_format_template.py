@@ -7,7 +7,7 @@ from stpipe.format_template import FormatTemplate
 
 
 @pytest.mark.parametrize(
-    'key_formats, template, expected, fields, errors',
+    "key_formats, template, expected, fields, errors",
     [
         # No replacement at all.
         (
@@ -22,7 +22,7 @@ from stpipe.format_template import FormatTemplate
             None,
             'name="{name}" value="{value}"',
             'name="fred" value="great"',
-            {'name': 'fred', 'value': 'great'},
+            {"name": "fred", "value": "great"},
             None,
         ),
         # But wait, too many values given:
@@ -30,7 +30,7 @@ from stpipe.format_template import FormatTemplate
             None,
             'name="{name}" value="{value}"',
             'name="fred" value="great"_more',
-            {'name': 'fred', 'value': 'great', 'extra': 'more'},
+            {"name": "fred", "value": "great", "extra": "more"},
             None,
         ),
         # And with too many and not enough:
@@ -38,7 +38,7 @@ from stpipe.format_template import FormatTemplate
             None,
             'name="{name}" value="{value}"',
             'name="{name}" value="great"_more',
-            {'value': 'great', 'extra': 'more'},
+            {"value": "great", "extra": "more"},
             None,
         ),
         # Nothing should be added if value is None
@@ -46,43 +46,43 @@ from stpipe.format_template import FormatTemplate
             None,
             'name="{name}" value="{value}"',
             'name="{name}" value=""',
-            {'value': None},
+            {"value": None},
             None,
         ),
         # Multiple key formats, using none.
         (
             {
-                'field': ['s{:05d}', 's{:s}'],
+                "field": ["s{:05d}", "s{:s}"],
             },
-            'astring',
-            'astring',
+            "astring",
+            "astring",
             {},
             None,
         ),
         # Multiple key formats, using first.
         (
             {
-                'field': ['s{:05d}', 's{:s}'],
+                "field": ["s{:05d}", "s{:s}"],
             },
-            'astring',
-            'astring_s00001',
-            {'field': 1},
+            "astring",
+            "astring_s00001",
+            {"field": 1},
             None,
         ),
         # Multiple key formats, using second.
         (
-            {'field': ['s{:05d}', 's{:s}']},
-            'astring',
-            'astring_smysource',
-            {'field': "mysource"},
+            {"field": ["s{:05d}", "s{:s}"]},
+            "astring",
+            "astring_smysource",
+            {"field": "mysource"},
             None,
         ),
         # No matching formats is an error.
         (
-            {'field': ['s{:05d}']},
-            'astring',
-            'astring_error',
-            {'field': '5.5'},
+            {"field": ["s{:05d}"]},
+            "astring",
+            "astring_error",
+            {"field": "5.5"},
             (RuntimeError,),
         ),
     ],
@@ -107,13 +107,13 @@ def test_separators():
     fmt = FormatTemplate()
 
     # With a different separator:
-    fmt.separator = '---'
-    result = fmt(template, name='fred', value='great', extra='more')
+    fmt.separator = "---"
+    result = fmt(template, name="fred", value="great", extra="more")
     assert result == 'name="fred" value="great"---more'
 
     # Initializing with a different separator:
-    fmt_newsep = FormatTemplate(separator='_now-with_')
-    result = fmt_newsep(template, name='fred', value='great', extra='more')
+    fmt_newsep = FormatTemplate(separator="_now-with_")
+    result = fmt_newsep(template, name="fred", value="great", extra="more")
     assert result == 'name="fred" value="great"_now-with_more'
 
 

@@ -88,7 +88,7 @@ class Pipeline(Step):
 
     @classmethod
     def merge_config(cls, config, config_file):
-        steps = config.get('steps', {})
+        steps = config.get("steps", {})
 
         # Configure all of the steps
         for key in cls.step_defs:
@@ -96,9 +96,9 @@ class Pipeline(Step):
             if cfg is not None:
                 # If a config_file is specified, load those values and
                 # then override them with our values.
-                if cfg.get('config_file'):
-                    cfg2 = config_parser.load_config_file(join(dirname(config_file or ''), cfg.get('config_file')))
-                    del cfg['config_file']
+                if cfg.get("config_file"):
+                    cfg2 = config_parser.load_config_file(join(dirname(config_file or ""), cfg.get("config_file")))
+                    del cfg["config_file"]
                     config_parser.merge_config(cfg2, cfg)
                     steps[key] = cfg2
         return config
@@ -107,8 +107,8 @@ class Pipeline(Step):
     def load_spec_file(cls, preserve_comments=False):
         spec = config_parser.get_merged_spec_file(cls, preserve_comments=preserve_comments)
 
-        spec['steps'] = Section(spec, spec.depth + 1, spec.main, name="steps")
-        steps = spec['steps']
+        spec["steps"] = Section(spec, spec.depth + 1, spec.main, name="steps")
+        steps = spec["steps"]
         for key, val in cls.step_defs.items():
             if not issubclass(val, Step):
                 raise TypeError(f"Entry {key!r} in step_defs is not a Step subclass")
@@ -119,10 +119,10 @@ class Pipeline(Step):
 
             # Also add a key that can be used to specify an external
             # config_file
-            step = spec['steps'][key]
-            step['config_file'] = 'string(default=None)'
-            step['name'] = "string(default='')"
-            step['class'] = "string(default='')"
+            step = spec["steps"][key]
+            step["config_file"] = "string(default=None)"
+            step["name"] = "string(default='')"
+            step["class"] = "string(default='')"
 
         return spec
 
@@ -155,16 +155,16 @@ class Pipeline(Step):
         """
         reftype = cls.get_config_reftype()
         refcfg = ConfigObj()
-        refcfg['steps'] = Section(refcfg, refcfg.depth + 1, refcfg.main, name="steps")
+        refcfg["steps"] = Section(refcfg, refcfg.depth + 1, refcfg.main, name="steps")
 
         # Check if retrieval should be attempted.
         if disable is None:
             disable = get_disable_crds_steppars()
         if disable:
-            logger.debug(f'{reftype.upper()}: CRDS parameter reference retrieval disabled.')
+            logger.debug(f"{reftype.upper()}: CRDS parameter reference retrieval disabled.")
             return refcfg
 
-        logger.debug('Retrieving all substep parameters from CRDS')
+        logger.debug("Retrieving all substep parameters from CRDS")
         #
         # Iterate over the steps in the pipeline
         with cls._datamodels_open(dataset, asn_n_members=1) as model:
@@ -177,13 +177,13 @@ class Pipeline(Step):
 
         for cal_step in cls.step_defs.keys():
             cal_step_class = cls.step_defs[cal_step]
-            refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(
+            refcfg["steps"][cal_step] = cal_step_class.get_config_from_reference(
                 crds_parameters,
                 crds_observatory=crds_observatory,
             )
         #
         # Now merge any config parameters from the step cfg file
-        logger.debug(f'Retrieving pipeline {reftype.upper()} parameters from CRDS')
+        logger.debug(f"Retrieving pipeline {reftype.upper()} parameters from CRDS")
         try:
             ref_file = crds_client.get_reference_file(
                 crds_parameters,
@@ -191,13 +191,13 @@ class Pipeline(Step):
                 crds_observatory,
             )
         except (AttributeError, crds_client.CrdsError):
-            logger.debug(f'{reftype.upper()}: No parameters found')
+            logger.debug(f"{reftype.upper()}: No parameters found")
         else:
-            if ref_file != 'N/A':
-                logger.info(f'{reftype.upper()} parameters found: {ref_file}')
+            if ref_file != "N/A":
+                logger.info(f"{reftype.upper()} parameters found: {ref_file}")
                 refcfg = cls.merge_pipeline_config(refcfg, ref_file)
             else:
-                logger.debug(f'No {reftype.upper()} reference files found.')
+                logger.debug(f"No {reftype.upper()} reference files found.")
 
         return refcfg
 
@@ -251,7 +251,7 @@ class Pipeline(Step):
             with self.open_model(input_file, asn_n_members=1, asn_exptypes=["science"]) as model:
                 self._precache_references_opened(model)
         except (ValueError, TypeError, OSError):
-            self.log.info(f'First argument {input_file} does not appear to be a ' 'model')
+            self.log.info(f"First argument {input_file} does not appear to be a " "model")
 
     def _precache_references_opened(self, model_or_container):
         """Pre-fetches references for `model_or_container`.
@@ -323,7 +323,7 @@ class Pipeline(Step):
             Keys are the parameters and values are the values.
         """
         pars = super().get_pars(full_spec=full_spec)
-        pars['steps'] = {}
+        pars["steps"] = {}
         for step_name, step_class in self.step_defs.items():
-            pars['steps'][step_name] = getattr(self, step_name).get_pars(full_spec=full_spec)
+            pars["steps"][step_name] = getattr(self, step_name).get_pars(full_spec=full_spec)
         return pars

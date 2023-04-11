@@ -132,7 +132,7 @@ def get_override_name(reference_file_type):
         The configuration parameter name to use to override the given
         reference file type.
     """
-    if not re.match('^[_A-Za-z][_A-Za-z0-9]*$', reference_file_type):
+    if not re.match("^[_A-Za-z][_A-Za-z0-9]*$", reference_file_type):
         raise ValueError(f"{reference_file_type!r} is not a valid reference file type name. It must be an identifier")
     return f"override_{reference_file_type}"
 

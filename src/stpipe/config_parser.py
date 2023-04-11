@@ -29,7 +29,7 @@ class ValidationError(Exception):
 def _get_input_file_check(root_dir):
     from . import cmdline
 
-    root_dir = root_dir or ''
+    root_dir = root_dir or ""
 
     def _input_file_check(path):
         if not isinstance(path, cmdline.FromCommandLine):
@@ -52,7 +52,7 @@ def _get_input_file_check(root_dir):
 def _get_output_file_check(root_dir):
     from . import cmdline
 
-    root_dir = root_dir or ''
+    root_dir = root_dir or ""
 
     def _output_file_check(path):
         if not isinstance(path, cmdline.FromCommandLine):
@@ -110,7 +110,7 @@ def _load_config_file_filesystem(config_file):
         with asdf_open(config_file) as asdf_file:
             return _config_obj_from_asdf(asdf_file)
     except (AsdfValidationError, ValueError):
-        logger.debug('Config file did not parse as ASDF. Trying as ConfigObj: %s', config_file)
+        logger.debug("Config file did not parse as ASDF. Trying as ConfigObj: %s", config_file)
         return ConfigObj(config_file, raise_errors=True)
 
 
@@ -123,7 +123,7 @@ def _load_config_file_s3(config_file):
         with asdf_open(content) as asdf_file:
             return _config_obj_from_asdf(asdf_file)
     except (AsdfValidationError, ValueError):
-        logger.debug('Config file did not parse as ASDF. Trying as ConfigObj: %s', config_file)
+        logger.debug("Config file did not parse as ASDF. Trying as ConfigObj: %s", config_file)
         content.seek(0)
         return ConfigObj(content, raise_errors=True)
 
@@ -195,14 +195,14 @@ def load_spec_file(cls, preserve_comments=False):
     # from the base class.
     if not isclass(cls):
         cls = cls.__class__
-    if 'spec' in cls.__dict__:
+    if "spec" in cls.__dict__:
         spec = cls.spec.strip()
         spec_file = textwrap.dedent(spec)
-        spec_file = spec_file.split('\n')
+        spec_file = spec_file.split("\n")
         encoded = []
         for line in spec_file:
             if isinstance(line, str):
-                encoded.append(line.encode('utf8'))
+                encoded.append(line.encode("utf8"))
             else:
                 encoded.append(line)
         spec_file = encoded
@@ -329,10 +329,10 @@ def validate(config, spec, section=None, validator=None, root_dir=None, allow_mi
 
     if validator is None:
         validator = Validator()
-        validator.functions['input_file'] = _get_input_file_check(root_dir)
-        validator.functions['output_file'] = _get_output_file_check(root_dir)
-        validator.functions['is_datamodel'] = _is_datamodel
-        validator.functions['is_string_or_datamodel'] = _is_string_or_datamodel
+        validator.functions["input_file"] = _get_input_file_check(root_dir)
+        validator.functions["output_file"] = _get_output_file_check(root_dir)
+        validator.functions["is_datamodel"] = _is_datamodel
+        validator.functions["is_string_or_datamodel"] = _is_string_or_datamodel
 
     orig_configspec = config.main.configspec
     config.main.configspec = spec
@@ -355,14 +355,14 @@ def validate(config, spec, section=None, validator=None, root_dir=None, allow_mi
                 if key is not None:
                     section_list.append(key)
                 else:
-                    section_list.append('[missing section]')
-                section_string = '/'.join(section_list)
+                    section_list.append("[missing section]")
+                section_string = "/".join(section_list)
                 if err == False:
                     if allow_missing:
                         config[key] = spec[key]
                         continue
                     else:
-                        err = 'missing'
+                        err = "missing"
 
                 messages.append(f"Config parameter {section_string!r}: {err}")
 
@@ -370,13 +370,13 @@ def validate(config, spec, section=None, validator=None, root_dir=None, allow_mi
         if extra_values:
             sections, name = extra_values[0]
             if len(sections) == 0:
-                sections = 'root'
+                sections = "root"
             else:
-                sections = '/'.join(sections)
+                sections = "/".join(sections)
             messages.append(f"Extra value {name!r} in {sections}")
 
         if len(messages):
-            raise ValidationError('\n'.join(messages))
+            raise ValidationError("\n".join(messages))
     finally:
         config.main.configspec = orig_configspec
 
@@ -401,9 +401,9 @@ def _parse(val):
     """
     Parse scalar strings into scalar python types.
     """
-    if val.lower() == 'true':
+    if val.lower() == "true":
         return True
-    elif val.lower() == 'false':
+    elif val.lower() == "false":
         return False
     try:
         return int(val)

@@ -5,26 +5,26 @@ Format template string allowing partial formatting.
 from collections import defaultdict
 from string import Formatter
 
-__all__ = ['FormatTemplate']
+__all__ = ["FormatTemplate"]
 
 
 # Define conversion based on format type
 CONVERSION = {
-    '%': float,
-    'b': int,
-    'c': int,
-    'd': int,
-    'e': float,
-    'E': float,
-    'f': float,
-    'F': float,
-    'g': float,
-    'G': float,
-    'n': int,
-    'o': int,
-    's': str,
-    'x': int,
-    'X': int,
+    "%": float,
+    "b": int,
+    "c": int,
+    "d": int,
+    "e": float,
+    "E": float,
+    "f": float,
+    "F": float,
+    "g": float,
+    "G": float,
+    "n": int,
+    "o": int,
+    "s": str,
+    "x": int,
+    "X": int,
 }
 
 
@@ -104,7 +104,7 @@ class FormatTemplate(Formatter):
     'name="fred" value="pre_great_format"'
     """
 
-    def __init__(self, separator='_', key_formats=None, remove_unused=False):
+    def __init__(self, separator="_", key_formats=None, remove_unused=False):
         """Inialize class
 
         Parameters
@@ -123,7 +123,7 @@ class FormatTemplate(Formatter):
         self.remove_unused = remove_unused
         self._used_keys = []
 
-        self.key_formats = defaultdict(lambda: ['{:s}'])
+        self.key_formats = defaultdict(lambda: ["{:s}"])
         if key_formats:
             self.key_formats.update(key_formats)
 
@@ -164,8 +164,8 @@ class FormatTemplate(Formatter):
                         break
                 else:
                     raise RuntimeError(
-                        'No suitable formatting for {key}: {value} found. Given formatting options:'
-                        '\n\t{formats}'.format(
+                        "No suitable formatting for {key}: {value} found. Given formatting options:"
+                        "\n\t{formats}".format(
                             key=key,
                             value=value,
                             formats=self.key_formats[key],
@@ -207,12 +207,12 @@ class FormatTemplate(Formatter):
             If not found, the string '{key}' is returned.
         """
         if self.remove_unused:
-            default = ''
+            default = ""
         else:
-            default = '{' + key + '}'
+            default = "{" + key + "}"
         value = kwargs.get(key, default)
         self._used_keys.append(key)
         if value is None:
-            value = ''
+            value = ""
 
         return value

@@ -54,7 +54,7 @@ def import_class(full_name, subclassof=object, config_file=None):
 
     try:
         full_name = full_name.strip()
-        package_name, sep, class_name = full_name.rpartition('.')
+        package_name, sep, class_name = full_name.rpartition(".")
         if not package_name:
             raise ImportError(f"{full_name} is not a Python class")
         imported = __import__(
@@ -70,9 +70,9 @@ def import_class(full_name, subclassof=object, config_file=None):
         step_class = getattr(imported, class_name)
 
         if not isinstance(step_class, type):
-            raise TypeError(f'Object {class_name} from package {package_name} is not a class')
+            raise TypeError(f"Object {class_name} from package {package_name} is not a class")
         elif not issubclass(step_class, subclassof):
-            raise TypeError(f'Class {class_name} from package {package_name} is not a ' f'subclass of {subclassof.__name__}')
+            raise TypeError(f"Class {class_name} from package {package_name} is not a " f"subclass of {subclassof.__name__}")
     finally:
         if config_file is not None:
             del sys.path[0]
@@ -96,7 +96,7 @@ def get_spec_file_path(step_class):
     # Since `step_class` could be defined in a file called whatever,
     # we need the source file basedir and the class name.
     dir = os.path.dirname(step_source_file)
-    return os.path.join(dir, step_class.__name__ + '.spec')
+    return os.path.join(dir, step_class.__name__ + ".spec")
 
 
 def find_spec_file(step_class):
@@ -129,4 +129,4 @@ def get_fully_qualified_class_name(cls_or_obj):
     if module is None or module == str.__class__.__module__:
         return cls.__name__  # Avoid reporting __builtin__
     else:
-        return module + '.' + cls.__name__
+        return module + "." + cls.__name__

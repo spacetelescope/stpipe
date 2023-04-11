@@ -14,7 +14,7 @@ def clean_up_logging():
 
 
 def test_configuration(tmpdir):
-    logfilename = tmpdir.join('output.log')
+    logfilename = tmpdir.join("output.log")
 
     configuration = """
 [.]
@@ -45,7 +45,7 @@ format = '%(message)s'
     with open(logfilename) as fd:
         lines = [x.strip() for x in fd.readlines()]
 
-    assert lines == ['Shown', 'Breaking']
+    assert lines == ["Shown", "Breaking"]
 
 
 def test_record_logs():

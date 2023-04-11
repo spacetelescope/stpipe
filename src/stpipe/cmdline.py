@@ -10,25 +10,25 @@ from . import config_parser, log, utilities
 from .step import Step, get_disable_crds_steppars
 
 built_in_configuration_parameters = [
-    'debug',
-    'logcfg',
-    'verbose',
+    "debug",
+    "logcfg",
+    "verbose",
 ]
 
 
 def _print_important_message(header, message, no_wrap=None):
-    print('-' * 70)
+    print("-" * 70)
     print(textwrap.fill(header))
     print(
         textwrap.fill(
             message,
-            initial_indent='    ',
-            subsequent_indent='    ',
+            initial_indent="    ",
+            subsequent_indent="    ",
         )
     )
     if no_wrap:
         print(no_wrap)
-    print('-' * 70)
+    print("-" * 70)
 
 
 def _get_config_and_class(identifier):
@@ -44,7 +44,7 @@ def _get_config_and_class(identifier):
         try:
             step_class = utilities.import_class(utilities.resolve_step_class_alias(identifier), Step)
         except (ImportError, AttributeError, TypeError):
-            raise ValueError('{!r} is not a path to a config file or a Python Step ' 'class'.format(identifier))
+            raise ValueError("{!r} is not a path to a config file or a Python Step " "class".format(identifier))
         # Don't validate yet
         config = config_parser.config_from_dict({})
         name = None
@@ -83,8 +83,8 @@ def _build_arg_parser_from_spec(spec, step_class, parent=None):
             if isinstance(val, dict):
                 build_from_spec(val, parts + [key])
             else:
-                comment = subspec.inline_comments.get(key) or ''
-                comment = comment.lstrip('#').strip()
+                comment = subspec.inline_comments.get(key) or ""
+                comment = comment.lstrip("#").strip()
                 argument = "--" + ".".join(parts + [key])
                 if argument[2:] in built_in_configuration_parameters:
                     raise ValueError("The Step's spec is trying to override a built-in " f"parameter {argument!r}")
@@ -92,15 +92,15 @@ def _build_arg_parser_from_spec(spec, step_class, parent=None):
                     "--" + ".".join(parts + [key]),
                     type=str,
                     help=comment,
-                    metavar='',
+                    metavar="",
                 )
 
     build_from_spec(spec)
 
     parser.add_argument(
-        'args',
-        nargs='*',
-        help='arguments to pass to step',
+        "args",
+        nargs="*",
+        help="arguments to pass to step",
     )
 
     return parser
@@ -127,7 +127,7 @@ def _override_config_from_args(config, args):
     """
 
     def set_value(subconf, key, val):
-        root, sep, rest = key.partition('.')
+        root, sep, rest = key.partition(".")
         if rest:
             set_value(subconf.setdefault(root, {}), rest, val)
         else:
@@ -209,14 +209,14 @@ def just_the_step_from_cmdline(args, cls=None):
         help="When an exception occurs, invoke the Python debugger, pdb",
     )
     parser1.add_argument(
-        '--save-parameters',
+        "--save-parameters",
         type=str,
-        help='Save step parameters to specified file.',
+        help="Save step parameters to specified file.",
     )
     parser1.add_argument(
-        '--disable-crds-steppars',
-        action='store_true',
-        help='Disable retrieval of step parameter references files from CRDS',
+        "--disable-crds-steppars",
+        action="store_true",
+        help="Disable retrieval of step parameter references files from CRDS",
     )
     known, _ = parser1.parse_known_args(args)
 
@@ -287,7 +287,7 @@ def just_the_step_from_cmdline(args, cls=None):
     if len(positional):
         input_file = positional[0]
         if args.input_dir:
-            input_file = args.input_dir + '/' + input_file
+            input_file = args.input_dir + "/" + input_file
 
         # Attempt to retrieve Step parameters from CRDS
         try:

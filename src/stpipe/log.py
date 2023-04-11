@@ -13,8 +13,8 @@ from . import config_parser
 from .extern.configobj import validate
 from .extern.configobj.configobj import ConfigObj
 
-STPIPE_ROOT_LOGGER = 'stpipe'
-DEFAULT_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+STPIPE_ROOT_LOGGER = "stpipe"
+DEFAULT_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 DEFAULT_CONFIGURATION = b"""
 [*]
 handler = stderr
@@ -85,15 +85,15 @@ class LogConfig:
         break_level=logging.NOTSET,
         format=None,
     ):
-        if name in ('', '.', 'root'):
-            name = '*'
+        if name in ("", ".", "root"):
+            name = "*"
         self.name = name
         self.handler = handler
         if not isinstance(self.handler, list):
-            if self.handler.strip() == '':
+            if self.handler.strip() == "":
                 self.handler = []
             else:
-                self.handler = [x.strip() for x in self.handler.split(',')]
+                self.handler = [x.strip() for x in self.handler.split(",")]
         self.level = level
         self.break_level = break_level
         if format is None:
@@ -116,12 +116,12 @@ class LogConfig:
         Given a handler string, returns a `logging.Handler` object.
         """
         if handler_str.startswith("file:"):
-            return logging.FileHandler(handler_str[5:], 'w', 'utf-8', True)
+            return logging.FileHandler(handler_str[5:], "w", "utf-8", True)
         elif handler_str.startswith("append:"):
-            return logging.FileHandler(handler_str[7:], 'a', 'utf-8', True)
-        elif handler_str == 'stdout':
+            return logging.FileHandler(handler_str[7:], "a", "utf-8", True)
+        elif handler_str == "stdout":
             return logging.StreamHandler(sys.stdout)
-        elif handler_str == 'stderr':
+        elif handler_str == "stderr":
             return logging.StreamHandler(sys.stderr)
         else:
             raise ValueError(f"Can't parse handler {handler_str!r}")
@@ -132,7 +132,7 @@ class LogConfig:
         object.
         """
         for handler in log.handlers[:]:
-            if hasattr(handler, '_from_config'):
+            if hasattr(handler, "_from_config"):
                 log.handlers.remove(handler)
 
         # Set a handler
@@ -151,7 +151,7 @@ class LogConfig:
 
         formatter = logging.Formatter(self.format)
         for handler in log.handlers:
-            if isinstance(handler, logging.Handler) and hasattr(handler, '_from_config'):
+            if isinstance(handler, logging.Handler) and hasattr(handler, "_from_config"):
                 handler.setFormatter(formatter)
 
     def match_and_apply(self, log):
@@ -187,7 +187,7 @@ def load_configuration(config_file):
     spec = config_parser.load_spec_file(LogConfig)
     config = ConfigObj(config_file, raise_errors=True, interpolation=False)
     val = validate.Validator()
-    val.functions['level'] = _level_check
+    val.functions["level"] = _level_check
     config_parser.validate(config, spec, validator=val)
 
     log_config.clear()
