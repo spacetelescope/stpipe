@@ -581,7 +581,7 @@ class Step:
 
     def prefetch(self, *args):
         """Prefetch reference files,  nominally called when
-        self.prefetch_references is True.  Can be called explictly
+        self.prefetch_references is True.  Can be called explicitly
         when self.prefetch_refences is False.
         """
         # prefetch truly occurs at the Pipeline (or subclass) level.
@@ -673,7 +673,7 @@ class Step:
         return self.name.lower()
 
     def search_attr(self, attribute, default=None, parent_first=False):
-        """Return first non-None attribute in step heirarchy
+        """Return first non-None attribute in step hierarchy
 
         Parameters
         ----------

@@ -37,7 +37,7 @@ class FormatTemplate(Formatter):
         A Python format string
 
     separator : string
-        Separater to use for values which have no
+        Separator to use for values which have no
         matching replacement strings
 
     key_formats : dict or None
