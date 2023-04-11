@@ -9,7 +9,6 @@ from inspect import isclass
 
 from asdf import ValidationError as AsdfValidationError
 from asdf import open as asdf_open
-from stdatamodels import s3_utils
 
 from . import utilities
 from .config import StepConfig
@@ -102,13 +101,6 @@ def load_config_file(config_file):
     """
     Read the file `config_file` and return the parsed configuration.
     """
-    if s3_utils.is_s3_uri(config_file):
-        return _load_config_file_s3(config_file)
-    else:
-        return _load_config_file_filesystem(config_file)
-
-
-def _load_config_file_filesystem(config_file):
     if not os.path.isfile(config_file):
         raise ValueError(f"Config file {config_file} not found.")
     try:
@@ -119,22 +111,6 @@ def _load_config_file_filesystem(config_file):
             "Config file did not parse as ASDF. Trying as ConfigObj: %s", config_file
         )
         return ConfigObj(config_file, raise_errors=True)
-
-
-def _load_config_file_s3(config_file):
-    if not s3_utils.object_exists(config_file):
-        raise ValueError(f"Config file {config_file} not found.")
-
-    content = s3_utils.get_object(config_file)
-    try:
-        with asdf_open(content) as asdf_file:
-            return _config_obj_from_asdf(asdf_file)
-    except (AsdfValidationError, ValueError):
-        logger.debug(
-            "Config file did not parse as ASDF. Trying as ConfigObj: %s", config_file
-        )
-        content.seek(0)
-        return ConfigObj(content, raise_errors=True)
 
 
 def _config_obj_from_asdf(asdf_file):
