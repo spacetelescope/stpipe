@@ -49,7 +49,7 @@ class Step:
     suffix             = string(default=None)        # Default suffix for output files
     search_output_file = boolean(default=True)       # Use outputfile define in parent step
     input_dir          = string(default=None)        # Input directory
-    """
+    """  # noqa: E501
     # Nickname used to refer to this class in lieu of the fully-qualified class
     # name.  Must be globally unique!
     class_alias = None
@@ -194,7 +194,8 @@ class Step:
             )
             if not issubclass(step_class, cls):
                 raise TypeError(
-                    f"Configuration file does not match the expected step class.  Expected {cls}, got {step_class}"
+                    "Configuration file does not match the expected step class. "
+                    f" Expected {cls}, got {step_class}"
                 )
         else:
             step_class = cls
@@ -456,7 +457,8 @@ class Step:
                                         ] = "SKIPPED"
                                     except AttributeError as e:
                                         self.log.info(
-                                            f"Could not record skip into DataModel header: {e}"
+                                            "Could not record skip into DataModel"
+                                            f" header: {e}"
                                         )
                             elif isinstance(args[0], AbstractDataModel):
                                 try:
@@ -465,7 +467,8 @@ class Step:
                                     ] = "SKIPPED"
                                 except AttributeError as e:
                                     self.log.info(
-                                        f"Could not record skip into DataModel header: {e}"
+                                        "Could not record skip into DataModel"
+                                        f" header: {e}"
                                     )
                     step_result = args[0]
                 else:
@@ -521,10 +524,12 @@ class Step:
                                 )
                             except AttributeError:
                                 self.log.warning(
-                                    "`save_results` has been requested, but cannot determine filename."
+                                    "`save_results` has been requested, but cannot"
+                                    " determine filename."
                                 )
                                 self.log.warning(
-                                    "Specify an output file with `--output_file` or set `--save_results=false`"
+                                    "Specify an output file with `--output_file` or set"
+                                    " `--save_results=false`"
                                 )
                             else:
                                 self.log.info(f"Saving file {output_path}")

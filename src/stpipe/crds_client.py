@@ -56,8 +56,8 @@ def get_multiple_reference_paths(parameters, reference_file_types, observatory):
 
 def _get_refpaths(data_dict, reference_file_types, observatory):
     """Tailor the CRDS core library getreferences() call to the stpipe code by
-    adding locking and truncating expected exceptions.   Also simplify 'NOT FOUND n/a' to
-    'N/A'.  Re-interpret empty reference_file_types as "no types" instead of core
+    adding locking and truncating expected exceptions.   Also simplify 'NOT FOUND n/a'
+    to 'N/A'.  Re-interpret empty reference_file_types as "no types" instead of core
     library default of "all types."
     """
     if not reference_file_types:  # [] interpreted as *all types*.
@@ -139,7 +139,8 @@ def get_override_name(reference_file_type):
     """
     if not re.match("^[_A-Za-z][_A-Za-z0-9]*$", reference_file_type):
         raise ValueError(
-            f"{reference_file_type!r} is not a valid reference file type name. It must be an identifier"
+            f"{reference_file_type!r} is not a valid reference file type name. It must"
+            " be an identifier"
         )
     return f"override_{reference_file_type}"
 

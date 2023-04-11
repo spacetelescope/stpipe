@@ -75,7 +75,8 @@ def import_class(full_name, subclassof=object, config_file=None):
             )
         elif not issubclass(step_class, subclassof):
             raise TypeError(
-                f"Class {class_name} from package {package_name} is not a subclass of {subclassof.__name__}"
+                f"Class {class_name} from package {package_name} is not a subclass of"
+                f" {subclassof.__name__}"
             )
     finally:
         if config_file is not None:

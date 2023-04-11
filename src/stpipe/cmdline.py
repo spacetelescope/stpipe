@@ -92,7 +92,8 @@ def _build_arg_parser_from_spec(spec, step_class, parent=None):
                 argument = "--" + ".".join(parts + [key])
                 if argument[2:] in built_in_configuration_parameters:
                     raise ValueError(
-                        f"The Step's spec is trying to override a built-in parameter {argument!r}"
+                        "The Step's spec is trying to override a built-in parameter"
+                        f" {argument!r}"
                     )
                 parser.add_argument(
                     "--" + ".".join(parts + [key]),
@@ -243,7 +244,8 @@ def just_the_step_from_cmdline(args, cls=None):
         if known.verbose:
             if known.logcfg is not None:
                 raise ValueError(
-                    "If --verbose is set, a logging configuration file may not be provided"
+                    "If --verbose is set, a logging configuration file may not be"
+                    " provided"
                 )
             log_config = io.BytesIO(log.MAX_CONFIGURATION)
         elif known.logcfg is not None:
@@ -290,8 +292,8 @@ def just_the_step_from_cmdline(args, cls=None):
     del args.args
 
     # This updates config (a ConfigObj) with the values from the command line arguments
-    # Config is empty if class specified, otherwise contains values from config file specified
-    # on command line
+    # Config is empty if class specified, otherwise contains values from config file
+    # specified on command line
     _override_config_from_args(config, args)
 
     config = step_class.merge_config(config, config_file)

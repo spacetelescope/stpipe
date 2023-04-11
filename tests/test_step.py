@@ -316,7 +316,8 @@ def test_step_list_args(mock_step_crds, config_file_list_arg_step):
         )
     assert (
         e.value.args[0]
-        == "Config parameter 'output_shape': the value \"['1500', '1300', '90']\" is too long."
+        == "Config parameter 'output_shape': the value \"['1500', '1300', '90']\" is"
+        " too long."
     )
 
     with pytest.raises(ValueError) as e:

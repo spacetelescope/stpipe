@@ -26,7 +26,7 @@ class SystemCall(Step):
     exitcode_as_exception = boolean(default=True) # Should a non-zero exit code be converted into an exception?
 
     failure_as_exception = boolean(default=True) # If subprocess fails to run at all, should that be an exception?
-    """
+    """  # noqa: E501
 
     def process(self, *args):
         from .. import datamodels
