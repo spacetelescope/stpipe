@@ -72,7 +72,7 @@ def import_class(full_name, subclassof=object, config_file=None):
         if not isinstance(step_class, type):
             raise TypeError(f"Object {class_name} from package {package_name} is not a class")
         elif not issubclass(step_class, subclassof):
-            raise TypeError(f"Class {class_name} from package {package_name} is not a " f"subclass of {subclassof.__name__}")
+            raise TypeError(f"Class {class_name} from package {package_name} is not a subclass of {subclassof.__name__}")
     finally:
         if config_file is not None:
             del sys.path[0]

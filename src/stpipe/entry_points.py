@@ -36,7 +36,7 @@ def get_steps():
         except Exception as e:
             warnings.warn(
                 f"{STEPS_GROUP} plugin from package {package_name}=={package_version} "
-                f"failed to load:\n\n"
+                "failed to load:\n\n"
                 f"{e.__class__.__name__}: {e}"
             )
 

@@ -296,7 +296,7 @@ def test_step_list_args(mock_step_crds, config_file_list_arg_step):
             ],
             ListArgStep,
         )
-    assert e.value.args[0] == "Config parameter 'output_shape': the value " "\"['1500', '1300', '90']\" is too long."
+    assert e.value.args[0] == "Config parameter 'output_shape': the value \"['1500', '1300', '90']\" is too long."
 
     with pytest.raises(ValueError) as e:
         cmdline.just_the_step_from_cmdline(
@@ -311,7 +311,7 @@ def test_step_list_args(mock_step_crds, config_file_list_arg_step):
             ],
             ListArgStep,
         )
-    assert e.value.args[0] == "Config parameter 'output_shape': the value " "\"['1500']\" is too short."
+    assert e.value.args[0] == "Config parameter 'output_shape': the value \"['1500']\" is too short."
 
     with pytest.raises(ValueError) as e:
         cmdline.just_the_step_from_cmdline(
@@ -326,7 +326,7 @@ def test_step_list_args(mock_step_crds, config_file_list_arg_step):
             ],
             ListArgStep,
         )
-    assert e.value.args[0] == "Config parameter 'output_shape': the value " '"1500" is of the wrong type.'
+    assert e.value.args[0] == "Config parameter 'output_shape': the value \"1500\" is of the wrong type."
 
     with pytest.raises(ValueError) as e:
         cmdline.just_the_step_from_cmdline(
@@ -341,7 +341,7 @@ def test_step_list_args(mock_step_crds, config_file_list_arg_step):
             ],
             ListArgStep,
         )
-    assert e.value.args[0] == "Config parameter 'output_shape': the value " '"1500.5" is of the wrong type.'
+    assert e.value.args[0] == "Config parameter 'output_shape': the value \"1500.5\" is of the wrong type."
 
 
 def test_logcfg_routing(tmpdir):

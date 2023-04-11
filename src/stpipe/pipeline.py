@@ -251,7 +251,7 @@ class Pipeline(Step):
             with self.open_model(input_file, asn_n_members=1, asn_exptypes=["science"]) as model:
                 self._precache_references_opened(model)
         except (ValueError, TypeError, OSError):
-            self.log.info(f"First argument {input_file} does not appear to be a " "model")
+            self.log.info(f"First argument {input_file} does not appear to be a model")
 
     def _precache_references_opened(self, model_or_container):
         """Pre-fetches references for `model_or_container`.

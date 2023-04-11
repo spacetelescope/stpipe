@@ -44,7 +44,7 @@ def _get_config_and_class(identifier):
         try:
             step_class = utilities.import_class(utilities.resolve_step_class_alias(identifier), Step)
         except (ImportError, AttributeError, TypeError):
-            raise ValueError("{!r} is not a path to a config file or a Python Step " "class".format(identifier))
+            raise ValueError(f"{identifier!r} is not a path to a config file or a Python Step class")
         # Don't validate yet
         config = config_parser.config_from_dict({})
         name = None
@@ -87,7 +87,7 @@ def _build_arg_parser_from_spec(spec, step_class, parent=None):
                 comment = comment.lstrip("#").strip()
                 argument = "--" + ".".join(parts + [key])
                 if argument[2:] in built_in_configuration_parameters:
-                    raise ValueError("The Step's spec is trying to override a built-in " f"parameter {argument!r}")
+                    raise ValueError(f"The Step's spec is trying to override a built-in parameter {argument!r}")
                 parser.add_argument(
                     "--" + ".".join(parts + [key]),
                     type=str,
@@ -232,7 +232,7 @@ def just_the_step_from_cmdline(args, cls=None):
         log_config = None
         if known.verbose:
             if known.logcfg is not None:
-                raise ValueError("If --verbose is set, a logging configuration file may " "not be provided")
+                raise ValueError("If --verbose is set, a logging configuration file may not be provided")
             log_config = io.BytesIO(log.MAX_CONFIGURATION)
         elif known.logcfg is not None:
             if not os.path.exists(known.logcfg):

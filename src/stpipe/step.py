@@ -179,11 +179,7 @@ class Step:
                 config_file=config_file,
             )
             if not issubclass(step_class, cls):
-                raise TypeError(
-                    "Configuration file does not match the "
-                    "expected step class.  Expected {}, "
-                    "got {}".format(cls, step_class)
-                )
+                raise TypeError(f"Configuration file does not match the expected step class.  Expected {cls}, got {step_class}")
         else:
             step_class = cls
 
@@ -496,8 +492,8 @@ class Step:
                             try:
                                 output_path = self.make_output_path(idx=idx, name_format=self.name_format)
                             except AttributeError:
-                                self.log.warning("`save_results` has been requested," " but cannot determine filename.")
-                                self.log.warning("Specify an output file with `--output_file`" " or set `--save_results=false`")
+                                self.log.warning("`save_results` has been requested, but cannot determine filename.")
+                                self.log.warning("Specify an output file with `--output_file` or set `--save_results=false`")
                             else:
                                 self.log.info(f"Saving file {output_path}")
                                 result.save(output_path, overwrite=True)
@@ -857,7 +853,7 @@ class Step:
         """
         self._set_input_dir(obj, exclusive=exclusive)
 
-        err_message = "Cannot set master input file name from object" " {}".format(obj)
+        err_message = f"Cannot set master input file name from object {obj}"
         parent_input_filename = self.search_attr("_input_filename")
         if not exclusive or parent_input_filename is None:
             if isinstance(obj, str):
@@ -1105,7 +1101,7 @@ class Step:
                 if hasattr(item, "close"):
                     item.close()
             except Exception as exception:
-                self.log.debug('Could not close "{}"' "Reason:\n{}".format(item, exception))
+                self.log.debug(f'Could not close "{item}"Reason:\n{exception}')
         for item in to_del:
             try:
                 del item

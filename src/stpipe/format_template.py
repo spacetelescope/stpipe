@@ -164,8 +164,7 @@ class FormatTemplate(Formatter):
                         break
                 else:
                     raise RuntimeError(
-                        "No suitable formatting for {key}: {value} found. Given formatting options:"
-                        "\n\t{formats}".format(
+                        "No suitable formatting for {key}: {value} found. Given formatting options:\n\t{formats}".format(
                             key=key,
                             value=value,
                             formats=self.key_formats[key],
