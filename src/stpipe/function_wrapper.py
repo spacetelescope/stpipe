@@ -8,6 +8,7 @@ class FunctionWrapper(Step):
     """
     This Step wraps an ordinary Python function.
     """
+
     def __init__(self, func, *args):
         Step.__init__(self, func.__name__, *args)
 

@@ -1,24 +1,26 @@
 """
 Our configuration files are ConfigObj/INI files.
 """
-from inspect import isclass
 import logging
 import os
 import os.path
 import textwrap
+from inspect import isclass
 
-from asdf import open as asdf_open
 from asdf import ValidationError as AsdfValidationError
+from asdf import open as asdf_open
 from stdatamodels import s3_utils
-
-from .extern.configobj.configobj import (
-    ConfigObj, Section, flatten_errors, get_extra_values)
-from .extern.configobj.validate import Validator, ValidateError, VdtTypeError
 
 from . import utilities
 from .config import StepConfig
 from .datamodel import AbstractDataModel
-
+from .extern.configobj.configobj import (
+    ConfigObj,
+    Section,
+    flatten_errors,
+    get_extra_values,
+)
+from .extern.configobj.validate import ValidateError, Validator, VdtTypeError
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -32,7 +34,7 @@ class ValidationError(Exception):
 def _get_input_file_check(root_dir):
     from . import cmdline
 
-    root_dir = root_dir or ''
+    root_dir = root_dir or ""
 
     def _input_file_check(path):
         if not isinstance(path, cmdline.FromCommandLine):
@@ -45,8 +47,7 @@ def _get_input_file_check(root_dir):
 
         path = os.path.abspath(path)
         if not os.path.exists(path):
-            raise ValidateError(
-                f"Path {path!r} does not exist")
+            raise ValidateError(f"Path {path!r} does not exist")
 
         return path
 
@@ -56,7 +57,7 @@ def _get_input_file_check(root_dir):
 def _get_output_file_check(root_dir):
     from . import cmdline
 
-    root_dir = root_dir or ''
+    root_dir = root_dir or ""
 
     def _output_file_check(path):
         if not isinstance(path, cmdline.FromCommandLine):
@@ -114,7 +115,9 @@ def _load_config_file_filesystem(config_file):
         with asdf_open(config_file) as asdf_file:
             return _config_obj_from_asdf(asdf_file)
     except (AsdfValidationError, ValueError):
-        logger.debug('Config file did not parse as ASDF. Trying as ConfigObj: %s', config_file)
+        logger.debug(
+            "Config file did not parse as ASDF. Trying as ConfigObj: %s", config_file
+        )
         return ConfigObj(config_file, raise_errors=True)
 
 
@@ -127,7 +130,9 @@ def _load_config_file_s3(config_file):
         with asdf_open(content) as asdf_file:
             return _config_obj_from_asdf(asdf_file)
     except (AsdfValidationError, ValueError):
-        logger.debug('Config file did not parse as ASDF. Trying as ConfigObj: %s', config_file)
+        logger.debug(
+            "Config file did not parse as ASDF. Trying as ConfigObj: %s", config_file
+        )
         content.seek(0)
         return ConfigObj(content, raise_errors=True)
 
@@ -142,7 +147,10 @@ def _config_obj_from_step_config(config):
     merge_config(configobj, config.parameters)
     merge_config(configobj, {"class": config.class_name, "name": config.name})
     if len(config.steps) > 0:
-        merge_config(configobj, {"steps": { s.name: _config_obj_from_step_config(s) for s in config.steps }})
+        merge_config(
+            configobj,
+            {"steps": {s.name: _config_obj_from_step_config(s) for s in config.steps}},
+        )
     return configobj
 
 
@@ -199,22 +207,26 @@ def load_spec_file(cls, preserve_comments=False):
     # from the base class.
     if not isclass(cls):
         cls = cls.__class__
-    if 'spec' in cls.__dict__:
+    if "spec" in cls.__dict__:
         spec = cls.spec.strip()
         spec_file = textwrap.dedent(spec)
-        spec_file = spec_file.split('\n')
+        spec_file = spec_file.split("\n")
         encoded = []
         for line in spec_file:
             if isinstance(line, str):
-                encoded.append(line.encode('utf8'))
+                encoded.append(line.encode("utf8"))
             else:
                 encoded.append(line)
         spec_file = encoded
     else:
         spec_file = utilities.find_spec_file(cls)
     if spec_file:
-        return ConfigObj(spec_file, _inspec=not preserve_comments,
-                         raise_errors=True, list_values=False)
+        return ConfigObj(
+            spec_file,
+            _inspec=not preserve_comments,
+            raise_errors=True,
+            list_values=False,
+        )
     return
 
 
@@ -247,7 +259,11 @@ def merge_config(into, new):
         if isinstance(val, Section):
             if key not in into:
                 section = Section(
-                    into, into.depth + 1, into.main, name=key)
+                    into,
+                    into.depth + 1,
+                    into.main,
+                    name=key,
+                )
                 into[key] = section
             merge_config(into[key], val)
         elif key not in defaults:
@@ -292,7 +308,9 @@ def config_from_dict(d, spec=None, root_dir=None, allow_missing=False):
     return config
 
 
-def validate(config, spec, section=None, validator=None, root_dir=None, allow_missing=False):
+def validate(
+    config, spec, section=None, validator=None, root_dir=None, allow_missing=False
+):
     """
     Parse config_file, in INI format, and do validation with the
     provided specfile.
@@ -325,10 +343,10 @@ def validate(config, spec, section=None, validator=None, root_dir=None, allow_mi
 
     if validator is None:
         validator = Validator()
-        validator.functions['input_file'] = _get_input_file_check(root_dir)
-        validator.functions['output_file'] = _get_output_file_check(root_dir)
-        validator.functions['is_datamodel'] = _is_datamodel
-        validator.functions['is_string_or_datamodel'] = _is_string_or_datamodel
+        validator.functions["input_file"] = _get_input_file_check(root_dir)
+        validator.functions["output_file"] = _get_output_file_check(root_dir)
+        validator.functions["is_datamodel"] = _is_datamodel
+        validator.functions["is_string_or_datamodel"] = _is_string_or_datamodel
 
     orig_configspec = config.main.configspec
     config.main.configspec = spec
@@ -340,8 +358,10 @@ def validate(config, spec, section=None, validator=None, root_dir=None, allow_mi
             section = None
 
         errors = config.main.validate(
-            validator, preserve_errors=True,
-            section=section)
+            validator,
+            preserve_errors=True,
+            section=section,
+        )
 
         messages = []
         if errors is not True:
@@ -349,30 +369,28 @@ def validate(config, spec, section=None, validator=None, root_dir=None, allow_mi
                 if key is not None:
                     section_list.append(key)
                 else:
-                    section_list.append('[missing section]')
-                section_string = '/'.join(section_list)
+                    section_list.append("[missing section]")
+                section_string = "/".join(section_list)
                 if err == False:
                     if allow_missing:
                         config[key] = spec[key]
                         continue
                     else:
-                        err = 'missing'
+                        err = "missing"
 
-                messages.append(
-                    f"Config parameter {section_string!r}: {err}")
+                messages.append(f"Config parameter {section_string!r}: {err}")
 
         extra_values = get_extra_values(config)
         if extra_values:
             sections, name = extra_values[0]
             if len(sections) == 0:
-                sections = 'root'
+                sections = "root"
             else:
-                sections = '/'.join(sections)
-            messages.append(
-                f"Extra value {name!r} in {sections}")
+                sections = "/".join(sections)
+            messages.append(f"Extra value {name!r} in {sections}")
 
         if len(messages):
-            raise ValidationError('\n'.join(messages))
+            raise ValidationError("\n".join(messages))
     finally:
         config.main.configspec = orig_configspec
 
@@ -397,9 +415,9 @@ def _parse(val):
     """
     Parse scalar strings into scalar python types.
     """
-    if val.lower() == 'true':
+    if val.lower() == "true":
         return True
-    elif val.lower() == 'false':
+    elif val.lower() == "false":
         return False
     try:
         return int(val)

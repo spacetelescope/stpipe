@@ -14,7 +14,7 @@ def clean_up_logging():
 
 
 def test_configuration(tmpdir):
-    logfilename = tmpdir.join('output.log')
+    logfilename = tmpdir.join("output.log")
 
     configuration = """
 [.]
@@ -22,7 +22,9 @@ handler = file:{}
 break_level = ERROR
 level = WARNING
 format = '%(message)s'
-""".format(logfilename)
+""".format(
+        logfilename
+    )
 
     fd = io.StringIO()
     fd.write(configuration)
@@ -43,14 +45,16 @@ format = '%(message)s'
     with open(logfilename) as fd:
         lines = [x.strip() for x in fd.readlines()]
 
-    assert lines == ['Shown', 'Breaking']
+    assert lines == ["Shown", "Breaking"]
 
 
 def test_record_logs():
     stpipe_logger = stpipe_log.getLogger(stpipe_log.STPIPE_ROOT_LOGGER)
     root_logger = stpipe_log.getLogger()
 
-    assert not any(isinstance(h, stpipe_log.RecordingHandler) for h in root_logger.handlers)
+    assert not any(
+        isinstance(h, stpipe_log.RecordingHandler) for h in root_logger.handlers
+    )
 
     with stpipe_log.record_logs(level=logging.ERROR) as log_records:
         stpipe_logger.warning("Warning from stpipe")
@@ -58,7 +62,9 @@ def test_record_logs():
         root_logger.warning("Warning from root")
         root_logger.error("Error from root")
 
-    assert not any(isinstance(h, stpipe_log.RecordingHandler) for h in root_logger.handlers)
+    assert not any(
+        isinstance(h, stpipe_log.RecordingHandler) for h in root_logger.handlers
+    )
 
     stpipe_logger.error("Additional error from stpipe")
     root_logger.error("Additional error from root")

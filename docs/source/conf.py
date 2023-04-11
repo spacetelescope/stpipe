@@ -1,10 +1,13 @@
 import importlib
-import stsci_rtd_theme
 import sys
+
+import stsci_rtd_theme
+
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
+
 from datetime import datetime
 from pathlib import Path
 
@@ -26,12 +29,12 @@ sys.path.insert(0, str(REPO_ROOT / "src" / "stpipe"))
 # values here:
 with open(REPO_ROOT / "pyproject.toml", "rb") as configuration_file:
     conf = tomllib.load(configuration_file)
-setup_metadata = conf['project']
+setup_metadata = conf["project"]
 
 project = setup_metadata["name"]
 primary_author = setup_metadata["authors"][0]
 author = f'{primary_author["name"]} <{primary_author["email"]}>'
-copyright = f'{datetime.now().year}, {author}'
+copyright = f"{datetime.now().year}, {author}"
 
 package = importlib.import_module(project)
 version = package.__version__.split("-", 1)[0]
@@ -48,7 +51,7 @@ autoclass_content = "both"
 
 html_theme = "stsci_rtd_theme"
 html_theme_options = {
-    "collapse_navigation": True
+    "collapse_navigation": True,
 }
 html_theme_path = [stsci_rtd_theme.get_html_theme_path()]
 html_domain_indices = True

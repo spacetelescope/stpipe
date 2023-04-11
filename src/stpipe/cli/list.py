@@ -2,13 +2,12 @@
 Implements the 'stpipe list' command, which lists available
 Step subclasses.
 """
-import sys
-
 import argparse
 import re
+import sys
 
-from .command import Command
 from .. import entry_points
+from .command import Command
 
 
 class ListCommand(Command):
@@ -34,13 +33,28 @@ examples:
             formatter_class=argparse.RawDescriptionHelpFormatter,
             description="list available classes",
             help="list available classes",
-    )
+        )
 
-        parser.add_argument("pattern", metavar="<pattern>", help="restrict classes to glob pattern (case-insensitive)", nargs="?")
+        parser.add_argument(
+            "pattern",
+            metavar="<pattern>",
+            help="restrict classes to glob pattern (case-insensitive)",
+            nargs="?",
+        )
 
         group = parser.add_mutually_exclusive_group()
-        group.add_argument("--pipelines-only", help="list only pipeline classes", action="store_true", default=False)
-        group.add_argument("--steps-only", help="list only step classes", action="store_true", default=False)
+        group.add_argument(
+            "--pipelines-only",
+            help="list only pipeline classes",
+            action="store_true",
+            default=False,
+        )
+        group.add_argument(
+            "--steps-only",
+            help="list only step classes",
+            action="store_true",
+            default=False,
+        )
 
     @classmethod
     def run(cls, args):
@@ -72,6 +86,8 @@ def _filter_pattern(pattern, steps):
     pattern = re.compile(re.escape(pattern.lower()).replace(r"\*", ".*"))
 
     return [
-        s for s in steps
-        if pattern.fullmatch(s.class_name.lower()) or (s.class_alias is not None and pattern.fullmatch(s.class_alias.lower()))
+        s
+        for s in steps
+        if pattern.fullmatch(s.class_name.lower())
+        or (s.class_alias is not None and pattern.fullmatch(s.class_alias.lower()))
     ]

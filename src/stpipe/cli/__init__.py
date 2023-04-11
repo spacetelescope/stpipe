@@ -4,5 +4,4 @@ implementation of 'strun').
 """
 from .main import handle_args
 
-
 __all__ = ["handle_args"]

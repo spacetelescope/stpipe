@@ -5,6 +5,8 @@
   catching ``ResourceWarning`` s. [#90]
 
 - Start using ``pre-commit`` to handle style checks. [#79]
+- Apply the ``isort`` and ``black`` code formatters and reduce the line length
+  maximum to 88 characters. [#80]
 
 0.4.6 (2023-03-27)
 ==================

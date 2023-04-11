@@ -1,11 +1,12 @@
 """
 Step
 """
+import gc
+import os
+import sys
 from collections.abc import Sequence
 from contextlib import contextmanager
 from functools import partial
-import gc
-import os
 from os.path import (
     abspath,
     basename,
@@ -17,19 +18,15 @@ from os.path import (
     split,
     splitext,
 )
-import sys
 
 try:
     from astropy.io import fits
+
     DISCOURAGED_TYPES = (fits.HDUList,)
 except ImportError:
     DISCOURAGED_TYPES = None
 
-from . import config
-from . import config_parser
-from . import crds_client
-from . import log
-from . import utilities
+from . import config, config_parser, crds_client, log, utilities
 from .datamodel import AbstractDataModel
 from .format_template import FormatTemplate
 
@@ -38,6 +35,7 @@ class Step:
     """
     Step
     """
+
     spec = """
     pre_hooks          = string_list(default=list())
     post_hooks         = string_list(default=list())
@@ -51,7 +49,7 @@ class Step:
     suffix             = string(default=None)        # Default suffix for output files
     search_output_file = boolean(default=True)       # Use outputfile define in parent step
     input_dir          = string(default=None)        # Input directory
-    """
+    """  # noqa: E501
     # Nickname used to refer to this class in lieu of the fully-qualified class
     # name.  Must be globally unique!
     class_alias = None
@@ -94,13 +92,15 @@ class Step:
     @classmethod
     def load_spec_file(cls, preserve_comments=False):
         spec = config_parser.get_merged_spec_file(
-            cls, preserve_comments=preserve_comments)
+            cls, preserve_comments=preserve_comments
+        )
         # Add arguments for all of the expected reference files
         for reference_file_type in cls.reference_file_types:
             override_name = crds_client.get_override_name(reference_file_type)
-            spec[override_name] = 'is_string_or_datamodel(default=None)'
-            spec.inline_comments[override_name] = (
-                f'# Override the {reference_file_type} reference file')
+            spec[override_name] = "is_string_or_datamodel(default=None)"
+            spec.inline_comments[
+                override_name
+            ] = f"# Override the {reference_file_type} reference file"
         return spec
 
     @classmethod
@@ -145,14 +145,22 @@ class Step:
         config = config_parser.load_config_file(config_file)
 
         # If a file object was passed in, pass the file name along
-        if hasattr(config_file, 'name'):
+        if hasattr(config_file, "name"):
             config_file = config_file.name
 
         step_class, name = cls._parse_class_and_name(
-            config, parent, name, config_file)
+            config,
+            parent,
+            name,
+            config_file,
+        )
 
         return step_class.from_config_section(
-            config, parent=parent, name=name, config_file=config_file)
+            config,
+            parent=parent,
+            name=name,
+            config_file=config_file,
+        )
 
     @staticmethod
     def from_cmdline(args):
@@ -179,35 +187,42 @@ class Step:
 
     @classmethod
     def _parse_class_and_name(cls, config, parent=None, name=None, config_file=None):
-        if 'class' in config:
-            step_class = utilities.import_class(utilities.resolve_step_class_alias(config['class']),
-                                                config_file=config_file)
+        if "class" in config:
+            step_class = utilities.import_class(
+                utilities.resolve_step_class_alias(config["class"]),
+                config_file=config_file,
+            )
             if not issubclass(step_class, cls):
                 raise TypeError(
-                    "Configuration file does not match the "
-                    "expected step class.  Expected {}, "
-                    "got {}".format(cls, step_class))
+                    "Configuration file does not match the expected step class. "
+                    f" Expected {cls}, got {step_class}"
+                )
         else:
             step_class = cls
 
         if not name:
-            name = config.get('name')
+            name = config.get("name")
             if not name:
                 if isinstance(config_file, str):
                     name = splitext(basename(config_file))[0]
                 else:
                     name = step_class.__name__
 
-        if 'name' in config:
-            del config['name']
-        if 'class' in config:
-            del config['class']
+        if "name" in config:
+            del config["name"]
+        if "class" in config:
+            del config["class"]
 
         return step_class, name
 
     @classmethod
-    def from_config_section(cls, config, parent=None, name=None,
-                            config_file=None):
+    def from_config_section(
+        cls,
+        config,
+        parent=None,
+        name=None,
+        config_file=None,
+    ):
         """
         Create a step from a configuration file fragment.
 
@@ -237,27 +252,26 @@ class Step:
             set as member variables on the returned `Step` instance.
         """
         if not name:
-            if config.get('name'):
-                name = config['name']
+            if config.get("name"):
+                name = config["name"]
             else:
                 name = cls.__name__
 
-        if 'name' in config:
-            del config['name']
-        if 'class' in config:
-            del config['class']
-        if 'config_file' in config:
-            del config['config_file']
+        if "name" in config:
+            del config["name"]
+        if "class" in config:
+            del config["class"]
+        if "config_file" in config:
+            del config["config_file"]
 
         spec = cls.load_spec_file()
         config = cls.merge_config(config, config_file)
-        config_parser.validate(
-            config, spec, root_dir=dirname(config_file or ''))
+        config_parser.validate(config, spec, root_dir=dirname(config_file or ""))
 
-        if 'config_file' in config:
-            del config['config_file']
-        if 'name' in config:
-            del config['name']
+        if "config_file" in config:
+            del config["config_file"]
+        if "name" in config:
+            del config["name"]
 
         # cmdline.FromCommandLine instances should not be passed to
         # steps. Instead, convert them back to strings.
@@ -275,12 +289,19 @@ class Step:
             parent=parent,
             config_file=config_file,
             _validate_kwds=False,
-            **kwargs)
+            **kwargs,
+        )
 
         return step
 
-    def __init__(self, name=None, parent=None, config_file=None,
-                 _validate_kwds=True, **kws):
+    def __init__(
+        self,
+        name=None,
+        parent=None,
+        config_file=None,
+        _validate_kwds=True,
+        **kws,
+    ):
         """
         Create a `Step` instance.
 
@@ -314,21 +335,22 @@ class Step:
         if _validate_kwds:
             spec = self.load_spec_file()
             kws = config_parser.config_from_dict(
-                kws, spec, root_dir=dirname(config_file or ''))
+                kws,
+                spec,
+                root_dir=dirname(config_file or ""),
+            )
 
         if name is None:
             name = self.__class__.__name__
         self.name = name
         if parent is None:
-            self.qualified_name = '.'.join([
-                log.STPIPE_ROOT_LOGGER, self.name])
+            self.qualified_name = ".".join([log.STPIPE_ROOT_LOGGER, self.name])
         else:
-            self.qualified_name = '.'.join([
-                parent.qualified_name, self.name])
+            self.qualified_name = ".".join([parent.qualified_name, self.name])
         self.parent = parent
 
         # Set the parameters as member variables
-        for (key, val) in kws.items():
+        for key, val in kws.items():
             setattr(self, key, val)
 
         # Create a new logger for this step
@@ -337,7 +359,7 @@ class Step:
         self.log.setLevel(log.logging.DEBUG)
 
         # Log the fact that we have been init-ed.
-        self.log.info(f'{self.__class__.__name__} instance created.')
+        self.log.info(f"{self.__class__.__name__} instance created.")
 
         # Store the config file path so config filenames can be resolved
         # against it.
@@ -346,12 +368,9 @@ class Step:
         # Setup the hooks
         if len(self.pre_hooks) or len(self.post_hooks):
             from . import hooks
-            self._pre_hooks = hooks.get_hook_objects(
-                self, 'pre', self.pre_hooks
-            )
-            self._post_hooks = hooks.get_hook_objects(
-                self, 'post', self.post_hooks
-            )
+
+            self._pre_hooks = hooks.get_hook_objects(self, "pre", self.pre_hooks)
+            self._post_hooks = hooks.get_hook_objects(self, "post", self.post_hooks)
         else:
             self._pre_hooks = []
             self._post_hooks = []
@@ -366,8 +385,8 @@ class Step:
         for i, arg in enumerate(args):
             if isinstance(arg, discouraged_types):
                 self.log.error(
-                    "{} {} object.  Use an instance of AbstractDataModel instead.".format(
-                        msg, i))
+                    f"{msg} {i} object.  Use an instance of AbstractDataModel instead."
+                )
 
     @property
     def log_records(self):
@@ -397,13 +416,9 @@ class Step:
 
             step_result = None
 
-            self.log.info(
-                f'Step {self.name} running with args {args}.'
-            )
+            self.log.info(f"Step {self.name} running with args {args}.")
 
-            self.log.info(
-                f'Step {self.name} parameters are: {self.get_pars()}'
-            )
+            self.log.info(f"Step {self.name} parameters are: {self.get_pars()}")
 
             if len(args):
                 self.set_primary_input(args[0])
@@ -431,20 +446,30 @@ class Step:
 
                 # Run the Step-specific code.
                 if self.skip:
-                    self.log.info('Step skipped.')
+                    self.log.info("Step skipped.")
                     if isinstance(args[0], AbstractDataModel):
                         if self.class_alias is not None:
                             if isinstance(args[0], Sequence):
                                 for model in args[0]:
                                     try:
-                                        model[f"meta.cal_step.{self.class_alias}"] = 'SKIPPED'
+                                        model[
+                                            f"meta.cal_step.{self.class_alias}"
+                                        ] = "SKIPPED"
                                     except AttributeError as e:
-                                        self.log.info(f"Could not record skip into DataModel header: {e}")
+                                        self.log.info(
+                                            "Could not record skip into DataModel"
+                                            f" header: {e}"
+                                        )
                             elif isinstance(args[0], AbstractDataModel):
                                 try:
-                                    args[0][f"meta.cal_step.{self.class_alias}"] = 'SKIPPED'
+                                    args[0][
+                                        f"meta.cal_step.{self.class_alias}"
+                                    ] = "SKIPPED"
                                 except AttributeError as e:
-                                    self.log.info(f"Could not record skip into DataModel header: {e}")
+                                    self.log.info(
+                                        "Could not record skip into DataModel"
+                                        f" header: {e}"
+                                    )
                     step_result = args[0]
                 else:
                     if self.prefetch_references:
@@ -453,9 +478,7 @@ class Step:
                         step_result = self.process(*args)
                     except TypeError as e:
                         if "process() takes exactly" in str(e):
-                            raise TypeError(
-                                "Incorrect number of arguments to step"
-                            )
+                            raise TypeError("Incorrect number of arguments to step")
                         raise
 
                 # Warn if returning a discouraged object
@@ -483,7 +506,6 @@ class Step:
 
                 # Save the output file if one was specified
                 if not self.skip and self.save_results:
-
                     # Setup the save list.
                     if not isinstance(step_result, (list, tuple)):
                         results_to_save = [step_result]
@@ -495,26 +517,25 @@ class Step:
                             idx = None
                         if isinstance(result, AbstractDataModel):
                             self.save_model(result, idx=idx, format=self.name_format)
-                        elif hasattr(result, 'save'):
+                        elif hasattr(result, "save"):
                             try:
-                                output_path = self.make_output_path(idx=idx, name_format=self.name_format)
+                                output_path = self.make_output_path(
+                                    idx=idx, name_format=self.name_format
+                                )
                             except AttributeError:
                                 self.log.warning(
-                                    '`save_results` has been requested,'
-                                    ' but cannot determine filename.'
+                                    "`save_results` has been requested, but cannot"
+                                    " determine filename."
                                 )
                                 self.log.warning(
-                                    'Specify an output file with `--output_file`'
-                                    ' or set `--save_results=false`'
+                                    "Specify an output file with `--output_file` or set"
+                                    " `--save_results=false`"
                                 )
                             else:
-                                self.log.info(
-                                    f'Saving file {output_path}'
-                                )
+                                self.log.info(f"Saving file {output_path}")
                                 result.save(output_path, overwrite=True)
 
-                self.log.info(
-                    f'Step {self.name} done')
+                self.log.info(f"Step {self.name} done")
             finally:
                 log.delegator.log = orig_log
 
@@ -573,14 +594,14 @@ class Step:
         override this method. The default behaviour is to raise a
         NotImplementedError exception.
         """
-        raise NotImplementedError('Steps have to override process().')
+        raise NotImplementedError("Steps have to override process().")
 
     def resolve_file_name(self, file_name):
         """
         Resolve a file name expressed relative to this Step's
         configuration file.
         """
-        return join(dirname(self.config_file or ''), file_name)
+        return join(dirname(self.config_file or ""), file_name)
 
     @classmethod
     def call(cls, *args, **kwargs):
@@ -613,27 +634,26 @@ class Step:
             filename = args[0]
         config, config_file = cls.build_config(filename, **kwargs)
 
-        if 'class' in config:
-            del config['class']
+        if "class" in config:
+            del config["class"]
 
-        if 'logcfg' in config:
+        if "logcfg" in config:
             try:
-                log.load_configuration(config['logcfg'])
+                log.load_configuration(config["logcfg"])
             except Exception as e:
                 raise RuntimeError(
                     f"Error parsing logging config {config['logcfg']}"
                 ) from e
-            del config['logcfg']
+            del config["logcfg"]
 
-        name = config.get('name', None)
-        instance = cls.from_config_section(config,
-            name=name, config_file=config_file)
+        name = config.get("name", None)
+        instance = cls.from_config_section(config, name=name, config_file=config_file)
 
         return instance.run(*args)
 
     @property
     def input_dir(self):
-        return self.search_attr('_input_dir', '')
+        return self.search_attr("_input_dir", "")
 
     @input_dir.setter
     def input_dir(self, input_dir):
@@ -643,12 +663,9 @@ class Step:
         """Create a default filename based on the input name"""
         output_file = input_file
         if output_file is None or not isinstance(output_file, str):
-                output_file = self.search_attr('_input_filename')
+            output_file = self.search_attr("_input_filename")
         if output_file is None:
-            output_file = 'step_{}{}'.format(
-                self.name,
-                self.output_ext
-            )
+            output_file = f"step_{self.name}{self.output_ext}"
         return output_file
 
     def default_suffix(self):
@@ -676,9 +693,7 @@ class Step:
         """
         if parent_first:
             try:
-                value = self.parent.search_attr(
-                    attribute, parent_first=parent_first
-                )
+                value = self.parent.search_attr(attribute, parent_first=parent_first)
             except AttributeError:
                 value = None
             if value is None:
@@ -717,7 +732,7 @@ class Step:
         if isinstance(path, AbstractDataModel):
             return path
         else:
-            return abspath(path) if path and path != 'N/A' else path
+            return abspath(path) if path and path != "N/A" else path
 
     def get_reference_file(self, input_file, reference_file_type):
         """
@@ -746,11 +761,13 @@ class Step:
         if override is not None:
             if isinstance(override, AbstractDataModel):
                 self._reference_files_used.append(
-                    (reference_file_type, override.override_handle))
+                    (reference_file_type, override.override_handle)
+                )
                 return override
             elif override.strip() != "":
                 self._reference_files_used.append(
-                    (reference_file_type, basename(override)))
+                    (reference_file_type, basename(override))
+                )
                 reference_name = override
             else:
                 return ""
@@ -765,14 +782,11 @@ class Step:
                 hdr_name = "crds://" + basename(reference_name)
             else:
                 hdr_name = "N/A"
-            self._reference_files_used.append(
-                (reference_file_type, hdr_name))
+            self._reference_files_used.append((reference_file_type, hdr_name))
         return crds_client.check_reference_open(reference_name)
 
     @classmethod
-    def get_config_from_reference(cls, dataset,
-                                  disable=None,
-                                  crds_observatory=None):
+    def get_config_from_reference(cls, dataset, disable=None, crds_observatory=None):
         """Retrieve step parameters from reference database
 
         Parameters
@@ -818,39 +832,43 @@ class Step:
                 crds_parameters = model.get_crds_parameters()
                 crds_observatory = model.crds_observatory
             except (OSError, TypeError, ValueError):
-                logger.warning('Input dataset is not an instance of AbstractDataModel.')
+                logger.warning("Input dataset is not an instance of AbstractDataModel.")
                 disable = True
 
         # Check if retrieval should be attempted.
         if disable is None:
             disable = get_disable_crds_steppars()
         if disable:
-            logger.info(f'{reftype.upper()}: CRDS parameter reference retrieval disabled.')
+            logger.info(
+                f"{reftype.upper()}: CRDS parameter reference retrieval disabled."
+            )
             return config_parser.ConfigObj()
 
         # Retrieve step parameters from CRDS
-        logger.debug(f'Retrieving step {reftype.upper()} parameters from CRDS')
+        logger.debug(f"Retrieving step {reftype.upper()} parameters from CRDS")
         try:
-            ref_file = crds_client.get_reference_file(crds_parameters,
-                                                      reftype,
-                                                      crds_observatory)
+            ref_file = crds_client.get_reference_file(
+                crds_parameters,
+                reftype,
+                crds_observatory,
+            )
         except (AttributeError, crds_client.CrdsError):
-            logger.debug(f'{reftype.upper()}: No parameters found')
+            logger.debug(f"{reftype.upper()}: No parameters found")
             return config_parser.ConfigObj()
-        if ref_file != 'N/A':
-            logger.info(f'{reftype.upper()} parameters found: {ref_file}')
+        if ref_file != "N/A":
+            logger.info(f"{reftype.upper()} parameters found: {ref_file}")
             ref = config_parser.load_config_file(ref_file)
 
             ref_pars = {
-                par: value
-                for par, value in ref.items()
-                if par not in ['class', 'name']
+                par: value for par, value in ref.items() if par not in ["class", "name"]
             }
-            logger.debug(f'{reftype.upper()} parameters retrieved from CRDS: {ref_pars}')
+            logger.debug(
+                f"{reftype.upper()} parameters retrieved from CRDS: {ref_pars}"
+            )
 
             return ref
         else:
-            logger.debug(f'No {reftype.upper()} reference files found.')
+            logger.debug(f"No {reftype.upper()} reference files found.")
             return config_parser.ConfigObj()
 
     @classmethod
@@ -884,11 +902,8 @@ class Step:
         """
         self._set_input_dir(obj, exclusive=exclusive)
 
-        err_message = (
-            'Cannot set master input file name from object'
-            ' {}'.format(obj)
-        )
-        parent_input_filename = self.search_attr('_input_filename')
+        err_message = f"Cannot set master input file name from object {obj}"
+        parent_input_filename = self.search_attr("_input_filename")
         if not exclusive or parent_input_filename is None:
             if isinstance(obj, str):
                 self._input_filename = obj
@@ -900,14 +915,16 @@ class Step:
             else:
                 self.log.debug(err_message)
 
-    def save_model(self,
-                   model,
-                   suffix=None,
-                   idx=None,
-                   output_file=None,
-                   force=False,
-                   format=None,
-                   **components):
+    def save_model(
+        self,
+        model,
+        suffix=None,
+        idx=None,
+        output_file=None,
+        force=False,
+        format=None,
+        **components,
+    ):
         """
         Saves the given model using the step/pipeline's naming scheme
 
@@ -945,13 +962,11 @@ class Step:
         output_paths : [str[, ...]]
             List of output file paths the model(s) were saved in.
         """
-        if output_file is None or output_file == '':
+        if output_file is None or output_file == "":
             output_file = self.output_file
 
         # Check if saving is even specified.
-        if not force and \
-           not self.save_results and \
-           not output_file:
+        if not force and not self.save_results and not output_file:
             return
 
         if isinstance(model, Sequence):
@@ -960,17 +975,16 @@ class Step:
                 suffix=suffix,
                 force=force,
                 format=format,
-                **components
+                **components,
             )
             output_path = model.save(
                 path=output_file,
-                save_model_func=save_model_func)
+                save_model_func=save_model_func,
+            )
         else:
-
             # Search for an output file name.
-            if (
-                    self.output_use_model or
-                    (output_file is None and not self.search_output_file)
+            if self.output_use_model or (
+                output_file is None and not self.search_output_file
             ):
                 output_file = model.meta.filename
                 idx = None
@@ -980,31 +994,29 @@ class Step:
                     suffix=suffix,
                     idx=idx,
                     name_format=format,
-                    **components
+                    **components,
                 )
             )
-            self.log.info(f'Saved model in {output_path}')
+            self.log.info(f"Saved model in {output_path}")
 
         return output_path
 
     @property
     def make_output_path(self):
         """Return function that creates the output path"""
-        make_output_path = self.search_attr(
-            '_make_output_path'
-        )
+        make_output_path = self.search_attr("_make_output_path")
         return partial(make_output_path, self)
 
     @staticmethod
     def _make_output_path(
-            step,
-            basepath=None,
-            ext=None,
-            suffix=None,
-            name_format=None,
-            component_format='',
-            separator='_',
-            **components
+        step,
+        basepath=None,
+        ext=None,
+        suffix=None,
+        name_format=None,
+        component_format="",
+        separator="_",
+        **components,
     ):
         """Create the output path
 
@@ -1053,7 +1065,7 @@ class Step:
         string.
         """
         if basepath is None and step.search_output_file:
-            basepath = step.search_attr('output_file')
+            basepath = step.search_attr("output_file")
         if basepath is None:
             basepath = step.default_output_file()
 
@@ -1062,21 +1074,21 @@ class Step:
             ext = step.output_ext
         if ext is None and len(basepath_ext):
             ext = basepath_ext
-        if ext.startswith('.'):
+        if ext.startswith("."):
             ext = ext[1:]
 
         # Suffix check. An explicit check on `False` is necessary
         # because `None` is also allowed.
         suffix = _get_suffix(suffix, step=step)
         if suffix is not False:
-            default_name_format = '{basename}{components}{suffix_sep}{suffix}.{ext}'
+            default_name_format = "{basename}{components}{suffix_sep}{suffix}.{ext}"
             suffix_sep = None
             if suffix is not None:
                 basename, suffix_sep = step.remove_suffix(basename)
             if suffix_sep is None:
                 suffix_sep = separator
         else:
-            default_name_format = '{basename}{components}.{ext}'
+            default_name_format = "{basename}{components}.{ext}"
             suffix = None
             suffix_sep = None
 
@@ -1084,19 +1096,19 @@ class Step:
         if name_format is None:
             name_format = default_name_format
         elif not name_format:
-            name_format = basename + '.{ext}'
-            basename = ''
-            suffix_sep = ''
-            separator = ''
+            name_format = basename + ".{ext}"
+            basename = ""
+            suffix_sep = ""
+            separator = ""
         formatter = FormatTemplate(
             separator=separator,
-            remove_unused=True
+            remove_unused=True,
         )
 
         if len(components):
             component_str = formatter(component_format, **components)
         else:
-            component_str = ''
+            component_str = ""
 
         basename = formatter(
             name_format,
@@ -1104,10 +1116,10 @@ class Step:
             suffix=suffix,
             suffix_sep=suffix_sep,
             ext=ext,
-            components=component_str
+            components=component_str,
         )
 
-        output_dir = step.search_attr('output_dir', default='')
+        output_dir = step.search_attr("output_dir", default="")
         output_dir = expandvars(expanduser(output_dir))
         full_output_path = join(output_dir, basename)
 
@@ -1137,13 +1149,10 @@ class Step:
         to_del += to_close
         for item in to_close:
             try:
-                if hasattr(item, 'close'):
+                if hasattr(item, "close"):
                     item.close()
             except Exception as exception:
-                self.log.debug(
-                    'Could not close "{}"'
-                    'Reason:\n{}'.format(item, exception)
-                )
+                self.log.debug(f'Could not close "{item}"Reason:\n{exception}')
         for item in to_del:
             try:
                 del item
@@ -1210,7 +1219,6 @@ class Step:
 
         return full_path
 
-
     def _set_input_dir(self, input, exclusive=True):
         """Set the input directory
 
@@ -1227,7 +1235,7 @@ class Step:
             defined by a parent Step. Otherwise, always set.
 
         """
-        if not exclusive or self.search_attr('_input_dir') is None:
+        if not exclusive or self.search_attr("_input_dir") is None:
             try:
                 if isfile(input):
                     self.input_dir = split(input)[0]
@@ -1287,7 +1295,9 @@ class Step:
             Set to True to include metadata that is required
             for submission to CRDS.
         """
-        with config.export_config(self).to_asdf(include_metadata=include_metadata) as af:
+        with config.export_config(self).to_asdf(
+            include_metadata=include_metadata
+        ) as af:
             af.write_to(filename)
 
     def update_pars(self, parameters):
@@ -1312,13 +1322,15 @@ class Step:
         existing = self.get_pars().keys()
         for parameter, value in parameters.items():
             if parameter in existing:
-                if parameter != 'steps':
+                if parameter != "steps":
                     setattr(self, parameter, value)
                 else:
                     for step_name, step_parameters in value.items():
                         getattr(self, step_name).update_pars(step_parameters)
             else:
-                self.log.debug(f'Parameter {parameter} is not valid for step {self}. Ignoring.')
+                self.log.debug(
+                    f"Parameter {parameter} is not valid for step {self}. Ignoring."
+                )
 
     @classmethod
     def build_config(cls, input, **kwargs):
@@ -1351,42 +1363,42 @@ class Step:
             log_cls.info("No filename given, cannot retrieve config from CRDS")
             config = config_parser.ConfigObj()
 
-        if 'config_file' in kwargs:
-            config_file = kwargs['config_file']
-            del kwargs['config_file']
+        if "config_file" in kwargs:
+            config_file = kwargs["config_file"]
+            del kwargs["config_file"]
             config_from_file = config_parser.load_config_file(config_file)
             config_parser.merge_config(config, config_from_file)
             config_dir = os.path.dirname(config_file)
         else:
             config_file = None
-            config_dir = ''
+            config_dir = ""
 
         config_kwargs = config_parser.ConfigObj()
 
         # load and merge configuration files for each step they are provided:
         steps = {}
-        if 'steps' in kwargs:
-            for step, pars in kwargs['steps'].items():
-                if 'config_file' in pars:
-                    step_config_file = os.path.join(config_dir, pars['config_file'])
+        if "steps" in kwargs:
+            for step, pars in kwargs["steps"].items():
+                if "config_file" in pars:
+                    step_config_file = os.path.join(config_dir, pars["config_file"])
                     cfgd = config_parser.load_config_file(step_config_file)
-                    if 'name' in cfgd:
-                        if cfgd['name'] != step:
+                    if "name" in cfgd:
+                        if cfgd["name"] != step:
                             raise ValueError(
                                 "Step name from configuration file "
                                 f"'{step_config_file}' does not match step "
                                 "name in the 'steps' argument."
                             )
-                        del cfgd['name']
-                    cfgd.pop('class', None)
+                        del cfgd["name"]
+                    cfgd.pop("class", None)
                     cfgd.update(pars)
                     steps[step] = cfgd
                 else:
                     steps[step] = pars
 
-            kwargs = {k : v for k, v in kwargs.items() if k != 'steps'}
+            kwargs = {k: v for k, v in kwargs.items() if k != "steps"}
             if steps:
-                kwargs['steps'] = steps
+                kwargs["steps"] = steps
 
         config_parser.merge_config(config_kwargs, kwargs)
         config_parser.merge_config(config, config_kwargs)
@@ -1397,6 +1409,7 @@ class Step:
 # #########
 # Utilities
 # #########
+
 
 def _get_suffix(suffix, step=None, default_suffix=None):
     """Retrieve either specified or pipeline-supplied suffix
@@ -1419,7 +1432,7 @@ def _get_suffix(suffix, step=None, default_suffix=None):
         Suffix to use
     """
     if suffix is None and step is not None:
-        suffix = step.search_attr('suffix')
+        suffix = step.search_attr("suffix")
     if suffix is None:
         suffix = default_suffix
     if suffix is None and step is not None:
@@ -1443,15 +1456,15 @@ def get_disable_crds_steppars(default=None):
     flag: bool
         True to disable CRDS STEPPARS retrieval.
     """
-    truths =  ('true', 'True', 't', 'yes', 'y')
+    truths = ("true", "True", "t", "yes", "y")
     if default:
         if isinstance(default, bool):
             return default
         elif isinstance(default, str):
             return default in truths
-        raise ValueError(f'default must be string or boolean: {default}')
+        raise ValueError(f"default must be string or boolean: {default}")
 
-    flag = os.environ.get('STPIPE_DISABLE_CRDS_STEPPARS', '')
+    flag = os.environ.get("STPIPE_DISABLE_CRDS_STEPPARS", "")
     return flag in truths
 
 

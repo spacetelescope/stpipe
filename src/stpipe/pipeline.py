@@ -3,17 +3,15 @@ Pipeline
 """
 from collections.abc import Sequence
 from os.path import dirname, join
-from .extern.configobj.configobj import Section, ConfigObj
 
-from . import config_parser
-from . import crds_client
-from . import log
-from .step import get_disable_crds_steppars, Step
-
+from . import config_parser, crds_client, log
+from .extern.configobj.configobj import ConfigObj, Section
+from .step import Step, get_disable_crds_steppars
 
 # For classmethods, the logger to use is the
 # delegator, since the pipeline has not yet been instantiated.
 logger = log.delegator.log
+
 
 class Pipeline(Step):
     """
@@ -38,12 +36,18 @@ class Pipeline(Step):
             cfg = self.steps.get(key)
             if cfg is not None:
                 new_step = val.from_config_section(
-                    cfg, parent=self, name=key,
-                    config_file=self.config_file)
+                    cfg,
+                    parent=self,
+                    name=key,
+                    config_file=self.config_file,
+                )
             else:
                 new_step = val(
-                    key, parent=self, config_file=self.config_file,
-                    **kwargs.get(key, {}))
+                    key,
+                    parent=self,
+                    config_file=self.config_file,
+                    **kwargs.get(key, {}),
+                )
 
             setattr(self, key, new_step)
 
@@ -53,8 +57,11 @@ class Pipeline(Step):
         Overridden reftypes are included but handled normally later by the
         Pipeline version of the get_ref_override() method defined below.
         """
-        return [reftype for step in self._unskipped_steps
-                for reftype in step.reference_file_types]
+        return [
+            reftype
+            for step in self._unskipped_steps
+            for reftype in step.reference_file_types
+        ]
 
     @property
     def _unskipped_steps(self):
@@ -62,8 +69,13 @@ class Pipeline(Step):
 
         Steps are also excluded if `Step.prefetch_references` is False.
         """
-        return [getattr(self, name) for name in self.step_defs
-                if (not getattr(self, name).skip and getattr(self, name).prefetch_references)]
+        return [
+            getattr(self, name)
+            for name in self.step_defs
+            if (
+                not getattr(self, name).skip and getattr(self, name).prefetch_references
+            )
+        ]
 
     def get_ref_override(self, reference_file_type):
         """Return any override for `reference_file_type` for any of the steps in
@@ -82,7 +94,7 @@ class Pipeline(Step):
 
     @classmethod
     def merge_config(cls, config, config_file):
-        steps = config.get('steps', {})
+        steps = config.get("steps", {})
 
         # Configure all of the steps
         for key in cls.step_defs:
@@ -90,10 +102,11 @@ class Pipeline(Step):
             if cfg is not None:
                 # If a config_file is specified, load those values and
                 # then override them with our values.
-                if cfg.get('config_file'):
+                if cfg.get("config_file"):
                     cfg2 = config_parser.load_config_file(
-                        join(dirname(config_file or ''), cfg.get('config_file')))
-                    del cfg['config_file']
+                        join(dirname(config_file or ""), cfg.get("config_file"))
+                    )
+                    del cfg["config_file"]
                     config_parser.merge_config(cfg2, cfg)
                     steps[key] = cfg2
         return config
@@ -101,14 +114,14 @@ class Pipeline(Step):
     @classmethod
     def load_spec_file(cls, preserve_comments=False):
         spec = config_parser.get_merged_spec_file(
-            cls, preserve_comments=preserve_comments)
+            cls, preserve_comments=preserve_comments
+        )
 
-        spec['steps'] = Section(spec, spec.depth + 1, spec.main, name="steps")
-        steps = spec['steps']
+        spec["steps"] = Section(spec, spec.depth + 1, spec.main, name="steps")
+        steps = spec["steps"]
         for key, val in cls.step_defs.items():
             if not issubclass(val, Step):
-                raise TypeError(
-                    f"Entry {key!r} in step_defs is not a Step subclass")
+                raise TypeError(f"Entry {key!r} in step_defs is not a Step subclass")
             stepspec = val.load_spec_file(preserve_comments=preserve_comments)
             steps[key] = Section(steps, steps.depth + 1, steps.main, name=key)
 
@@ -116,10 +129,10 @@ class Pipeline(Step):
 
             # Also add a key that can be used to specify an external
             # config_file
-            step = spec['steps'][key]
-            step['config_file'] = 'string(default=None)'
-            step['name'] = "string(default='')"
-            step['class'] = "string(default='')"
+            step = spec["steps"][key]
+            step["config_file"] = "string(default=None)"
+            step["name"] = "string(default='')"
+            step["class"] = "string(default='')"
 
         return spec
 
@@ -152,17 +165,18 @@ class Pipeline(Step):
         """
         reftype = cls.get_config_reftype()
         refcfg = ConfigObj()
-        refcfg['steps'] = Section(refcfg, refcfg.depth + 1, refcfg.main, name="steps")
+        refcfg["steps"] = Section(refcfg, refcfg.depth + 1, refcfg.main, name="steps")
 
         # Check if retrieval should be attempted.
         if disable is None:
             disable = get_disable_crds_steppars()
         if disable:
-            logger.debug(f'{reftype.upper()}: CRDS parameter reference retrieval disabled.')
+            logger.debug(
+                f"{reftype.upper()}: CRDS parameter reference retrieval disabled."
+            )
             return refcfg
 
-
-        logger.debug('Retrieving all substep parameters from CRDS')
+        logger.debug("Retrieving all substep parameters from CRDS")
         #
         # Iterate over the steps in the pipeline
         with cls._datamodels_open(dataset, asn_n_members=1) as model:
@@ -175,23 +189,27 @@ class Pipeline(Step):
 
         for cal_step in cls.step_defs.keys():
             cal_step_class = cls.step_defs[cal_step]
-            refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(crds_parameters,
-                                                                                 crds_observatory=crds_observatory)
+            refcfg["steps"][cal_step] = cal_step_class.get_config_from_reference(
+                crds_parameters,
+                crds_observatory=crds_observatory,
+            )
         #
         # Now merge any config parameters from the step cfg file
-        logger.debug(f'Retrieving pipeline {reftype.upper()} parameters from CRDS')
+        logger.debug(f"Retrieving pipeline {reftype.upper()} parameters from CRDS")
         try:
-            ref_file = crds_client.get_reference_file(crds_parameters,
-                                                      reftype,
-                                                      crds_observatory)
+            ref_file = crds_client.get_reference_file(
+                crds_parameters,
+                reftype,
+                crds_observatory,
+            )
         except (AttributeError, crds_client.CrdsError):
-            logger.debug(f'{reftype.upper()}: No parameters found')
+            logger.debug(f"{reftype.upper()}: No parameters found")
         else:
-            if ref_file != 'N/A':
-                logger.info(f'{reftype.upper()} parameters found: {ref_file}')
+            if ref_file != "N/A":
+                logger.info(f"{reftype.upper()} parameters found: {ref_file}")
                 refcfg = cls.merge_pipeline_config(refcfg, ref_file)
             else:
-                logger.debug(f'No {reftype.upper()} reference files found.')
+                logger.debug(f"No {reftype.upper()} reference files found.")
 
         return refcfg
 
@@ -242,13 +260,12 @@ class Pipeline(Step):
         None
         """
         try:
-            with self.open_model(input_file, asn_n_members=1,
-                                asn_exptypes=["science"]) as model:
+            with self.open_model(
+                input_file, asn_n_members=1, asn_exptypes=["science"]
+            ) as model:
                 self._precache_references_opened(model)
         except (ValueError, TypeError, OSError):
-            self.log.info(
-                f'First argument {input_file} does not appear to be a '
-                'model')
+            self.log.info(f"First argument {input_file} does not appear to be a model")
 
     def _precache_references_opened(self, model_or_container):
         """Pre-fetches references for `model_or_container`.
@@ -285,17 +302,23 @@ class Pipeline(Step):
             reftype: self.get_ref_override(reftype)
             for reftype in self.reference_file_types
             if self.get_ref_override(reftype) is not None
-            }
+        }
 
         fetch_types = sorted(set(self.reference_file_types) - set(ovr_refs.keys()))
 
-        self.log.info("Prefetching reference files for dataset: " + repr(model.meta.filename) +
-                      " reftypes = " + repr(fetch_types))
-        crds_refs = crds_client.get_multiple_reference_paths(model.get_crds_parameters(), fetch_types, model.crds_observatory)
+        self.log.info(
+            "Prefetching reference files for dataset: "
+            + repr(model.meta.filename)
+            + " reftypes = "
+            + repr(fetch_types)
+        )
+        crds_refs = crds_client.get_multiple_reference_paths(
+            model.get_crds_parameters(), fetch_types, model.crds_observatory
+        )
 
         ref_path_map = dict(list(crds_refs.items()) + list(ovr_refs.items()))
 
-        for (reftype, refpath) in sorted(ref_path_map.items()):
+        for reftype, refpath in sorted(ref_path_map.items()):
             how = "Override" if reftype in ovr_refs else "Prefetch"
             self.log.info(f"{how} for {reftype.upper()} reference file is '{refpath}'.")
             crds_client.check_reference_open(refpath)
@@ -319,7 +342,9 @@ class Pipeline(Step):
             Keys are the parameters and values are the values.
         """
         pars = super().get_pars(full_spec=full_spec)
-        pars['steps'] = {}
+        pars["steps"] = {}
         for step_name, step_class in self.step_defs.items():
-            pars['steps'][step_name] = getattr(self, step_name).get_pars(full_spec=full_spec)
+            pars["steps"][step_name] = getattr(self, step_name).get_pars(
+                full_spec=full_spec
+            )
         return pars

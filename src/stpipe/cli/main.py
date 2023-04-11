@@ -5,9 +5,8 @@ import argparse
 import sys
 import traceback
 
-from .list import ListCommand
 from ..exceptions import StpipeExitException
-
+from .list import ListCommand
 
 # New subclasses of Command must be imported
 # and appended to this list before they'll
@@ -42,7 +41,9 @@ def handle_args(raw_args):
         parser.print_help()
         return 0
 
-    command_class = next(c for c in _COMMAND_CLASSES if c.get_name() == args.command_name)
+    command_class = next(
+        c for c in _COMMAND_CLASSES if c.get_name() == args.command_name
+    )
 
     return command_class.run(args)
 
@@ -68,7 +69,12 @@ def main():
 
 def _get_parser():
     parser = argparse.ArgumentParser("stpipe", description="stpipe CLI")
-    parser.add_argument("-v", "--version", help="print version information and exit", action="store_true")
+    parser.add_argument(
+        "-v",
+        "--version",
+        help="print version information and exit",
+        action="store_true",
+    )
 
     subparsers = parser.add_subparsers(dest="command_name", title="commands")
 
@@ -83,10 +89,14 @@ def _print_versions():
     Print stpipe version as well as versions of any packages
     that register an stpipe.steps entry point.
     """
-    from .. import entry_points
     import stpipe
 
-    packages = sorted({(s.package_name, s.package_version) for s in entry_points.get_steps()}, key=lambda tup: tup[0])
+    from .. import entry_points
+
+    packages = sorted(
+        {(s.package_name, s.package_version) for s in entry_points.get_steps()},
+        key=lambda tup: tup[0],
+    )
 
     print(f"stpipe: {stpipe.__version__}")
     for package_name, package_version in packages:

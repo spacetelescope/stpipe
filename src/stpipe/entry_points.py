@@ -1,13 +1,15 @@
-from collections import namedtuple
 import warnings
+from collections import namedtuple
 
 from importlib_metadata import entry_points
-
 
 STEPS_GROUP = "stpipe.steps"
 
 
-StepInfo = namedtuple("StepInfo", ["class_name", "class_alias", "is_pipeline", "package_name", "package_version"])
+StepInfo = namedtuple(
+    "StepInfo",
+    ["class_name", "class_alias", "is_pipeline", "package_name", "package_version"],
+)
 
 
 def get_steps():
@@ -37,7 +39,7 @@ def get_steps():
         except Exception as e:
             warnings.warn(
                 f"{STEPS_GROUP} plugin from package {package_name}=={package_version} "
-                f"failed to load:\n\n"
+                "failed to load:\n\n"
                 f"{e.__class__.__name__}: {e}"
             )
 

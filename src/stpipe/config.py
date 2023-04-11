@@ -6,10 +6,9 @@ both until we replace configobj with traitlets.
 from copy import deepcopy
 from datetime import datetime
 
-from .utilities import get_fully_qualified_class_name
-
 import asdf
 
+from .utilities import get_fully_qualified_class_name
 
 _CONFIG_SCHEMA_URI = "http://stsci.edu/schemas/stpipe/step_config-1.0.0"
 _LEGACY_CONFIG_SCHEMA_URI = "http://stsci.edu/schemas/stpipe/step_config-0.1.0"
@@ -47,6 +46,7 @@ class StepConfig:
     steps : list of StepConfig
         List of sub-step configs.
     """
+
     def __init__(self, class_name, name, parameters, steps):
         self._class_name = class_name
         self._name = name
@@ -74,10 +74,10 @@ class StepConfig:
             return False
 
         return (
-            self.class_name == other.class_name and
-            self.name == other.name and
-            self.parameters == other.parameters and
-            self.steps == other.steps
+            self.class_name == other.class_name
+            and self.name == other.name
+            and self.parameters == other.parameters
+            and self.steps == other.steps
         )
 
     def _to_tree(self):
@@ -109,8 +109,13 @@ class StepConfig:
 
         if include_metadata:
             meta = deepcopy(_META_TEMPLATE)
-            meta["date"] = meta["date"].replace(_TEMPLATE_PLACEHOLDER, datetime.utcnow().replace(microsecond=0).isoformat())
-            meta["description"] = meta["description"].replace(_TEMPLATE_PLACEHOLDER, self.class_name)
+            meta["date"] = meta["date"].replace(
+                _TEMPLATE_PLACEHOLDER,
+                datetime.utcnow().replace(microsecond=0).isoformat(),
+            )
+            meta["description"] = meta["description"].replace(
+                _TEMPLATE_PLACEHOLDER, self.class_name
+            )
             result["meta"] = meta
 
         _validate_asdf(result, _CONFIG_SCHEMA_URI)

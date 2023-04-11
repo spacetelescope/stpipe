@@ -3,8 +3,8 @@ import subprocess
 import pytest
 
 import stpipe
-from stpipe.cli import handle_args
 from stpipe import entry_points
+from stpipe.cli import handle_args
 from stpipe.entry_points import StepInfo
 
 
@@ -12,11 +12,41 @@ from stpipe.entry_points import StepInfo
 def monkey_patch_get_steps(monkeypatch):
     def _get_steps():
         return [
-            StepInfo("jwst.pipeline.Ami3Pipeline", "calwebb_ami3", True, "jwst", "0.18.4"),
-            StepInfo("jwst.pipeline.Coron3Pipeline", "calwebb_coron3", True, "jwst", "0.18.4"),
-            StepInfo("romancal.pipeline.SomeRomanPipeline", None, True, "romancal", "0.1.1"),
-            StepInfo("romancal.step.FlatFieldStep", None, False, "romancal", "0.1.1"),
-            StepInfo("razzledazzle.step.RazzleDazzleStep", None, False, "razzledazzle", "9.5.3"),
+            StepInfo(
+                "jwst.pipeline.Ami3Pipeline",
+                "calwebb_ami3",
+                True,
+                "jwst",
+                "0.18.4",
+            ),
+            StepInfo(
+                "jwst.pipeline.Coron3Pipeline",
+                "calwebb_coron3",
+                True,
+                "jwst",
+                "0.18.4",
+            ),
+            StepInfo(
+                "romancal.pipeline.SomeRomanPipeline",
+                None,
+                True,
+                "romancal",
+                "0.1.1",
+            ),
+            StepInfo(
+                "romancal.step.FlatFieldStep",
+                None,
+                False,
+                "romancal",
+                "0.1.1",
+            ),
+            StepInfo(
+                "razzledazzle.step.RazzleDazzleStep",
+                None,
+                False,
+                "razzledazzle",
+                "9.5.3",
+            ),
         ]
 
     monkeypatch.setattr(entry_points, "get_steps", _get_steps)
@@ -35,7 +65,9 @@ def test_version(flag, capsys):
 
 
 def test_package_main():
-    out = subprocess.check_output(["python", "-m", "stpipe", "--version"]).decode("utf-8")
+    out = subprocess.check_output(["python", "-m", "stpipe", "--version"]).decode(
+        "utf-8"
+    )
     assert f"stpipe: {stpipe.__version__}" in out
 
 

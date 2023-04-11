@@ -6,6 +6,7 @@ class Command(abc.ABC):
     Base class for stpipe CLI commands.  Every subclass should
     be added to the _COMMAND_CLASSES list in core.py.
     """
+
     @abc.abstractclassmethod
     def get_name(cls):
         """
