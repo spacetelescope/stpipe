@@ -42,9 +42,13 @@ def _get_config_and_class(identifier):
         step_class, name = Step._parse_class_and_name(config, config_file=config_file)
     else:
         try:
-            step_class = utilities.import_class(utilities.resolve_step_class_alias(identifier), Step)
+            step_class = utilities.import_class(
+                utilities.resolve_step_class_alias(identifier), Step
+            )
         except (ImportError, AttributeError, TypeError):
-            raise ValueError(f"{identifier!r} is not a path to a config file or a Python Step class")
+            raise ValueError(
+                f"{identifier!r} is not a path to a config file or a Python Step class"
+            )
         # Don't validate yet
         config = config_parser.config_from_dict({})
         name = None
@@ -87,7 +91,9 @@ def _build_arg_parser_from_spec(spec, step_class, parent=None):
                 comment = comment.lstrip("#").strip()
                 argument = "--" + ".".join(parts + [key])
                 if argument[2:] in built_in_configuration_parameters:
-                    raise ValueError(f"The Step's spec is trying to override a built-in parameter {argument!r}")
+                    raise ValueError(
+                        f"The Step's spec is trying to override a built-in parameter {argument!r}"
+                    )
                 parser.add_argument(
                     "--" + ".".join(parts + [key]),
                     type=str,
@@ -222,17 +228,23 @@ def just_the_step_from_cmdline(args, cls=None):
 
     try:
         if cls is None:
-            step_class, config, name, config_file = _get_config_and_class(known.cfg_file_or_class[0])
+            step_class, config, name, config_file = _get_config_and_class(
+                known.cfg_file_or_class[0]
+            )
         else:
             config_file = known.config_file
             config = config_parser.load_config_file(config_file)
-            step_class, name = Step._parse_class_and_name(config, config_file=config_file)
+            step_class, name = Step._parse_class_and_name(
+                config, config_file=config_file
+            )
             step_class = cls
 
         log_config = None
         if known.verbose:
             if known.logcfg is not None:
-                raise ValueError("If --verbose is set, a logging configuration file may not be provided")
+                raise ValueError(
+                    "If --verbose is set, a logging configuration file may not be provided"
+                )
             log_config = io.BytesIO(log.MAX_CONFIGURATION)
         elif known.logcfg is not None:
             if not os.path.exists(known.logcfg):
@@ -291,9 +303,13 @@ def just_the_step_from_cmdline(args, cls=None):
 
         # Attempt to retrieve Step parameters from CRDS
         try:
-            parameter_cfg = step_class.get_config_from_reference(input_file, disable=disable_crds_steppars)
+            parameter_cfg = step_class.get_config_from_reference(
+                input_file, disable=disable_crds_steppars
+            )
         except (FileNotFoundError, OSError):
-            log.log.warning("Unable to open input file, cannot get parameters from CRDS")
+            log.log.warning(
+                "Unable to open input file, cannot get parameters from CRDS"
+            )
         else:
             if config:
                 config_parser.merge_config(parameter_cfg, config)
@@ -354,7 +370,9 @@ def step_from_cmdline(args, cls=None):
         will be set as member variables on the returned `Step`
         instance.
     """
-    step, step_class, positional, debug_on_exception = just_the_step_from_cmdline(args, cls)
+    step, step_class, positional, debug_on_exception = just_the_step_from_cmdline(
+        args, cls
+    )
 
     try:
         profile_path = os.environ.pop("STPIPE_PROFILE", None)

@@ -21,14 +21,18 @@ def hook_from_string(step, type, num, command):
 
     step_func = None
     try:
-        step_func = utilities.import_class(command, types.FunctionType, step.config_file)
+        step_func = utilities.import_class(
+            command, types.FunctionType, step.config_file
+        )
     except Exception:
         pass
 
     if step_func is not None:
         from . import function_wrapper
 
-        return function_wrapper.FunctionWrapper(step_func, parent=step, config_file=step.config_file)
+        return function_wrapper.FunctionWrapper(
+            step_func, parent=step, config_file=step.config_file
+        )
 
     from .subproc import SystemCall
 

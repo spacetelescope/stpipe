@@ -14,7 +14,12 @@ from stdatamodels import s3_utils
 from . import utilities
 from .config import StepConfig
 from .datamodel import AbstractDataModel
-from .extern.configobj.configobj import ConfigObj, Section, flatten_errors, get_extra_values
+from .extern.configobj.configobj import (
+    ConfigObj,
+    Section,
+    flatten_errors,
+    get_extra_values,
+)
 from .extern.configobj.validate import ValidateError, Validator, VdtTypeError
 
 # Configure logger
@@ -110,7 +115,9 @@ def _load_config_file_filesystem(config_file):
         with asdf_open(config_file) as asdf_file:
             return _config_obj_from_asdf(asdf_file)
     except (AsdfValidationError, ValueError):
-        logger.debug("Config file did not parse as ASDF. Trying as ConfigObj: %s", config_file)
+        logger.debug(
+            "Config file did not parse as ASDF. Trying as ConfigObj: %s", config_file
+        )
         return ConfigObj(config_file, raise_errors=True)
 
 
@@ -123,7 +130,9 @@ def _load_config_file_s3(config_file):
         with asdf_open(content) as asdf_file:
             return _config_obj_from_asdf(asdf_file)
     except (AsdfValidationError, ValueError):
-        logger.debug("Config file did not parse as ASDF. Trying as ConfigObj: %s", config_file)
+        logger.debug(
+            "Config file did not parse as ASDF. Trying as ConfigObj: %s", config_file
+        )
         content.seek(0)
         return ConfigObj(content, raise_errors=True)
 
@@ -138,7 +147,10 @@ def _config_obj_from_step_config(config):
     merge_config(configobj, config.parameters)
     merge_config(configobj, {"class": config.class_name, "name": config.name})
     if len(config.steps) > 0:
-        merge_config(configobj, {"steps": {s.name: _config_obj_from_step_config(s) for s in config.steps}})
+        merge_config(
+            configobj,
+            {"steps": {s.name: _config_obj_from_step_config(s) for s in config.steps}},
+        )
     return configobj
 
 
@@ -296,7 +308,9 @@ def config_from_dict(d, spec=None, root_dir=None, allow_missing=False):
     return config
 
 
-def validate(config, spec, section=None, validator=None, root_dir=None, allow_missing=False):
+def validate(
+    config, spec, section=None, validator=None, root_dir=None, allow_missing=False
+):
     """
     Parse config_file, in INI format, and do validation with the
     provided specfile.

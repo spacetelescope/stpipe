@@ -7,7 +7,17 @@ import sys
 from collections.abc import Sequence
 from contextlib import contextmanager
 from functools import partial
-from os.path import abspath, basename, dirname, expanduser, expandvars, isfile, join, split, splitext
+from os.path import (
+    abspath,
+    basename,
+    dirname,
+    expanduser,
+    expandvars,
+    isfile,
+    join,
+    split,
+    splitext,
+)
 
 try:
     from astropy.io import fits
@@ -81,12 +91,16 @@ class Step:
 
     @classmethod
     def load_spec_file(cls, preserve_comments=False):
-        spec = config_parser.get_merged_spec_file(cls, preserve_comments=preserve_comments)
+        spec = config_parser.get_merged_spec_file(
+            cls, preserve_comments=preserve_comments
+        )
         # Add arguments for all of the expected reference files
         for reference_file_type in cls.reference_file_types:
             override_name = crds_client.get_override_name(reference_file_type)
             spec[override_name] = "is_string_or_datamodel(default=None)"
-            spec.inline_comments[override_name] = f"# Override the {reference_file_type} reference file"
+            spec.inline_comments[
+                override_name
+            ] = f"# Override the {reference_file_type} reference file"
         return spec
 
     @classmethod
@@ -179,7 +193,9 @@ class Step:
                 config_file=config_file,
             )
             if not issubclass(step_class, cls):
-                raise TypeError(f"Configuration file does not match the expected step class.  Expected {cls}, got {step_class}")
+                raise TypeError(
+                    f"Configuration file does not match the expected step class.  Expected {cls}, got {step_class}"
+                )
         else:
             step_class = cls
 
@@ -367,7 +383,9 @@ class Step:
 
         for i, arg in enumerate(args):
             if isinstance(arg, discouraged_types):
-                self.log.error(f"{msg} {i} object.  Use an instance of AbstractDataModel instead.")
+                self.log.error(
+                    f"{msg} {i} object.  Use an instance of AbstractDataModel instead."
+                )
 
     @property
     def log_records(self):
@@ -433,14 +451,22 @@ class Step:
                             if isinstance(args[0], Sequence):
                                 for model in args[0]:
                                     try:
-                                        model[f"meta.cal_step.{self.class_alias}"] = "SKIPPED"
+                                        model[
+                                            f"meta.cal_step.{self.class_alias}"
+                                        ] = "SKIPPED"
                                     except AttributeError as e:
-                                        self.log.info(f"Could not record skip into DataModel header: {e}")
+                                        self.log.info(
+                                            f"Could not record skip into DataModel header: {e}"
+                                        )
                             elif isinstance(args[0], AbstractDataModel):
                                 try:
-                                    args[0][f"meta.cal_step.{self.class_alias}"] = "SKIPPED"
+                                    args[0][
+                                        f"meta.cal_step.{self.class_alias}"
+                                    ] = "SKIPPED"
                                 except AttributeError as e:
-                                    self.log.info(f"Could not record skip into DataModel header: {e}")
+                                    self.log.info(
+                                        f"Could not record skip into DataModel header: {e}"
+                                    )
                     step_result = args[0]
                 else:
                     if self.prefetch_references:
@@ -490,10 +516,16 @@ class Step:
                             self.save_model(result, idx=idx, format=self.name_format)
                         elif hasattr(result, "save"):
                             try:
-                                output_path = self.make_output_path(idx=idx, name_format=self.name_format)
+                                output_path = self.make_output_path(
+                                    idx=idx, name_format=self.name_format
+                                )
                             except AttributeError:
-                                self.log.warning("`save_results` has been requested, but cannot determine filename.")
-                                self.log.warning("Specify an output file with `--output_file` or set `--save_results=false`")
+                                self.log.warning(
+                                    "`save_results` has been requested, but cannot determine filename."
+                                )
+                                self.log.warning(
+                                    "Specify an output file with `--output_file` or set `--save_results=false`"
+                                )
                             else:
                                 self.log.info(f"Saving file {output_path}")
                                 result.save(output_path, overwrite=True)
@@ -604,7 +636,9 @@ class Step:
             try:
                 log.load_configuration(config["logcfg"])
             except Exception as e:
-                raise RuntimeError(f"Error parsing logging config {config['logcfg']}") from e
+                raise RuntimeError(
+                    f"Error parsing logging config {config['logcfg']}"
+                ) from e
             del config["logcfg"]
 
         name = config.get("name", None)
@@ -721,10 +755,14 @@ class Step:
         override = self.get_ref_override(reference_file_type)
         if override is not None:
             if isinstance(override, AbstractDataModel):
-                self._reference_files_used.append((reference_file_type, override.override_handle))
+                self._reference_files_used.append(
+                    (reference_file_type, override.override_handle)
+                )
                 return override
             elif override.strip() != "":
-                self._reference_files_used.append((reference_file_type, basename(override)))
+                self._reference_files_used.append(
+                    (reference_file_type, basename(override))
+                )
                 reference_name = override
             else:
                 return ""
@@ -796,7 +834,9 @@ class Step:
         if disable is None:
             disable = get_disable_crds_steppars()
         if disable:
-            logger.info(f"{reftype.upper()}: CRDS parameter reference retrieval disabled.")
+            logger.info(
+                f"{reftype.upper()}: CRDS parameter reference retrieval disabled."
+            )
             return config_parser.ConfigObj()
 
         # Retrieve step parameters from CRDS
@@ -814,8 +854,12 @@ class Step:
             logger.info(f"{reftype.upper()} parameters found: {ref_file}")
             ref = config_parser.load_config_file(ref_file)
 
-            ref_pars = {par: value for par, value in ref.items() if par not in ["class", "name"]}
-            logger.debug(f"{reftype.upper()} parameters retrieved from CRDS: {ref_pars}")
+            ref_pars = {
+                par: value for par, value in ref.items() if par not in ["class", "name"]
+            }
+            logger.debug(
+                f"{reftype.upper()} parameters retrieved from CRDS: {ref_pars}"
+            )
 
             return ref
         else:
@@ -934,7 +978,9 @@ class Step:
             )
         else:
             # Search for an output file name.
-            if self.output_use_model or (output_file is None and not self.search_output_file):
+            if self.output_use_model or (
+                output_file is None and not self.search_output_file
+            ):
                 output_file = model.meta.filename
                 idx = None
             output_path = model.save(
@@ -1244,7 +1290,9 @@ class Step:
             Set to True to include metadata that is required
             for submission to CRDS.
         """
-        with config.export_config(self).to_asdf(include_metadata=include_metadata) as af:
+        with config.export_config(self).to_asdf(
+            include_metadata=include_metadata
+        ) as af:
             af.write_to(filename)
 
     def update_pars(self, parameters):
@@ -1275,7 +1323,9 @@ class Step:
                     for step_name, step_parameters in value.items():
                         getattr(self, step_name).update_pars(step_parameters)
             else:
-                self.log.debug(f"Parameter {parameter} is not valid for step {self}. Ignoring.")
+                self.log.debug(
+                    f"Parameter {parameter} is not valid for step {self}. Ignoring."
+                )
 
     @classmethod
     def build_config(cls, input, **kwargs):

@@ -68,7 +68,10 @@ def _get_refpaths(data_dict, reference_file_types, observatory):
             reftypes=reference_file_types,
             observatory=observatory,
         )
-    refpaths = {filetype: filepath if "N/A" not in filepath.upper() else "N/A" for (filetype, filepath) in bestrefs.items()}
+    refpaths = {
+        filetype: filepath if "N/A" not in filepath.upper() else "N/A"
+        for (filetype, filepath) in bestrefs.items()
+    }
     return refpaths
 
 
@@ -113,7 +116,9 @@ def get_reference_file(parameters, reference_file_type, observatory):
 
     See also get_multiple_reference_paths().
     """
-    return get_multiple_reference_paths(parameters, [reference_file_type], observatory)[reference_file_type]
+    return get_multiple_reference_paths(parameters, [reference_file_type], observatory)[
+        reference_file_type
+    ]
 
 
 def get_override_name(reference_file_type):
@@ -133,7 +138,9 @@ def get_override_name(reference_file_type):
         reference file type.
     """
     if not re.match("^[_A-Za-z][_A-Za-z0-9]*$", reference_file_type):
-        raise ValueError(f"{reference_file_type!r} is not a valid reference file type name. It must be an identifier")
+        raise ValueError(
+            f"{reference_file_type!r} is not a valid reference file type name. It must be an identifier"
+        )
     return f"override_{reference_file_type}"
 
 
@@ -167,7 +174,10 @@ def reference_uri_to_cache_path(reference_uri, observatory):
     The default CRDS_PATH value is /grp/crds/cache, currently on the Central Store.
     """
     if not reference_uri.startswith("crds://"):
-        raise CrdsError("CRDS reference URI's should start with 'crds://' but got", repr(reference_uri))
+        raise CrdsError(
+            "CRDS reference URI's should start with 'crds://' but got",
+            repr(reference_uri),
+        )
     basename = config.pop_crds_uri(reference_uri)
     return crds.locate_file(basename, observatory)
 

@@ -109,8 +109,13 @@ class StepConfig:
 
         if include_metadata:
             meta = deepcopy(_META_TEMPLATE)
-            meta["date"] = meta["date"].replace(_TEMPLATE_PLACEHOLDER, datetime.utcnow().replace(microsecond=0).isoformat())
-            meta["description"] = meta["description"].replace(_TEMPLATE_PLACEHOLDER, self.class_name)
+            meta["date"] = meta["date"].replace(
+                _TEMPLATE_PLACEHOLDER,
+                datetime.utcnow().replace(microsecond=0).isoformat(),
+            )
+            meta["description"] = meta["description"].replace(
+                _TEMPLATE_PLACEHOLDER, self.class_name
+            )
             result["meta"] = meta
 
         _validate_asdf(result, _CONFIG_SCHEMA_URI)
@@ -190,7 +195,10 @@ def export_config(step):
     # ahold of the name and class name.
     parameters.pop("steps", None)
 
-    steps = [export_config(getattr(step, step_name)) for step_name, _ in getattr(step, "step_defs", {}).items()]
+    steps = [
+        export_config(getattr(step, step_name))
+        for step_name, _ in getattr(step, "step_defs", {}).items()
+    ]
 
     return StepConfig(class_name, name, parameters, steps)
 

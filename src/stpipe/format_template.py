@@ -175,7 +175,11 @@ class FormatTemplate(Formatter):
 
         # Get any unused arguments and simply do the appending
         unused_keys = set(formatted_kwargs).difference(self._used_keys)
-        unused_values = [formatted_kwargs[unused] for unused in unused_keys if formatted_kwargs[unused] is not None]
+        unused_values = [
+            formatted_kwargs[unused]
+            for unused in unused_keys
+            if formatted_kwargs[unused] is not None
+        ]
         result_parts = [result] + unused_values
         result = self.separator.join(result_parts)
 

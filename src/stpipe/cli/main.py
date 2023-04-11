@@ -41,7 +41,9 @@ def handle_args(raw_args):
         parser.print_help()
         return 0
 
-    command_class = next(c for c in _COMMAND_CLASSES if c.get_name() == args.command_name)
+    command_class = next(
+        c for c in _COMMAND_CLASSES if c.get_name() == args.command_name
+    )
 
     return command_class.run(args)
 
@@ -67,7 +69,12 @@ def main():
 
 def _get_parser():
     parser = argparse.ArgumentParser("stpipe", description="stpipe CLI")
-    parser.add_argument("-v", "--version", help="print version information and exit", action="store_true")
+    parser.add_argument(
+        "-v",
+        "--version",
+        help="print version information and exit",
+        action="store_true",
+    )
 
     subparsers = parser.add_subparsers(dest="command_name", title="commands")
 
@@ -86,7 +93,10 @@ def _print_versions():
 
     from .. import entry_points
 
-    packages = sorted({(s.package_name, s.package_version) for s in entry_points.get_steps()}, key=lambda tup: tup[0])
+    packages = sorted(
+        {(s.package_name, s.package_version) for s in entry_points.get_steps()},
+        key=lambda tup: tup[0],
+    )
 
     print(f"stpipe: {stpipe.__version__}")
     for package_name, package_version in packages:

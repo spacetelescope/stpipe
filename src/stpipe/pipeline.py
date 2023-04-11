@@ -57,7 +57,11 @@ class Pipeline(Step):
         Overridden reftypes are included but handled normally later by the
         Pipeline version of the get_ref_override() method defined below.
         """
-        return [reftype for step in self._unskipped_steps for reftype in step.reference_file_types]
+        return [
+            reftype
+            for step in self._unskipped_steps
+            for reftype in step.reference_file_types
+        ]
 
     @property
     def _unskipped_steps(self):
@@ -68,7 +72,9 @@ class Pipeline(Step):
         return [
             getattr(self, name)
             for name in self.step_defs
-            if (not getattr(self, name).skip and getattr(self, name).prefetch_references)
+            if (
+                not getattr(self, name).skip and getattr(self, name).prefetch_references
+            )
         ]
 
     def get_ref_override(self, reference_file_type):
@@ -97,7 +103,9 @@ class Pipeline(Step):
                 # If a config_file is specified, load those values and
                 # then override them with our values.
                 if cfg.get("config_file"):
-                    cfg2 = config_parser.load_config_file(join(dirname(config_file or ""), cfg.get("config_file")))
+                    cfg2 = config_parser.load_config_file(
+                        join(dirname(config_file or ""), cfg.get("config_file"))
+                    )
                     del cfg["config_file"]
                     config_parser.merge_config(cfg2, cfg)
                     steps[key] = cfg2
@@ -105,7 +113,9 @@ class Pipeline(Step):
 
     @classmethod
     def load_spec_file(cls, preserve_comments=False):
-        spec = config_parser.get_merged_spec_file(cls, preserve_comments=preserve_comments)
+        spec = config_parser.get_merged_spec_file(
+            cls, preserve_comments=preserve_comments
+        )
 
         spec["steps"] = Section(spec, spec.depth + 1, spec.main, name="steps")
         steps = spec["steps"]
@@ -161,7 +171,9 @@ class Pipeline(Step):
         if disable is None:
             disable = get_disable_crds_steppars()
         if disable:
-            logger.debug(f"{reftype.upper()}: CRDS parameter reference retrieval disabled.")
+            logger.debug(
+                f"{reftype.upper()}: CRDS parameter reference retrieval disabled."
+            )
             return refcfg
 
         logger.debug("Retrieving all substep parameters from CRDS")
@@ -248,7 +260,9 @@ class Pipeline(Step):
         None
         """
         try:
-            with self.open_model(input_file, asn_n_members=1, asn_exptypes=["science"]) as model:
+            with self.open_model(
+                input_file, asn_n_members=1, asn_exptypes=["science"]
+            ) as model:
                 self._precache_references_opened(model)
         except (ValueError, TypeError, OSError):
             self.log.info(f"First argument {input_file} does not appear to be a model")
@@ -293,9 +307,14 @@ class Pipeline(Step):
         fetch_types = sorted(set(self.reference_file_types) - set(ovr_refs.keys()))
 
         self.log.info(
-            "Prefetching reference files for dataset: " + repr(model.meta.filename) + " reftypes = " + repr(fetch_types)
+            "Prefetching reference files for dataset: "
+            + repr(model.meta.filename)
+            + " reftypes = "
+            + repr(fetch_types)
         )
-        crds_refs = crds_client.get_multiple_reference_paths(model.get_crds_parameters(), fetch_types, model.crds_observatory)
+        crds_refs = crds_client.get_multiple_reference_paths(
+            model.get_crds_parameters(), fetch_types, model.crds_observatory
+        )
 
         ref_path_map = dict(list(crds_refs.items()) + list(ovr_refs.items()))
 
@@ -325,5 +344,7 @@ class Pipeline(Step):
         pars = super().get_pars(full_spec=full_spec)
         pars["steps"] = {}
         for step_name, step_class in self.step_defs.items():
-            pars["steps"][step_name] = getattr(self, step_name).get_pars(full_spec=full_spec)
+            pars["steps"][step_name] = getattr(self, step_name).get_pars(
+                full_spec=full_spec
+            )
         return pars

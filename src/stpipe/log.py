@@ -151,7 +151,9 @@ class LogConfig:
 
         formatter = logging.Formatter(self.format)
         for handler in log.handlers:
-            if isinstance(handler, logging.Handler) and hasattr(handler, "_from_config"):
+            if isinstance(handler, logging.Handler) and hasattr(
+                handler, "_from_config"
+            ):
                 handler.setFormatter(formatter)
 
     def match_and_apply(self, log):
@@ -250,7 +252,9 @@ class DelegationHandler(logging.Handler):
 
     @log.setter
     def log(self, log):
-        assert log is None or (isinstance(log, logging.Logger) and log.name.startswith(STPIPE_ROOT_LOGGER))
+        assert log is None or (
+            isinstance(log, logging.Logger) and log.name.startswith(STPIPE_ROOT_LOGGER)
+        )
         self._logs[threading.current_thread()] = log
 
 

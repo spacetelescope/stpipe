@@ -160,16 +160,26 @@ def mock_step_crds(monkeypatch):
         return config
 
     def mock_get_config_from_reference_step(dataset, disable=None):
-        config = cp.config_from_dict({"str1": "from crds", "str2": "from crds", "str3": "from crds"})
+        config = cp.config_from_dict(
+            {"str1": "from crds", "str2": "from crds", "str3": "from crds"}
+        )
         return config
 
     def mock_get_config_from_reference_list_arg_step(dataset, disable=None):
         config = cp.config_from_dict({"rotation": "15", "pixel_scale": "0.85"})
         return config
 
-    monkeypatch.setattr(SimplePipe, "get_config_from_reference", mock_get_config_from_reference_pipe)
-    monkeypatch.setattr(SimpleStep, "get_config_from_reference", mock_get_config_from_reference_step)
-    monkeypatch.setattr(ListArgStep, "get_config_from_reference", mock_get_config_from_reference_list_arg_step)
+    monkeypatch.setattr(
+        SimplePipe, "get_config_from_reference", mock_get_config_from_reference_pipe
+    )
+    monkeypatch.setattr(
+        SimpleStep, "get_config_from_reference", mock_get_config_from_reference_step
+    )
+    monkeypatch.setattr(
+        ListArgStep,
+        "get_config_from_reference",
+        mock_get_config_from_reference_list_arg_step,
+    )
 
 
 # #####
@@ -177,7 +187,9 @@ def mock_step_crds(monkeypatch):
 # #####
 def test_build_config_pipe_config_file(mock_step_crds, config_file_pipe):
     """Test that local config overrides defaults and CRDS-supplied file"""
-    config, returned_config_file = SimplePipe.build_config("science.fits", config_file=config_file_pipe)
+    config, returned_config_file = SimplePipe.build_config(
+        "science.fits", config_file=config_file_pipe
+    )
     assert returned_config_file == config_file_pipe
     assert config["str1"] == "from config"
     assert config["str2"] == "from config"
@@ -225,7 +237,9 @@ def test_build_config_pipe_kwarg(mock_step_crds, config_file_pipe):
 
 def test_build_config_step_config_file(mock_step_crds, config_file_step):
     """Test that local config overrides defaults and CRDS-supplied file"""
-    config, returned_config_file = SimpleStep.build_config("science.fits", config_file=config_file_step)
+    config, returned_config_file = SimpleStep.build_config(
+        "science.fits", config_file=config_file_step
+    )
     assert returned_config_file == config_file_step
     assert config["str1"] == "from config"
     assert config["str2"] == "from config"
@@ -251,7 +265,9 @@ def test_build_config_step_default():
 
 def test_build_config_step_kwarg(mock_step_crds, config_file_step):
     """Test that kwargs override everything"""
-    config, returned_config_file = SimpleStep.build_config("science.fits", config_file=config_file_step, str1="from kwarg")
+    config, returned_config_file = SimpleStep.build_config(
+        "science.fits", config_file=config_file_step, str1="from kwarg"
+    )
     assert returned_config_file == config_file_step
     assert config["str1"] == "from kwarg"
     assert config["str2"] == "from config"
@@ -262,7 +278,9 @@ def test_step_list_args(mock_step_crds, config_file_list_arg_step):
     """Test that list arguments, provided as comma-separated values are parsed
     correctly.
     """
-    config, returned_config_file = ListArgStep.build_config("science.fits", config_file=config_file_list_arg_step)
+    config, returned_config_file = ListArgStep.build_config(
+        "science.fits", config_file=config_file_list_arg_step
+    )
     assert returned_config_file == config_file_list_arg_step
     c, *_ = cmdline.just_the_step_from_cmdline(
         [
@@ -296,7 +314,10 @@ def test_step_list_args(mock_step_crds, config_file_list_arg_step):
             ],
             ListArgStep,
         )
-    assert e.value.args[0] == "Config parameter 'output_shape': the value \"['1500', '1300', '90']\" is too long."
+    assert (
+        e.value.args[0]
+        == "Config parameter 'output_shape': the value \"['1500', '1300', '90']\" is too long."
+    )
 
     with pytest.raises(ValueError) as e:
         cmdline.just_the_step_from_cmdline(
@@ -311,7 +332,10 @@ def test_step_list_args(mock_step_crds, config_file_list_arg_step):
             ],
             ListArgStep,
         )
-    assert e.value.args[0] == "Config parameter 'output_shape': the value \"['1500']\" is too short."
+    assert (
+        e.value.args[0]
+        == "Config parameter 'output_shape': the value \"['1500']\" is too short."
+    )
 
     with pytest.raises(ValueError) as e:
         cmdline.just_the_step_from_cmdline(
@@ -326,7 +350,10 @@ def test_step_list_args(mock_step_crds, config_file_list_arg_step):
             ],
             ListArgStep,
         )
-    assert e.value.args[0] == "Config parameter 'output_shape': the value \"1500\" is of the wrong type."
+    assert (
+        e.value.args[0]
+        == "Config parameter 'output_shape': the value \"1500\" is of the wrong type."
+    )
 
     with pytest.raises(ValueError) as e:
         cmdline.just_the_step_from_cmdline(
@@ -341,7 +368,10 @@ def test_step_list_args(mock_step_crds, config_file_list_arg_step):
             ],
             ListArgStep,
         )
-    assert e.value.args[0] == "Config parameter 'output_shape': the value \"1500.5\" is of the wrong type."
+    assert (
+        e.value.args[0]
+        == "Config parameter 'output_shape': the value \"1500.5\" is of the wrong type."
+    )
 
 
 def test_logcfg_routing(tmpdir):
@@ -372,4 +402,6 @@ def test_log_records():
     pipeline = LoggingPipeline()
     pipeline.run()
 
-    assert any(r.message == "This step has called out a warning." for r in pipeline.log_records)
+    assert any(
+        r.message == "This step has called out a warning." for r in pipeline.log_records
+    )
