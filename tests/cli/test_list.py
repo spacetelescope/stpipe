@@ -35,63 +35,81 @@ def assert_captured_steps(captured, class_names):
 def test_no_arguments(capsys):
     assert handle_args(["list"]) == 0
 
-    assert_captured_steps(capsys.readouterr(), [
-        "jwst.pipeline.Ami3Pipeline",
-        "jwst.pipeline.Coron3Pipeline",
-        "jwst.pipeline.DarkPipeline",
-        "jwst.step.AlignRefsStep",
-        "jwst.step.AmiAnalyzeStep",
-        "jwst.step.AmiAverageStep",
-        "romancal.pipeline.SomeRomanPipeline",
-        "romancal.step.FlatFieldStep",
-    ])
+    assert_captured_steps(
+        capsys.readouterr(),
+        [
+            "jwst.pipeline.Ami3Pipeline",
+            "jwst.pipeline.Coron3Pipeline",
+            "jwst.pipeline.DarkPipeline",
+            "jwst.step.AlignRefsStep",
+            "jwst.step.AmiAnalyzeStep",
+            "jwst.step.AmiAverageStep",
+            "romancal.pipeline.SomeRomanPipeline",
+            "romancal.step.FlatFieldStep",
+        ],
+    )
 
 
 def test_pipelines_only(capsys):
     assert handle_args(["list", "--pipelines-only"]) == 0
 
-    assert_captured_steps(capsys.readouterr(), [
-        "jwst.pipeline.Ami3Pipeline",
-        "jwst.pipeline.Coron3Pipeline",
-        "jwst.pipeline.DarkPipeline",
-        "romancal.pipeline.SomeRomanPipeline",
-    ])
+    assert_captured_steps(
+        capsys.readouterr(),
+        [
+            "jwst.pipeline.Ami3Pipeline",
+            "jwst.pipeline.Coron3Pipeline",
+            "jwst.pipeline.DarkPipeline",
+            "romancal.pipeline.SomeRomanPipeline",
+        ],
+    )
 
 
 def test_steps_only(capsys):
     assert handle_args(["list", "--steps-only"]) == 0
 
-    assert_captured_steps(capsys.readouterr(), [
-        "jwst.step.AlignRefsStep",
-        "jwst.step.AmiAnalyzeStep",
-        "jwst.step.AmiAverageStep",
-        "romancal.step.FlatFieldStep",
-    ])
+    assert_captured_steps(
+        capsys.readouterr(),
+        [
+            "jwst.step.AlignRefsStep",
+            "jwst.step.AmiAnalyzeStep",
+            "jwst.step.AmiAverageStep",
+            "romancal.step.FlatFieldStep",
+        ],
+    )
 
 
 def test_filter_class_names(capsys):
     assert handle_args(["list", "romancal.*"]) == 0
 
-    assert_captured_steps(capsys.readouterr(), [
-        "romancal.pipeline.SomeRomanPipeline",
-        "romancal.step.FlatFieldStep",
-    ])
+    assert_captured_steps(
+        capsys.readouterr(),
+        [
+            "romancal.pipeline.SomeRomanPipeline",
+            "romancal.step.FlatFieldStep",
+        ],
+    )
 
     # Should be case-insensitive:
     assert handle_args(["list", "*.ami*"]) == 0
 
-    assert_captured_steps(capsys.readouterr(), [
-        "jwst.pipeline.Ami3Pipeline",
-        "jwst.step.AmiAnalyzeStep",
-        "jwst.step.AmiAverageStep",
-    ])
+    assert_captured_steps(
+        capsys.readouterr(),
+        [
+            "jwst.pipeline.Ami3Pipeline",
+            "jwst.step.AmiAnalyzeStep",
+            "jwst.step.AmiAverageStep",
+        ],
+    )
 
 
 def test_filter_aliases(capsys):
     assert handle_args(["list", "calwebb*"]) == 0
 
-    assert_captured_steps(capsys.readouterr(), [
-        "jwst.pipeline.Ami3Pipeline",
-        "jwst.pipeline.Coron3Pipeline",
-        "jwst.pipeline.DarkPipeline",
-    ])
+    assert_captured_steps(
+        capsys.readouterr(),
+        [
+            "jwst.pipeline.Ami3Pipeline",
+            "jwst.pipeline.Coron3Pipeline",
+            "jwst.pipeline.DarkPipeline",
+        ],
+    )

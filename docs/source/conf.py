@@ -51,7 +51,7 @@ autoclass_content = "both"
 
 html_theme = "stsci_rtd_theme"
 html_theme_options = {
-    "collapse_navigation": True
+    "collapse_navigation": True,
 }
 html_theme_path = [stsci_rtd_theme.get_html_theme_path()]
 html_domain_indices = True

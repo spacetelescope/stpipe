@@ -5,9 +5,7 @@ import os
 
 from asdf.resource import DirectoryResourceMapping
 
-SCHEMAS_PATH = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "resources", "schemas")
-)
+SCHEMAS_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "resources", "schemas"))
 
 
 def get_resource_mappings():

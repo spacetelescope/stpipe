@@ -42,8 +42,7 @@ def _get_input_file_check(root_dir):
 
         path = os.path.abspath(path)
         if not os.path.exists(path):
-            raise ValidateError(
-                f"Path {path!r} does not exist")
+            raise ValidateError(f"Path {path!r} does not exist")
 
         return path
 
@@ -139,7 +138,7 @@ def _config_obj_from_step_config(config):
     merge_config(configobj, config.parameters)
     merge_config(configobj, {"class": config.class_name, "name": config.name})
     if len(config.steps) > 0:
-        merge_config(configobj, {"steps": { s.name: _config_obj_from_step_config(s) for s in config.steps }})
+        merge_config(configobj, {"steps": {s.name: _config_obj_from_step_config(s) for s in config.steps}})
     return configobj
 
 
@@ -210,8 +209,12 @@ def load_spec_file(cls, preserve_comments=False):
     else:
         spec_file = utilities.find_spec_file(cls)
     if spec_file:
-        return ConfigObj(spec_file, _inspec=not preserve_comments,
-                         raise_errors=True, list_values=False)
+        return ConfigObj(
+            spec_file,
+            _inspec=not preserve_comments,
+            raise_errors=True,
+            list_values=False,
+        )
     return
 
 
@@ -244,7 +247,11 @@ def merge_config(into, new):
         if isinstance(val, Section):
             if key not in into:
                 section = Section(
-                    into, into.depth + 1, into.main, name=key)
+                    into,
+                    into.depth + 1,
+                    into.main,
+                    name=key,
+                )
                 into[key] = section
             merge_config(into[key], val)
         elif key not in defaults:
@@ -337,8 +344,10 @@ def validate(config, spec, section=None, validator=None, root_dir=None, allow_mi
             section = None
 
         errors = config.main.validate(
-            validator, preserve_errors=True,
-            section=section)
+            validator,
+            preserve_errors=True,
+            section=section,
+        )
 
         messages = []
         if errors is not True:
@@ -355,8 +364,7 @@ def validate(config, spec, section=None, validator=None, root_dir=None, allow_mi
                     else:
                         err = 'missing'
 
-                messages.append(
-                    f"Config parameter {section_string!r}: {err}")
+                messages.append(f"Config parameter {section_string!r}: {err}")
 
         extra_values = get_extra_values(config)
         if extra_values:
@@ -365,8 +373,7 @@ def validate(config, spec, section=None, validator=None, root_dir=None, allow_mi
                 sections = 'root'
             else:
                 sections = '/'.join(sections)
-            messages.append(
-                f"Extra value {name!r} in {sections}")
+            messages.append(f"Extra value {name!r} in {sections}")
 
         if len(messages):
             raise ValidationError('\n'.join(messages))

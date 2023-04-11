@@ -33,7 +33,7 @@ examples:
             formatter_class=argparse.RawDescriptionHelpFormatter,
             description="list available classes",
             help="list available classes",
-    )
+        )
 
         parser.add_argument("pattern", metavar="<pattern>", help="restrict classes to glob pattern (case-insensitive)", nargs="?")
 
@@ -71,6 +71,7 @@ def _filter_pattern(pattern, steps):
     pattern = re.compile(re.escape(pattern.lower()).replace(r"\*", ".*"))
 
     return [
-        s for s in steps
+        s
+        for s in steps
         if pattern.fullmatch(s.class_name.lower()) or (s.class_alias is not None and pattern.fullmatch(s.class_alias.lower()))
     ]

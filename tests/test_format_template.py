@@ -15,45 +15,40 @@ from stpipe.format_template import FormatTemplate
             'name="{name}" value="{value}"',
             'name="{name}" value="{value}"',
             {},
-            None
+            None,
         ),
-
         # Basic replacement
         (
             None,
             'name="{name}" value="{value}"',
             'name="fred" value="great"',
             {'name': 'fred', 'value': 'great'},
-            None
+            None,
         ),
-
         # But wait, too many values given:
         (
             None,
             'name="{name}" value="{value}"',
             'name="fred" value="great"_more',
             {'name': 'fred', 'value': 'great', 'extra': 'more'},
-            None
+            None,
         ),
-
         # And with too many and not enough:
         (
             None,
             'name="{name}" value="{value}"',
             'name="{name}" value="great"_more',
             {'value': 'great', 'extra': 'more'},
-            None
+            None,
         ),
-
         # Nothing should be added if value is None
         (
             None,
             'name="{name}" value="{value}"',
             'name="{name}" value=""',
             {'value': None},
-            None
+            None,
         ),
-
         # Multiple key formats, using none.
         (
             {
@@ -62,9 +57,8 @@ from stpipe.format_template import FormatTemplate
             'astring',
             'astring',
             {},
-            None
+            None,
         ),
-
         # Multiple key formats, using first.
         (
             {
@@ -73,31 +67,25 @@ from stpipe.format_template import FormatTemplate
             'astring',
             'astring_s00001',
             {'field': 1},
-            None
+            None,
         ),
-
         # Multiple key formats, using second.
         (
-            {
-                'field': ['s{:05d}', 's{:s}']
-            },
+            {'field': ['s{:05d}', 's{:s}']},
             'astring',
             'astring_smysource',
             {'field': "mysource"},
-            None
+            None,
         ),
-
         # No matching formats is an error.
         (
-            {
-                'field': ['s{:05d}']
-            },
+            {'field': ['s{:05d}']},
             'astring',
             'astring_error',
             {'field': '5.5'},
-            (RuntimeError,)
+            (RuntimeError,),
         ),
-    ]
+    ],
 )
 def test_basics(key_formats, template, expected, fields, errors):
     """Test all basic formatting options"""

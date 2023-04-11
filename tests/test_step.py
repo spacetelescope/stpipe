@@ -15,6 +15,7 @@ from stpipe.step import Step
 # ######################
 class SimpleStep(Step):
     """A Step with parameters"""
+
     spec = """
         str1 = string(default='default')
         str2 = string(default='default')
@@ -23,8 +24,10 @@ class SimpleStep(Step):
         output_ext = string(default='simplestep')
     """
 
+
 class SimplePipe(Pipeline):
     """A Pipeline with parameters and one step"""
+
     spec = """
         str1 = string(default='default')
         str2 = string(default='default')
@@ -37,9 +40,10 @@ class SimplePipe(Pipeline):
 
 
 class LoggingPipeline(Pipeline):
-    """ A Pipeline that utilizes self.log
-        to log a warning
+    """A Pipeline that utilizes self.log
+    to log a warning
     """
+
     spec = """
         str1 = string(default='default')
         output_ext = string(default='simplestep')
@@ -57,6 +61,7 @@ class LoggingPipeline(Pipeline):
 
 class ListArgStep(Step):
     """A Step with parameters"""
+
     spec = """
         output_shape = int_list(min=2, max=2, default=None)  # [y, x] - numpy convention
         crpix = float_list(min=2, max=2, default=None)
@@ -79,16 +84,18 @@ def config_file_pipe(tmpdir):
         'name': 'SimplePipe',
         'parameters': {
             'str1': 'from config',
-            'str2': 'from config'
+            'str2': 'from config',
         },
         'steps': [
-            {'class': 'test_step.SimpleStep',
-             'name': 'step1',
-             'parameters': {
-                 'str1' : 'from config',
-                 'str2' : 'from config'
-             }},
-        ]
+            {
+                'class': 'test_step.SimpleStep',
+                'name': 'step1',
+                'parameters': {
+                    'str1': 'from config',
+                    'str2': 'from config',
+                },
+            },
+        ],
     }
     with asdf.AsdfFile(tree) as af:
         af.write_to(config_file)
@@ -105,8 +112,8 @@ def config_file_step(tmpdir):
         'name': 'SimpleStep',
         'parameters': {
             'str1': 'from config',
-            'str2': 'from config'
-        }
+            'str2': 'from config',
+        },
     }
     with asdf.AsdfFile(tree) as af:
         af.write_to(config_file)
@@ -124,8 +131,7 @@ def config_file_list_arg_step(tmpdir):
         'parameters': {
             'rotation': None,
             'pixel_scale_ratio': 1.1,
-
-        }
+        },
     }
     with asdf.AsdfFile(tree) as af:
         af.write_to(config_file)
@@ -135,13 +141,22 @@ def config_file_list_arg_step(tmpdir):
 @pytest.fixture
 def mock_step_crds(monkeypatch):
     """Mock various crds calls from Step"""
+
     def mock_get_config_from_reference_pipe(dataset, disable=None):
-        config = cp.config_from_dict({
-            'str1': 'from crds', 'str2': 'from crds', 'str3': 'from crds',
-            'steps' : {
-                'step1': {'str1': 'from crds', 'str2': 'from crds', 'str3': 'from crds'},
+        config = cp.config_from_dict(
+            {
+                'str1': 'from crds',
+                'str2': 'from crds',
+                'str3': 'from crds',
+                'steps': {
+                    'step1': {
+                        'str1': 'from crds',
+                        'str2': 'from crds',
+                        'str3': 'from crds',
+                    },
+                },
             }
-        })
+        )
         return config
 
     def mock_get_config_from_reference_step(dataset, disable=None):
@@ -193,8 +208,12 @@ def test_build_config_pipe_default():
 
 def test_build_config_pipe_kwarg(mock_step_crds, config_file_pipe):
     """Test that kwargs override CRDS and local param reffiles"""
-    config, returned_config_file = SimplePipe.build_config('science.fits', config_file=config_file_pipe,
-                                                           str1='from kwarg', steps={'step1': {'str1': 'from kwarg'}})
+    config, returned_config_file = SimplePipe.build_config(
+        'science.fits',
+        config_file=config_file_pipe,
+        str1='from kwarg',
+        steps={'step1': {'str1': 'from kwarg'}},
+    )
     assert returned_config_file == config_file_pipe
     assert config['str1'] == 'from kwarg'
     assert config['str2'] == 'from config'
@@ -240,21 +259,22 @@ def test_build_config_step_kwarg(mock_step_crds, config_file_step):
 
 
 def test_step_list_args(mock_step_crds, config_file_list_arg_step):
-    """ Test that list arguments, provided as comma-separated values are parsed
-        correctly.
+    """Test that list arguments, provided as comma-separated values are parsed
+    correctly.
     """
-    config, returned_config_file = ListArgStep.build_config(
-        'science.fits',
-        config_file=config_file_list_arg_step
-    )
+    config, returned_config_file = ListArgStep.build_config('science.fits', config_file=config_file_list_arg_step)
     assert returned_config_file == config_file_list_arg_step
     c, *_ = cmdline.just_the_step_from_cmdline(
-        ['filename.fits',
-         '--output_shape', '1500,1300',
-         '--crpix=123,456',
-         '--pixel_scale=0.75',
-         '--config-file', returned_config_file],
-        ListArgStep
+        [
+            'filename.fits',
+            '--output_shape',
+            '1500,1300',
+            '--crpix=123,456',
+            '--pixel_scale=0.75',
+            '--config-file',
+            returned_config_file,
+        ],
+        ListArgStep,
     )
     assert c.rotation is None
     assert c.pixel_scale == 0.75
@@ -265,60 +285,71 @@ def test_step_list_args(mock_step_crds, config_file_list_arg_step):
 
     with pytest.raises(ValueError) as e:
         cmdline.just_the_step_from_cmdline(
-                ['filename.fits',
-                 '--output_shape', '1500,1300,90',
-                 '--crpix=123,456',
-                 '--pixel_scale=0.75',
-                 '--config-file', returned_config_file],
-                ListArgStep
+            [
+                'filename.fits',
+                '--output_shape',
+                '1500,1300,90',
+                '--crpix=123,456',
+                '--pixel_scale=0.75',
+                '--config-file',
+                returned_config_file,
+            ],
+            ListArgStep,
         )
-    assert (e.value.args[0] == "Config parameter 'output_shape': the value "
-            "\"['1500', '1300', '90']\" is too long.")
+    assert e.value.args[0] == "Config parameter 'output_shape': the value " "\"['1500', '1300', '90']\" is too long."
 
     with pytest.raises(ValueError) as e:
         cmdline.just_the_step_from_cmdline(
-                ['filename.fits',
-                 '--output_shape', '1500,',
-                 '--crpix=123,456',
-                 '--pixel_scale=0.75',
-                 '--config-file', returned_config_file],
-                ListArgStep
+            [
+                'filename.fits',
+                '--output_shape',
+                '1500,',
+                '--crpix=123,456',
+                '--pixel_scale=0.75',
+                '--config-file',
+                returned_config_file,
+            ],
+            ListArgStep,
         )
-    assert (e.value.args[0] == "Config parameter 'output_shape': the value "
-            "\"['1500']\" is too short.")
+    assert e.value.args[0] == "Config parameter 'output_shape': the value " "\"['1500']\" is too short."
 
     with pytest.raises(ValueError) as e:
         cmdline.just_the_step_from_cmdline(
-                ['filename.fits',
-                 '--output_shape', '1500',
-                 '--crpix=123,456',
-                 '--pixel_scale=0.75',
-                 '--config-file', returned_config_file],
-                ListArgStep
+            [
+                'filename.fits',
+                '--output_shape',
+                '1500',
+                '--crpix=123,456',
+                '--pixel_scale=0.75',
+                '--config-file',
+                returned_config_file,
+            ],
+            ListArgStep,
         )
-    assert (e.value.args[0] == "Config parameter 'output_shape': the value "
-            "\"1500\" is of the wrong type.")
+    assert e.value.args[0] == "Config parameter 'output_shape': the value " "\"1500\" is of the wrong type."
 
     with pytest.raises(ValueError) as e:
         cmdline.just_the_step_from_cmdline(
-                ['filename.fits',
-                 '--output_shape', '1500.5,1300.2',
-                 '--crpix=123,456',
-                 '--pixel_scale=0.75',
-                 '--config-file', returned_config_file],
-                ListArgStep
+            [
+                'filename.fits',
+                '--output_shape',
+                '1500.5,1300.2',
+                '--crpix=123,456',
+                '--pixel_scale=0.75',
+                '--config-file',
+                returned_config_file,
+            ],
+            ListArgStep,
         )
-    assert (e.value.args[0] == "Config parameter 'output_shape': the value "
-            "\"1500.5\" is of the wrong type.")
+    assert e.value.args[0] == "Config parameter 'output_shape': the value " "\"1500.5\" is of the wrong type."
 
 
 def test_logcfg_routing(tmpdir):
-
     cfg = f"""[*]\nlevel = INFO\nhandler = file:{tmpdir}/myrun.log"""
 
     logcfg_file = str(tmpdir / 'stpipe-log.cfg')
 
-    with open(logcfg_file,'w') as f:
+    with open(logcfg_file, 'w') as f:
         f.write(cfg)
 
     LoggingPipeline.call(logcfg=logcfg_file)

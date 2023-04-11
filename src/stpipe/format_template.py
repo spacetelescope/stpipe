@@ -103,6 +103,7 @@ class FormatTemplate(Formatter):
     >>> fmt_preformat(template, name='fred', value='great')
     'name="fred" value="pre_great_format"'
     """
+
     def __init__(self, separator='_', key_formats=None, remove_unused=False):
         """Inialize class
 
@@ -149,7 +150,6 @@ class FormatTemplate(Formatter):
         for key, value in kwargs.items():
             if value is not None:
                 for key_format in self.key_formats[key]:
-
                     # Get the formatting type character. Indices are:
                     #  0: The first replacement field. There should only be one.
                     #  2: Get the format spec.
@@ -166,21 +166,17 @@ class FormatTemplate(Formatter):
                     raise RuntimeError(
                         'No suitable formatting for {key}: {value} found. Given formatting options:'
                         '\n\t{formats}'.format(
-                            key=key, value=value, formats=self.key_formats[key]
+                            key=key,
+                            value=value,
+                            formats=self.key_formats[key],
                         )
                     )
             formatted_kwargs[key] = value
-        result = super().format(
-            format_string, **formatted_kwargs
-        )
+        result = super().format(format_string, **formatted_kwargs)
 
         # Get any unused arguments and simply do the appending
         unused_keys = set(formatted_kwargs).difference(self._used_keys)
-        unused_values = [
-            formatted_kwargs[unused]
-            for unused in unused_keys
-            if formatted_kwargs[unused] is not None
-        ]
+        unused_values = [formatted_kwargs[unused] for unused in unused_keys if formatted_kwargs[unused] is not None]
         result_parts = [result] + unused_values
         result = self.separator.join(result_parts)
 

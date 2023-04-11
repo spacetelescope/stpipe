@@ -8,6 +8,7 @@ class SystemCall(Step):
     """
     Execute a system call in the shell.
     """
+
     spec = """
     # SystemCall is a step to run external processes as Steps.
 
@@ -49,15 +50,17 @@ class SystemCall(Step):
         # Start the process and wait for it to finish.
         self.log.info(f'Spawning {cmd_str!r}')
         try:
-            p = subprocess.Popen(args=[cmd_str],
-                                 stdin=None,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,
-                                 shell=True,
-                                 env=env)
+            p = subprocess.Popen(
+                args=[cmd_str],
+                stdin=None,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=True,
+                env=env,
+            )
             err = p.wait()
         except Exception as e:
-            msg = (f'Failed with an exception: \n{e}')
+            msg = f'Failed with an exception: \n{e}'
             self.log.info(msg)
 
             if self.failure_as_exception:

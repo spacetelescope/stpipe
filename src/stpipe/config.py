@@ -46,6 +46,7 @@ class StepConfig:
     steps : list of StepConfig
         List of sub-step configs.
     """
+
     def __init__(self, class_name, name, parameters, steps):
         self._class_name = class_name
         self._name = name
@@ -73,10 +74,10 @@ class StepConfig:
             return False
 
         return (
-            self.class_name == other.class_name and
-            self.name == other.name and
-            self.parameters == other.parameters and
-            self.steps == other.steps
+            self.class_name == other.class_name
+            and self.name == other.name
+            and self.parameters == other.parameters
+            and self.steps == other.steps
         )
 
     def _to_tree(self):
@@ -189,10 +190,7 @@ def export_config(step):
     # ahold of the name and class name.
     parameters.pop("steps", None)
 
-    steps = [
-        export_config(getattr(step, step_name))
-        for step_name, _ in getattr(step, "step_defs", {}).items()
-    ]
+    steps = [export_config(getattr(step, step_name)) for step_name, _ in getattr(step, "step_defs", {}).items()]
 
     return StepConfig(class_name, name, parameters, steps)
 

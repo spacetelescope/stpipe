@@ -22,9 +22,11 @@ class AbstractDataModel(abc.ABC):
         """
         if cls is AbstractDataModel:
             mro = C.__mro__
-            if (any([hasattr(CC, "crds_observatory") for CC in mro]) and
-                any([hasattr(CC, "get_crds_parameters") for CC in mro]) and
-                any([hasattr(CC, "save") for CC in mro])):
+            if (
+                any([hasattr(CC, "crds_observatory") for CC in mro])
+                and any([hasattr(CC, "get_crds_parameters") for CC in mro])
+                and any([hasattr(CC, "save") for CC in mro])
+            ):
                 return True
         return False
 
@@ -33,7 +35,6 @@ class AbstractDataModel(abc.ABC):
     def crds_observatory(self):
         """This should return a string identifying the observatory as CRDS expects it"""
         pass
-
 
     @abc.abstractmethod
     def get_crds_parameters(self):

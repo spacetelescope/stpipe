@@ -22,7 +22,9 @@ handler = file:{}
 break_level = ERROR
 level = WARNING
 format = '%(message)s'
-""".format(logfilename)
+""".format(
+        logfilename
+    )
 
     fd = io.StringIO()
     fd.write(configuration)

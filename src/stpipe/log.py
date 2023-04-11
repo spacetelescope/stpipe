@@ -31,6 +31,7 @@ level = DEBUG
 ###########################################################################
 # LOGS AS EXCEPTIONS
 
+
 class LoggedException(Exception):
     """
     This is an exception used when a log record is converted into an
@@ -38,6 +39,7 @@ class LoggedException(Exception):
 
     Use its `record` member to get the original `logging.LogRecord`.
     """
+
     def __init__(self, record):
         self.record = record
         Exception.__init__(self, record.getMessage())
@@ -48,6 +50,7 @@ class BreakHandler(logging.Handler):
     A handler that turns logs of a certain severity or higher into
     exceptions.
     """
+
     _from_config = True
 
     def emit(self, record):
@@ -61,7 +64,7 @@ class BreakHandler(logging.Handler):
 log_config = {}
 
 
-class LogConfig():
+class LogConfig:
     """
     Stores a single logging configuration.
 
@@ -73,8 +76,15 @@ class LogConfig():
     handler, level, break_level, format : str
         See LogConfig.spec for a description of these values.
     """
-    def __init__(self, name, handler=None, level=logging.NOTSET,
-                 break_level=logging.NOTSET, format=None):
+
+    def __init__(
+        self,
+        name,
+        handler=None,
+        level=logging.NOTSET,
+        break_level=logging.NOTSET,
+        format=None,
+    ):
         if name in ('', '.', 'root'):
             name = '*'
         self.name = name
@@ -96,7 +106,7 @@ class LogConfig():
         configuration.
         """
         if log_name.startswith(STPIPE_ROOT_LOGGER):
-            log_name = log_name[len(STPIPE_ROOT_LOGGER) + 1:]
+            log_name = log_name[len(STPIPE_ROOT_LOGGER) + 1 :]
             if fnmatch.fnmatchcase(log_name, self.name):
                 return True
         return False
@@ -141,8 +151,7 @@ class LogConfig():
 
         formatter = logging.Formatter(self.format)
         for handler in log.handlers:
-            if (isinstance(handler, logging.Handler) and
-                hasattr(handler, '_from_config')):
+            if isinstance(handler, logging.Handler) and hasattr(handler, '_from_config'):
                 handler.setFormatter(formatter)
 
     def match_and_apply(self, log):
@@ -163,6 +172,7 @@ def load_configuration(config_file):
     ----------
     config_file : str or readable file-like object
     """
+
     def _level_check(value):
         try:
             value = int(value)
@@ -198,11 +208,7 @@ def getLogger(name=None):
 
 
 def _find_logging_config_file():
-    files = [
-        "stpipe-log.cfg",
-        "~/.stpipe-log.cfg",
-        "/etc/stpipe-log.cfg"
-        ]
+    files = ["stpipe-log.cfg", "~/.stpipe-log.cfg", "/etc/stpipe-log.cfg"]
 
     for file in files:
         file = os.path.expanduser(file)
@@ -227,14 +233,14 @@ class DelegationHandler(logging.Handler):
     different thread, we need to manage a dictionary mapping the
     current thread to the Step's logger on that thread.
     """
+
     def __init__(self, *args, **kwargs):
         self._logs = {}
         logging.Handler.__init__(self, *args, **kwargs)
 
     def emit(self, record):
         log = self.log
-        if (log is not None and
-            not record.name.startswith(STPIPE_ROOT_LOGGER)):
+        if log is not None and not record.name.startswith(STPIPE_ROOT_LOGGER):
             record.name = log.name
             log.handle(record)
 
@@ -244,9 +250,7 @@ class DelegationHandler(logging.Handler):
 
     @log.setter
     def log(self, log):
-        assert (log is None or
-                (isinstance(log, logging.Logger) and
-                 log.name.startswith(STPIPE_ROOT_LOGGER)))
+        assert log is None or (isinstance(log, logging.Logger) and log.name.startswith(STPIPE_ROOT_LOGGER))
         self._logs[threading.current_thread()] = log
 
 
@@ -254,6 +258,7 @@ class RecordingHandler(logging.Handler):
     """
     A handler that simply accumulates LogRecord instances.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._log_records = []
