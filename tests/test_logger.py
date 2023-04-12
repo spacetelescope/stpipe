@@ -16,15 +16,13 @@ def clean_up_logging():
 def test_configuration(tmpdir):
     logfilename = tmpdir.join("output.log")
 
-    configuration = """
+    configuration = f"""
 [.]
-handler = file:{}
+handler = file:{logfilename}
 break_level = ERROR
 level = WARNING
 format = '%(message)s'
-""".format(
-        logfilename
-    )
+"""
 
     fd = io.StringIO()
     fd.write(configuration)
