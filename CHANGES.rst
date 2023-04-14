@@ -8,6 +8,7 @@
 - Apply the ``isort`` and ``black`` code formatters and reduce the line length
   maximum to 88 characters. [#80]
 - Add spell checking through the ``codespell`` tool. [#81]
+- Drop support for Python 3.8 [#93]
 
 0.4.6 (2023-03-27)
 ==================
