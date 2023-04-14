@@ -12,7 +12,6 @@ import re
 import crds
 from crds.core import config, crds_cache_locking, heavy_client, log
 from crds.core.exceptions import CrdsError
-from stdatamodels import s3_utils
 
 __all__ = [
     "check_reference_open",
@@ -33,7 +32,7 @@ def get_multiple_reference_paths(parameters, reference_file_types, observatory):
     ----------
     parameters : dict
         Parameters used by CRDS to compute best references.  Can
-        be obtained from `~stdatamodels.DataModel.get_crds_parameters`.
+        be obtained from `DataModel.get_crds_parameters`.
 
     reference_file_types : list of str
         List of reference file types.
@@ -81,12 +80,8 @@ def check_reference_open(refpath):
     Ignore reference path values of "N/A" or "" for checking.
     """
     if refpath != "N/A" and refpath.strip() != "":
-        if s3_utils.is_s3_uri(refpath):
-            if not s3_utils.object_exists(refpath):
-                raise RuntimeError("S3 object does not exist: " + refpath)
-        else:
-            with open(refpath, "rb"):
-                pass
+        with open(refpath, "rb"):
+            pass
     return refpath
 
 
