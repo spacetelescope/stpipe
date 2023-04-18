@@ -9,6 +9,7 @@
 - Add spell checking through the ``codespell`` tool. [#81]
 - Drop support for Python 3.8 [#93]
 - Remove ``stdatamodels`` dependency, as it is no longer used. [#91]
+- Add ``flynt`` string update checking tool. [#92]
 
 0.4.6 (2023-03-27)
 ==================
