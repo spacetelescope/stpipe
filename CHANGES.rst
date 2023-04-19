@@ -1,4 +1,4 @@
-0.5.0 (unreleased)
+0.5.0 (2023-04-19)
 ==================
 
 - Remove use of deprecated ``pytest-openfiles`` ``pytest`` plugin. This has been replaced by
