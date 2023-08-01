@@ -42,8 +42,8 @@ class Step:
     """
 
     spec = """
-    pre_hooks          = string_list(default=list())
-    post_hooks         = string_list(default=list())
+    pre_hooks          = list(default=list())        # List of Step classes to run before step
+    post_hooks         = list(default=list())        # List of Step classes to run after step
     output_file        = output_file(default=None)   # File to save output to.
     output_dir         = string(default=None)        # Directory path for output files
     output_ext         = string()                    # Default type of output

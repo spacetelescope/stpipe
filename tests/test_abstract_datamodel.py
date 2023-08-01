@@ -17,7 +17,7 @@ def test_roman_datamodel():
 
 
 def test_jwst_datamodel():
-    jwst_datamodel = pytest.importorskip("jwst.datamodels")
+    jwst_datamodel = pytest.importorskip("stdatamodels.jwst.datamodels")
     image_model = jwst_datamodel.ImageModel()
     assert isinstance(image_model, AbstractDataModel)
 
