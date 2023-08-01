@@ -13,13 +13,14 @@ Other status codes are Step implementation-specific.
 
 import sys
 
-import stpipe
 from stpipe import Step
 from stpipe.exceptions import StpipeExitException
+from stpipe.cli.main import _print_versions
+
 
 if __name__ == "__main__":
     if "--version" in sys.argv:
-        sys.stdout.write(f"{stpipe.__version__}\n")
+        _print_versions()
         sys.exit(0)
 
     try:
