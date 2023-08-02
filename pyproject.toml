@@ -42,6 +42,7 @@ test = [
 
 [project.scripts]
 stpipe = 'stpipe.cli.main:main'
+strun = 'stpipe.cli.strun'
 
 [build-system]
 requires = [
