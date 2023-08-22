@@ -29,7 +29,7 @@ class SystemCall(Step):
     """  # noqa: E501
 
     def process(self, *args):
-        from .. import datamodels
+        from .. import datamodels  # noqa: TID252
 
         newargs = []
         for i, arg in enumerate(args):
