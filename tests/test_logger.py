@@ -6,7 +6,7 @@ from stpipe import log as stpipe_log
 
 
 @pytest.fixture(autouse=True)
-def clean_up_logging():
+def _clean_up_logging():
     yield
     logging.shutdown()
     stpipe_log.load_configuration(io.BytesIO(stpipe_log.DEFAULT_CONFIGURATION))

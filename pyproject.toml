@@ -96,8 +96,8 @@ select = [
     'INP',     # flake8-no-pep420 (prevent use of PEP420, i.e. implicit name spaces)
     # 'G',       # flake8-logging-format (best practices for logging)
     'PIE',     # flake8-pie (misc suggested improvement linting)
-    # 'T20',     # flake8-print (prevent print statements in code)
-    # 'PT',      # flake8-pytest-style (best practices for pytest)
+    'T20',     # flake8-print (prevent print statements in code)
+    'PT',      # flake8-pytest-style (best practices for pytest)
     # 'Q',       # flake8-quotes (best practices for quotes)
     # 'RSE',     # flake8-raise (best practices for raising exceptions)
     # 'RET',     # flake8-return (best practices for return statements)
@@ -127,6 +127,8 @@ extend-ignore = [
 [tool.ruff.extend-per-file-ignores]
 "tests/*.py" = ["S101", "S603", "S607", "INP001"]
 "src/stpipe/tests/*.py" = ["S101"]
+"src/stpipe/cli/*.py" = ["T201"]
+"src/stpipe/cmdline.py" = ["T201"]
 
 
 [tool.black]

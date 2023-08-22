@@ -1,5 +1,6 @@
 """Test step.Step"""
 import logging
+import re
 
 import asdf
 import pytest
@@ -137,8 +138,8 @@ def config_file_list_arg_step(tmpdir):
     return config_file
 
 
-@pytest.fixture
-def mock_step_crds(monkeypatch):
+@pytest.fixture()
+def _mock_step_crds(monkeypatch):
     """Mock various crds calls from Step"""
 
     def mock_get_config_from_reference_pipe(dataset, disable=None):
@@ -184,7 +185,8 @@ def mock_step_crds(monkeypatch):
 # #####
 # Tests
 # #####
-def test_build_config_pipe_config_file(mock_step_crds, config_file_pipe):
+@pytest.mark.usefixtures("_mock_step_crds")
+def test_build_config_pipe_config_file(config_file_pipe):
     """Test that local config overrides defaults and CRDS-supplied file"""
     config, returned_config_file = SimplePipe.build_config(
         "science.fits", config_file=config_file_pipe
@@ -198,7 +200,8 @@ def test_build_config_pipe_config_file(mock_step_crds, config_file_pipe):
     assert config["steps"]["step1"]["str3"] == "from crds"
 
 
-def test_build_config_pipe_crds(mock_step_crds):
+@pytest.mark.usefixtures("_mock_step_crds")
+def test_build_config_pipe_crds():
     """Test that CRDS param reffile overrides a default CRDS configuration"""
     config, config_file = SimplePipe.build_config("science.fits")
     assert not config_file
@@ -217,7 +220,8 @@ def test_build_config_pipe_default():
     assert len(config) == 0
 
 
-def test_build_config_pipe_kwarg(mock_step_crds, config_file_pipe):
+@pytest.mark.usefixtures("_mock_step_crds")
+def test_build_config_pipe_kwarg(config_file_pipe):
     """Test that kwargs override CRDS and local param reffiles"""
     config, returned_config_file = SimplePipe.build_config(
         "science.fits",
@@ -234,7 +238,8 @@ def test_build_config_pipe_kwarg(mock_step_crds, config_file_pipe):
     assert config["steps"]["step1"]["str3"] == "from crds"
 
 
-def test_build_config_step_config_file(mock_step_crds, config_file_step):
+@pytest.mark.usefixtures("_mock_step_crds")
+def test_build_config_step_config_file(config_file_step):
     """Test that local config overrides defaults and CRDS-supplied file"""
     config, returned_config_file = SimpleStep.build_config(
         "science.fits", config_file=config_file_step
@@ -245,7 +250,8 @@ def test_build_config_step_config_file(mock_step_crds, config_file_step):
     assert config["str3"] == "from crds"
 
 
-def test_build_config_step_crds(mock_step_crds):
+@pytest.mark.usefixtures("_mock_step_crds")
+def test_build_config_step_crds():
     """Test override of a CRDS configuration"""
     config, config_file = SimpleStep.build_config("science.fits")
     assert config_file is None
@@ -262,7 +268,8 @@ def test_build_config_step_default():
     assert len(config) == 0
 
 
-def test_build_config_step_kwarg(mock_step_crds, config_file_step):
+@pytest.mark.usefixtures("_mock_step_crds")
+def test_build_config_step_kwarg(config_file_step):
     """Test that kwargs override everything"""
     config, returned_config_file = SimpleStep.build_config(
         "science.fits", config_file=config_file_step, str1="from kwarg"
@@ -273,7 +280,8 @@ def test_build_config_step_kwarg(mock_step_crds, config_file_step):
     assert config["str3"] == "from crds"
 
 
-def test_step_list_args(mock_step_crds, config_file_list_arg_step):
+@pytest.mark.usefixtures("_mock_step_crds")
+def test_step_list_args(config_file_list_arg_step):
     """Test that list arguments, provided as comma-separated values are parsed
     correctly.
     """
@@ -300,7 +308,11 @@ def test_step_list_args(mock_step_crds, config_file_list_arg_step):
     assert c.output_shape == [1500, 1300]
     assert c.crpix == [123, 456]
 
-    with pytest.raises(ValueError) as e:
+    msg = re.escape(
+        "Config parameter 'output_shape': the value \"['1500', '1300', '90']\" "
+        "is too long."
+    )
+    with pytest.raises(ValueError, match=msg):
         cmdline.just_the_step_from_cmdline(
             [
                 "filename.fits",
@@ -313,13 +325,11 @@ def test_step_list_args(mock_step_crds, config_file_list_arg_step):
             ],
             ListArgStep,
         )
-    assert (
-        e.value.args[0]
-        == "Config parameter 'output_shape': the value \"['1500', '1300', '90']\" is"
-        " too long."
-    )
 
-    with pytest.raises(ValueError) as e:
+    msg = re.escape(
+        "Config parameter 'output_shape': the value \"['1500']\" is too short."
+    )
+    with pytest.raises(ValueError, match=msg):
         cmdline.just_the_step_from_cmdline(
             [
                 "filename.fits",
@@ -332,12 +342,11 @@ def test_step_list_args(mock_step_crds, config_file_list_arg_step):
             ],
             ListArgStep,
         )
-    assert (
-        e.value.args[0]
-        == "Config parameter 'output_shape': the value \"['1500']\" is too short."
-    )
 
-    with pytest.raises(ValueError) as e:
+    msg = re.escape(
+        "Config parameter 'output_shape': the value \"1500\" is of the wrong type."
+    )
+    with pytest.raises(ValueError, match=msg):
         cmdline.just_the_step_from_cmdline(
             [
                 "filename.fits",
@@ -350,12 +359,11 @@ def test_step_list_args(mock_step_crds, config_file_list_arg_step):
             ],
             ListArgStep,
         )
-    assert (
-        e.value.args[0]
-        == "Config parameter 'output_shape': the value \"1500\" is of the wrong type."
-    )
 
-    with pytest.raises(ValueError) as e:
+    msg = re.escape(
+        "Config parameter 'output_shape': the value \"1500.5\" is of the wrong type."
+    )
+    with pytest.raises(ValueError, match=msg):
         cmdline.just_the_step_from_cmdline(
             [
                 "filename.fits",
@@ -368,10 +376,6 @@ def test_step_list_args(mock_step_crds, config_file_list_arg_step):
             ],
             ListArgStep,
         )
-    assert (
-        e.value.args[0]
-        == "Config parameter 'output_shape': the value \"1500.5\" is of the wrong type."
-    )
 
 
 def test_logcfg_routing(tmpdir):
