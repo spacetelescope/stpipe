@@ -361,7 +361,10 @@ class Step:
         self.log.setLevel(log.logging.DEBUG)
 
         # Log the fact that we have been init-ed.
-        self.log.info(f"{self.__class__.__name__} instance created.")
+        self.log.info(
+            "%s instance created.",
+            self.__class__.__name__,
+        )
 
         # Store the config file path so config filenames can be resolved
         # against it.
@@ -387,7 +390,9 @@ class Step:
         for i, arg in enumerate(args):
             if isinstance(arg, discouraged_types):
                 self.log.error(
-                    f"{msg} {i} object.  Use an instance of AbstractDataModel instead."
+                    "%s %s object.  Use an instance of AbstractDataModel instead.",
+                    msg,
+                    i,
                 )
 
     @property
@@ -418,9 +423,9 @@ class Step:
 
             step_result = None
 
-            self.log.info(f"Step {self.name} running with args {args}.")
+            self.log.info("Step %s running with args %s.", self.name, args)
 
-            self.log.info(f"Step {self.name} parameters are: {self.get_pars()}")
+            self.log.info("Step %s parameters are: %s", self.name, self.get_pars())
 
             if len(args):
                 self.set_primary_input(args[0])
@@ -459,8 +464,9 @@ class Step:
                                         ] = "SKIPPED"
                                     except AttributeError as e:  # noqa: PERF203
                                         self.log.info(
-                                            "Could not record skip into DataModel"
-                                            f" header: {e}"
+                                            "Could not record skip into DataModel "
+                                            "header: %s",
+                                            e,
                                         )
                             elif isinstance(args[0], AbstractDataModel):
                                 try:
@@ -470,7 +476,8 @@ class Step:
                                 except AttributeError as e:
                                     self.log.info(
                                         "Could not record skip into DataModel"
-                                        f" header: {e}"
+                                        " header: %s",
+                                        e,
                                     )
                     step_result = args[0]
                 else:
@@ -536,10 +543,10 @@ class Step:
                                     " `--save_results=false`"
                                 )
                             else:
-                                self.log.info(f"Saving file {output_path}")
+                                self.log.info("Saving file %s", output_path)
                                 result.save(output_path, overwrite=True)
 
-                self.log.info(f"Step {self.name} done")
+                self.log.info("Step %s done", self.name)
             finally:
                 log.delegator.log = orig_log
 
@@ -844,12 +851,12 @@ class Step:
             disable = get_disable_crds_steppars()
         if disable:
             logger.info(
-                f"{reftype.upper()}: CRDS parameter reference retrieval disabled."
+                "%s: CRDS parameter reference retrieval disabled.", reftype.upper()
             )
             return config_parser.ConfigObj()
 
         # Retrieve step parameters from CRDS
-        logger.debug(f"Retrieving step {reftype.upper()} parameters from CRDS")
+        logger.debug("Retrieving step %s parameters from CRDS", reftype.upper())
         try:
             ref_file = crds_client.get_reference_file(
                 crds_parameters,
@@ -857,22 +864,22 @@ class Step:
                 crds_observatory,
             )
         except (AttributeError, crds_client.CrdsError):
-            logger.debug(f"{reftype.upper()}: No parameters found")
+            logger.debug("%s: No parameters found", reftype.upper())
             return config_parser.ConfigObj()
         if ref_file != "N/A":
-            logger.info(f"{reftype.upper()} parameters found: {ref_file}")
+            logger.info("%s parameters found: %s", reftype.upper(), ref_file)
             ref = config_parser.load_config_file(ref_file)
 
             ref_pars = {
                 par: value for par, value in ref.items() if par not in ["class", "name"]
             }
             logger.debug(
-                f"{reftype.upper()} parameters retrieved from CRDS: {ref_pars}"
+                "%s parameters retrieved from CRDS: %s", reftype.upper(), ref_pars
             )
 
             return ref
 
-        logger.debug(f"No {reftype.upper()} reference files found.")
+        logger.debug("No %s reference files found.", reftype.upper())
         return config_parser.ConfigObj()
 
     @classmethod
@@ -1001,7 +1008,7 @@ class Step:
                     **components,
                 )
             )
-            self.log.info(f"Saved model in {output_path}")
+            self.log.info("Saved model in %s", output_path)
 
         return output_path
 
@@ -1154,7 +1161,7 @@ class Step:
                 if hasattr(item, "close"):
                     item.close()
             except Exception as exception:  # noqa: PERF203
-                self.log.debug(f'Could not close "{item}"Reason:\n{exception}')
+                self.log.debug('Could not close "%s"Reason:\n%s', item, exception)
         for item in to_del:
             try:
                 del item
@@ -1328,7 +1335,7 @@ class Step:
                         getattr(self, step_name).update_pars(step_parameters)
             else:
                 self.log.debug(
-                    f"Parameter {parameter} is not valid for step {self}. Ignoring."
+                    "Parameter %s is not valid for step %s. Ignoring.", parameter, self
                 )
 
     @classmethod

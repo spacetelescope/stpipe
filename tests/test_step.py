@@ -53,7 +53,7 @@ class LoggingPipeline(Pipeline):
     def process(self):
         self.log.warning("This step has called out a warning.")
 
-        self.log.warning(f"{self.log}  {self.log.handlers}")
+        self.log.warning("%s  %s", self.log, self.log.handlers)
 
     def _datamodels_open(self, **kwargs):
         pass
