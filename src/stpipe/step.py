@@ -345,9 +345,9 @@ class Step:
             name = self.__class__.__name__
         self.name = name
         if parent is None:
-            self.qualified_name = ".".join([log.STPIPE_ROOT_LOGGER, self.name])
+            self.qualified_name = f"{log.STPIPE_ROOT_LOGGER}.{self.name}"
         else:
-            self.qualified_name = ".".join([parent.qualified_name, self.name])
+            self.qualified_name = f"{parent.qualified_name}.{self.name}"
         self.parent = parent
 
         # Set the parameters as member variables

@@ -32,12 +32,6 @@ repos:
       additional_dependencies:
         - tomli
 
-- repo: https://github.com/ikamensh/flynt/
-  rev: '1.0.1'
-  hooks:
-    - id: flynt
-      exclude: "src/stpipe/extern/.*"
-
 - repo: https://github.com/astral-sh/ruff-pre-commit
   rev: 'v0.1.4'
   hooks:
