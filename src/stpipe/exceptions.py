@@ -3,8 +3,6 @@ class StpipeException(Exception):  # noqa: N818
     Base class for exceptions from the stpipe package.
     """
 
-    pass
-
 
 class StpipeExitException(StpipeException):  # noqa: N818
     """

@@ -132,8 +132,6 @@ class FromCommandLine(str):
     use isinstance to see where the values came from.
     """
 
-    pass
-
 
 def _override_config_from_args(config, args):
     """

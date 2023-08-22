@@ -561,7 +561,6 @@ class Step:
             List of reference files used when running the step, each
             a tuple in the form (str reference type, str reference URI).
         """
-        pass
 
     @staticmethod
     def remove_suffix(name):
@@ -722,7 +721,6 @@ class Step:
         true precache operations and avoids having to override the more complex
         Step.run() instead.
         """
-        pass
 
     def get_ref_override(self, reference_file_type):
         """Determine and return any override for `reference_file_type`.

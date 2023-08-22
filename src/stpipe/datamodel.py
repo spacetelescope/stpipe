@@ -34,7 +34,6 @@ class AbstractDataModel(abc.ABC):
     @abc.abstractmethod
     def crds_observatory(self):
         """This should return a string identifying the observatory as CRDS expects it"""
-        pass
 
     @abc.abstractmethod
     def get_crds_parameters(self):
@@ -65,4 +64,3 @@ class AbstractDataModel(abc.ABC):
         output_path: str
             The file path the model was saved in.
         """
-        pass

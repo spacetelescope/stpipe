@@ -144,7 +144,5 @@ class _NotSet:
     below
     """
 
-    pass
-
 
 _not_set = _NotSet()
