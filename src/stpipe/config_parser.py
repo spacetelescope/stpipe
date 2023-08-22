@@ -79,7 +79,7 @@ def _get_output_file_check(root_dir):
     return _output_file_check
 
 
-def _is_datamodel(value, default=None):
+def _is_datamodel(value):
     """Verify that value is either is a DataModel."""
     if isinstance(value, AbstractDataModel):
         return value
@@ -87,7 +87,7 @@ def _is_datamodel(value, default=None):
     raise VdtTypeError(value)
 
 
-def _is_string_or_datamodel(value, default=None):
+def _is_string_or_datamodel(value):
     """Verify that value is either a string (nominally a reference file path)
     or a DataModel (possibly one with no corresponding file.)
     """

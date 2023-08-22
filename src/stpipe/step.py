@@ -87,7 +87,7 @@ class Step:
         return f"pars-{cls.__name__.lower()}"
 
     @classmethod
-    def merge_config(cls, config, config_file):
+    def merge_config(cls, config, config_file):  # noqa: ARG003
         return config
 
     @classmethod
@@ -187,7 +187,9 @@ class Step:
         return cmdline.step_from_cmdline(args)
 
     @classmethod
-    def _parse_class_and_name(cls, config, parent=None, name=None, config_file=None):
+    def _parse_class_and_name(
+        cls, config, parent=None, name=None, config_file=None  # noqa: ARG003
+    ):
         if "class" in config:
             step_class = utilities.import_class(
                 utilities.resolve_step_class_alias(config["class"]),
