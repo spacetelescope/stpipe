@@ -8,7 +8,7 @@ from . import utilities
 from .step import Step
 
 
-def hook_from_string(step, type, num, command):
+def hook_from_string(step, type, num, command):  # noqa: A002
     name = f"{type}_hook{num:d}"
 
     step_class = None
@@ -36,5 +36,5 @@ def hook_from_string(step, type, num, command):
     return SystemCall(name, parent=step, command=command)
 
 
-def get_hook_objects(step, type, hooks):
-    return [hook_from_string(step, type, i, hook) for i, hook in enumerate(hooks)]
+def get_hook_objects(step, type_, hooks):
+    return [hook_from_string(step, type_, i, hook) for i, hook in enumerate(hooks)]

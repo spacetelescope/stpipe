@@ -127,7 +127,7 @@ class FormatTemplate(Formatter):
         if key_formats:
             self.key_formats.update(key_formats)
 
-    def format(self, format_string, **kwargs):
+    def format(self, format_string, **kwargs):  # noqa: A003
         """Perform the formatting
 
         Parameters

@@ -100,8 +100,8 @@ def get_spec_file_path(step_class):
 
     # Since `step_class` could be defined in a file called whatever,
     # we need the source file basedir and the class name.
-    dir = os.path.dirname(step_source_file)
-    return os.path.join(dir, step_class.__name__ + ".spec")
+    dir_ = os.path.dirname(step_source_file)
+    return os.path.join(dir_, step_class.__name__ + ".spec")
 
 
 def find_spec_file(step_class):

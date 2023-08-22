@@ -926,7 +926,7 @@ class Step:
         idx=None,
         output_file=None,
         force=False,
-        format=None,
+        format=None,  # noqa: A002
         **components,
     ):
         """
@@ -1223,7 +1223,7 @@ class Step:
 
         return full_path
 
-    def _set_input_dir(self, input, exclusive=True):
+    def _set_input_dir(self, input_, exclusive=True):
         """Set the input directory
 
         If sufficient information is at hand, set a value
@@ -1231,7 +1231,7 @@ class Step:
 
         Parameters
         ----------
-        input : str
+        input_ : str
             Input to determine path from.
 
         exclusive : bool
@@ -1241,8 +1241,8 @@ class Step:
         """
         if not exclusive or self.search_attr("_input_dir") is None:
             with suppress(Exception):
-                if isfile(input):
-                    self.input_dir = split(input)[0]
+                if isfile(input_):
+                    self.input_dir = split(input_)[0]
 
     def get_pars(self, full_spec=True):
         """Retrieve the configuration parameters of a step
@@ -1334,7 +1334,7 @@ class Step:
                 )
 
     @classmethod
-    def build_config(cls, input, **kwargs):
+    def build_config(cls, input, **kwargs):  # noqa: A002
         """Build the ConfigObj to initialize a Step
 
         A Step config is built in the following order:

@@ -70,9 +70,9 @@ def _get_output_file_check(root_dir):
             path = os.path.join(root_dir, path)
 
         path = os.path.abspath(path)
-        dir = os.path.dirname(path)
-        if dir and not os.path.exists(dir):
-            os.makedirs(dir)
+        dir_ = os.path.dirname(path)
+        if dir_ and not os.path.exists(dir_):
+            os.makedirs(dir_)
 
         return path
 

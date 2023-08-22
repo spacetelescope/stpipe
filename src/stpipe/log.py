@@ -83,7 +83,7 @@ class LogConfig:
         handler=None,
         level=logging.NOTSET,
         break_level=logging.NOTSET,
-        format=None,
+        format=None,  # noqa: A002
     ):
         if name in ("", ".", "root"):
             name = "*"
@@ -97,7 +97,7 @@ class LogConfig:
         self.level = level
         self.break_level = break_level
         if format is None:
-            format = DEFAULT_FORMAT
+            format = DEFAULT_FORMAT  # noqa: A001
         self.format = format
 
     def match(self, log_name):
