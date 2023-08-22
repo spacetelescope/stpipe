@@ -355,7 +355,7 @@ def validate(
                 else:
                     section_list.append("[missing section]")
                 section_string = "/".join(section_list)
-                if err == False:
+                if err is False:
                     if allow_missing:
                         config[key] = spec[key]
                         continue
