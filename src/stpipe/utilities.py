@@ -45,7 +45,7 @@ def import_class(full_name, subclassof=object, config_file=None):
     #   package.subPackage.subsubpackage.className
     # in the input parameter `full_name`. This means that
     #   1. We HAVE to be able to say
-    #       from package.subPackage.subsubpackage import className
+    #       `from package.subPackage.subsubpackage import className`
     #   2. If `subclassof` is defined, the newly imported Python class MUST be a
     #      subclass of `subclassof`, which HAS to be a Python class.
 

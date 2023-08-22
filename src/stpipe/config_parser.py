@@ -393,7 +393,6 @@ def string_to_python_type(section, key):
     else:
         typed_val = _parse(val)
     section[key] = typed_val
-    return
 
 
 def _parse(val):
