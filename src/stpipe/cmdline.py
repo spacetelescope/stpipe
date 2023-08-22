@@ -398,7 +398,7 @@ def step_from_cmdline(args, cls=None):
         _print_important_message(f"ERROR RUNNING STEP {step_class.__name__!r}:", str(e))
 
         if debug_on_exception:
-            import pdb
+            import pdb  # noqa: T100
 
             pdb.post_mortem()
         else:
