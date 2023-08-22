@@ -14,9 +14,8 @@ Other status codes are Step implementation-specific.
 import sys
 
 from stpipe import Step
-from stpipe.exceptions import StpipeExitException
 from stpipe.cli.main import _print_versions
-
+from stpipe.exceptions import StpipeExitException
 
 if __name__ == "__main__":
     if "--version" in sys.argv:
