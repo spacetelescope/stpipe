@@ -16,12 +16,12 @@ class AbstractDataModel(abc.ABC):
     """
 
     @classmethod
-    def __subclasshook__(cls, C):
+    def __subclasshook__(cls, c_):
         """
         Pseudo subclass check based on these attributes and methods
         """
         if cls is AbstractDataModel:
-            mro = C.__mro__
+            mro = c_.__mro__
             if (
                 any([hasattr(CC, "crds_observatory") for CC in mro])
                 and any([hasattr(CC, "get_crds_parameters") for CC in mro])

@@ -1,4 +1,4 @@
-class StpipeException(Exception):
+class StpipeException(Exception):  # noqa: N818
     """
     Base class for exceptions from the stpipe package.
     """
@@ -6,7 +6,7 @@ class StpipeException(Exception):
     pass
 
 
-class StpipeExitException(StpipeException):
+class StpipeExitException(StpipeException):  # noqa: N818
     """
     An exception that carries an exit status that is
     returned by stpipe CLI tools.

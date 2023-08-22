@@ -32,7 +32,7 @@ level = DEBUG
 # LOGS AS EXCEPTIONS
 
 
-class LoggedException(Exception):
+class LoggedException(Exception):  # noqa: N818
     """
     This is an exception used when a log record is converted into an
     exception.
@@ -203,7 +203,7 @@ def load_configuration(config_file):
                 cfg.match_and_apply(log)
 
 
-def getLogger(name=None):
+def getLogger(name=None):  # noqa: N802
     log = logging.getLogger(name)
 
     return log

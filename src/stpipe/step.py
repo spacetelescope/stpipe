@@ -561,6 +561,7 @@ class Step:
         """
         pass
 
+    @staticmethod
     def remove_suffix(name):
         """
         Remove a known Step filename suffix from a filename
