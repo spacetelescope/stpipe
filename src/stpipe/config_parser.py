@@ -83,8 +83,8 @@ def _is_datamodel(value, default=None):
     """Verify that value is either is a DataModel."""
     if isinstance(value, AbstractDataModel):
         return value
-    else:
-        raise VdtTypeError(value)
+
+    raise VdtTypeError(value)
 
 
 def _is_string_or_datamodel(value, default=None):
@@ -93,10 +93,11 @@ def _is_string_or_datamodel(value, default=None):
     """
     if isinstance(value, AbstractDataModel):
         return value
-    elif isinstance(value, str):
+
+    if isinstance(value, str):
         return value
-    else:
-        raise VdtTypeError(value)
+
+    raise VdtTypeError(value)
 
 
 def load_config_file(config_file):
@@ -211,7 +212,7 @@ def load_spec_file(cls, preserve_comments=_not_set):
             raise_errors=True,
             list_values=False,
         )
-    return
+    return None
 
 
 def merge_config(into, new):
@@ -359,8 +360,8 @@ def validate(
                     if allow_missing:
                         config[key] = spec[key]
                         continue
-                    else:
-                        err = "missing"
+
+                    err = "missing"
 
                 messages.append(f"Config parameter {section_string!r}: {err}")
 
@@ -401,12 +402,15 @@ def _parse(val):
     """
     if val.lower() == "true":
         return True
-    elif val.lower() == "false":
+
+    if val.lower() == "false":
         return False
+
     try:
         return int(val)
     except ValueError:
         pass
+
     try:
         return float(val)
     except ValueError:

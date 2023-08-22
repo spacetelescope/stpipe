@@ -178,9 +178,7 @@ class FormatTemplate(Formatter):
             if formatted_kwargs[unused] is not None
         ]
         result_parts = [result] + unused_values
-        result = self.separator.join(result_parts)
-
-        return result
+        return self.separator.join(result_parts)
 
     # Make the instance callable
     __call__ = format

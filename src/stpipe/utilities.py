@@ -73,7 +73,8 @@ def import_class(full_name, subclassof=object, config_file=None):
             raise TypeError(
                 f"Object {class_name} from package {package_name} is not a class"
             )
-        elif not issubclass(step_class, subclassof):
+
+        if not issubclass(step_class, subclassof):
             raise TypeError(
                 f"Class {class_name} from package {package_name} is not a subclass of"
                 f" {subclassof.__name__}"
@@ -133,8 +134,8 @@ def get_fully_qualified_class_name(cls_or_obj):
     module = cls.__module__
     if module is None or module == str.__class__.__module__:
         return cls.__name__  # Avoid reporting __builtin__
-    else:
-        return module + "." + cls.__name__
+
+    return module + "." + cls.__name__
 
 
 class _NotSet:

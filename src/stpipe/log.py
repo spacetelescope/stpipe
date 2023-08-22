@@ -117,14 +117,17 @@ class LogConfig:
         """
         if handler_str.startswith("file:"):
             return logging.FileHandler(handler_str[5:], "w", "utf-8", True)
-        elif handler_str.startswith("append:"):
+
+        if handler_str.startswith("append:"):
             return logging.FileHandler(handler_str[7:], "a", "utf-8", True)
-        elif handler_str == "stdout":
+
+        if handler_str == "stdout":
             return logging.StreamHandler(sys.stdout)
-        elif handler_str == "stderr":
+
+        if handler_str == "stderr":
             return logging.StreamHandler(sys.stderr)
-        else:
-            raise ValueError(f"Can't parse handler {handler_str!r}")
+
+        raise ValueError(f"Can't parse handler {handler_str!r}")
 
     def apply(self, log):
         """
@@ -205,9 +208,7 @@ def load_configuration(config_file):
 
 
 def getLogger(name=None):  # noqa: N802
-    log = logging.getLogger(name)
-
-    return log
+    return logging.getLogger(name)
 
 
 def _find_logging_config_file():
@@ -218,8 +219,7 @@ def _find_logging_config_file():
         if os.path.exists(file):
             return os.path.abspath(file)
 
-    buffer = io.BytesIO(DEFAULT_CONFIGURATION)
-    return buffer
+    return io.BytesIO(DEFAULT_CONFIGURATION)
 
 
 ###########################################################################

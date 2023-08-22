@@ -285,15 +285,13 @@ class Step:
             else:
                 kwargs[k] = config[k]
 
-        step = cls(
+        return cls(
             name=name,
             parent=parent,
             config_file=config_file,
             _validate_kwds=False,
             **kwargs,
         )
-
-        return step
 
     def __init__(
         self,
@@ -702,16 +700,16 @@ class Step:
             if value is None:
                 value = getattr(self, attribute, default)
             return value
-        else:
-            value = getattr(self, attribute, None)
-            if value is None:
-                try:
-                    value = self.parent.search_attr(attribute)
-                except AttributeError:
-                    pass
-            if value is None:
-                value = default
-            return value
+
+        value = getattr(self, attribute, None)
+        if value is None:
+            try:
+                value = self.parent.search_attr(attribute)
+            except AttributeError:
+                pass
+        if value is None:
+            value = default
+        return value
 
     def _precache_references(self, input_file):
         """Because Step precaching precedes calls to get_reference_file() almost
@@ -733,8 +731,8 @@ class Step:
         path = getattr(self, override_name, None)
         if isinstance(path, AbstractDataModel):
             return path
-        else:
-            return abspath(path) if path and path != "N/A" else path
+
+        return abspath(path) if path and path != "N/A" else path
 
     def get_reference_file(self, input_file, reference_file_type):
         """
@@ -766,7 +764,8 @@ class Step:
                     (reference_file_type, override.override_handle)
                 )
                 return override
-            elif override.strip() != "":
+
+            if override.strip() != "":
                 self._reference_files_used.append(
                     (reference_file_type, basename(override))
                 )
@@ -869,9 +868,9 @@ class Step:
             )
 
             return ref
-        else:
-            logger.debug(f"No {reftype.upper()} reference files found.")
-            return config_parser.ConfigObj()
+
+        logger.debug(f"No {reftype.upper()} reference files found.")
+        return config_parser.ConfigObj()
 
     @classmethod
     def reference_uri_to_cache_path(cls, reference_uri, observatory):
@@ -969,7 +968,7 @@ class Step:
 
         # Check if saving is even specified.
         if not force and not self.save_results and not output_file:
-            return
+            return None
 
         if isinstance(model, Sequence):
             save_model_func = partial(
@@ -1123,9 +1122,7 @@ class Step:
 
         output_dir = step.search_attr("output_dir", default="")
         output_dir = expandvars(expanduser(output_dir))
-        full_output_path = join(output_dir, basename)
-
-        return full_output_path
+        return join(output_dir, basename)
 
     def closeout(self, to_close=None, to_del=None):
         """Close out step processing
@@ -1459,8 +1456,10 @@ def get_disable_crds_steppars(default=None):
     if default:
         if isinstance(default, bool):
             return default
-        elif isinstance(default, str):
+
+        if isinstance(default, str):
             return default in truths
+
         raise ValueError(f"default must be string or boolean: {default}")
 
     flag = os.environ.get("STPIPE_DISABLE_CRDS_STEPPARS", "")

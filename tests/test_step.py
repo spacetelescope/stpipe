@@ -143,7 +143,7 @@ def _mock_step_crds(monkeypatch):
     """Mock various crds calls from Step"""
 
     def mock_get_config_from_reference_pipe(dataset, disable=None):
-        config = cp.config_from_dict(
+        return cp.config_from_dict(
             {
                 "str1": "from crds",
                 "str2": "from crds",
@@ -157,17 +157,14 @@ def _mock_step_crds(monkeypatch):
                 },
             }
         )
-        return config
 
     def mock_get_config_from_reference_step(dataset, disable=None):
-        config = cp.config_from_dict(
+        return cp.config_from_dict(
             {"str1": "from crds", "str2": "from crds", "str3": "from crds"}
         )
-        return config
 
     def mock_get_config_from_reference_list_arg_step(dataset, disable=None):
-        config = cp.config_from_dict({"rotation": "15", "pixel_scale": "0.85"})
-        return config
+        return cp.config_from_dict({"rotation": "15", "pixel_scale": "0.85"})
 
     monkeypatch.setattr(
         SimplePipe, "get_config_from_reference", mock_get_config_from_reference_pipe
