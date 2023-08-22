@@ -40,7 +40,8 @@ def get_steps():
             warnings.warn(
                 f"{STEPS_GROUP} plugin from package {package_name}=={package_version} "
                 "failed to load:\n\n"
-                f"{e.__class__.__name__}: {e}"
+                f"{e.__class__.__name__}: {e}",
+                stacklevel=2,
             )
 
         steps.extend(package_steps)

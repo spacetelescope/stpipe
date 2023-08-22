@@ -45,10 +45,10 @@ def _get_config_and_class(identifier):
             step_class = utilities.import_class(
                 utilities.resolve_step_class_alias(identifier), Step
             )
-        except (ImportError, AttributeError, TypeError):
+        except (ImportError, AttributeError, TypeError) as err:
             raise ValueError(
                 f"{identifier!r} is not a path to a config file or a Python Step class"
-            )
+            ) from err
         # Don't validate yet
         config = config_parser.config_from_dict({})
         name = None
@@ -82,7 +82,9 @@ def _build_arg_parser_from_spec(spec, step_class, parent=None):
         description=step_class.__doc__,
     )
 
-    def build_from_spec(subspec, parts=[]):
+    def build_from_spec(subspec, parts=None):
+        if parts is None:
+            parts = []
         for key, val in subspec.items():
             if isinstance(val, dict):
                 build_from_spec(val, parts + [key])
@@ -263,7 +265,9 @@ def just_the_step_from_cmdline(args, cls=None):
             try:
                 log.load_configuration(log_config)
             except Exception as e:
-                raise ValueError(f"Error parsing logging config {log_config!r}:\n{e}")
+                raise ValueError(
+                    f"Error parsing logging config {log_config!r}:\n{e}"
+                ) from e
     except Exception as e:
         _print_important_message("ERROR PARSING CONFIGURATION:", str(e))
         parser1.print_help()
@@ -336,7 +340,7 @@ def just_the_step_from_cmdline(args, cls=None):
         # If the configobj validator failed, print usage information.
         _print_important_message("ERROR PARSING CONFIGURATION:", str(e))
         parser2.print_help()
-        raise ValueError(str(e))
+        raise ValueError(str(e)) from e
 
     # Define the primary input file.
     # Always have an output_file set on the outermost step

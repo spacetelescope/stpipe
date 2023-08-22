@@ -149,10 +149,10 @@ class StepConfig:
             try:
                 _validate_asdf(asdf_file, _LEGACY_CONFIG_SCHEMA_URI)
                 return cls._from_legacy_tree(asdf_file.tree)
-            except asdf.ValidationError:
+            except asdf.ValidationError as err:
                 # Raise the original error so that we encourage
                 # use of the new config file format.
-                raise e
+                raise e from err
 
     @classmethod
     def _from_tree(cls, tree):

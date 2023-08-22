@@ -180,10 +180,11 @@ def load_configuration(config_file):
             value = int(value)
         except ValueError:
             pass
+
         try:
             value = logging._checkLevel(value)
-        except ValueError:
-            raise validate.VdtTypeError(value)
+        except ValueError as err:
+            raise validate.VdtTypeError(value) from err
         return value
 
     spec = config_parser.load_spec_file(LogConfig)

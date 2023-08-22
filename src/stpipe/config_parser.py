@@ -187,7 +187,7 @@ def load_spec_file(cls, preserve_comments=_not_set):
     """
     if preserve_comments is not _not_set:
         msg = "preserve_comments is deprecated"
-        warnings.warn(msg, DeprecationWarning)
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
     # Don't use 'hasattr' here, because we don't want to inherit spec
     # from the base class.
     if not isclass(cls):

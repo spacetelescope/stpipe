@@ -344,7 +344,7 @@ class Pipeline(Step):
         """
         pars = super().get_pars(full_spec=full_spec)
         pars["steps"] = {}
-        for step_name, step_class in self.step_defs.items():
+        for step_name, _step_class in self.step_defs.items():
             pars["steps"][step_name] = getattr(self, step_name).get_pars(
                 full_spec=full_spec
             )

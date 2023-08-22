@@ -479,7 +479,9 @@ class Step:
                         step_result = self.process(*args)
                     except TypeError as e:
                         if "process() takes exactly" in str(e):
-                            raise TypeError("Incorrect number of arguments to step")
+                            raise TypeError(
+                                "Incorrect number of arguments to step"
+                            ) from e
                         raise
 
                 # Warn if returning a discouraged object

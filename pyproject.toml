@@ -86,6 +86,8 @@ select = [
     'N',      # pep8-naming
     'UP',     # pyupgrade
     'S',      # flake8-bandit
+    # 'BLE',    # flake8-blind-except
+    'B',      # flake8-bugbear
 ]
 line-length = 88
 extend-exclude = [
