@@ -456,7 +456,7 @@ class Step:
                                         model[
                                             f"meta.cal_step.{self.class_alias}"
                                         ] = "SKIPPED"
-                                    except AttributeError as e:
+                                    except AttributeError as e:  # noqa: PERF203
                                         self.log.info(
                                             "Could not record skip into DataModel"
                                             f" header: {e}"
@@ -1152,12 +1152,12 @@ class Step:
             try:
                 if hasattr(item, "close"):
                     item.close()
-            except Exception as exception:
+            except Exception as exception:  # noqa: PERF203
                 self.log.debug(f'Could not close "{item}"Reason:\n{exception}')
         for item in to_del:
             try:
                 del item
-            except NameError as error:
+            except NameError as error:  # noqa: PERF203
                 self.log.debug("An error has occurred: %s", error)
         gc.collect()
 
