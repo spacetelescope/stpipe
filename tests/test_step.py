@@ -393,7 +393,7 @@ def test_logcfg_routing(tmpdir):
                     handler.close()
 
     with open(tmpdir / "myrun.log") as f:
-        fulltext = "\n".join([line for line in f])
+        fulltext = "\n".join(list(f))
 
     assert "called out a warning" in fulltext
 

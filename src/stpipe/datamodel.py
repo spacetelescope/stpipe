@@ -23,9 +23,9 @@ class AbstractDataModel(abc.ABC):
         if cls is AbstractDataModel:
             mro = c_.__mro__
             if (
-                any([hasattr(CC, "crds_observatory") for CC in mro])
-                and any([hasattr(CC, "get_crds_parameters") for CC in mro])
-                and any([hasattr(CC, "save") for CC in mro])
+                any(hasattr(CC, "crds_observatory") for CC in mro)
+                and any(hasattr(CC, "get_crds_parameters") for CC in mro)
+                and any(hasattr(CC, "save") for CC in mro)
             ):
                 return True
         return False
