@@ -53,11 +53,6 @@ repos:
       args: ["--fix"]
       exclude: "scripts/strun"
 
-- repo: https://github.com/pycqa/isort
-  rev: 5.12.0
-  hooks:
-    - id: isort
-
 - repo: https://github.com/psf/black
   rev: 23.10.1
   hooks:

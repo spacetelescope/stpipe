@@ -81,6 +81,7 @@ filterwarnings = [
 select = [
     'F',      # Pyflakes
     'W', 'E', # pycodestyle
+    'I',      # isort
 ]
 line-length = 88
 extend-exclude = [

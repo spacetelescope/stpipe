@@ -3,7 +3,6 @@ import os
 
 import asdf
 import yaml
-
 from stpipe.integration import SCHEMAS_PATH
 
 

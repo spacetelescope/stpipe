@@ -1,7 +1,6 @@
 import subprocess
 
 import pytest
-
 import stpipe
 from stpipe import entry_points
 from stpipe.cli import handle_args
