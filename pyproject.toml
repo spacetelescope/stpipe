@@ -85,6 +85,7 @@ select = [
     'I',      # isort
     'N',      # pep8-naming
     'UP',     # pyupgrade
+    'S',      # flake8-bandit
 ]
 line-length = 88
 extend-exclude = [
@@ -96,11 +97,10 @@ extend-ignore = [
     'W605', # invalid escape sequence
 ]
 
-[tool.isort]
-profile = "black"
-filter_files = true
-line_length = 88
-extend_skip_glob = ["src/stpipe/extern/*"]
+[tool.ruff.extend-per-file-ignores]
+"tests/*.py" = ["S101", "S603", "S607"]
+"src/stpipe/tests/*.py" = ["S101"]
+
 
 [tool.black]
 line-length = 88

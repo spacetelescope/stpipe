@@ -5,7 +5,7 @@ import gc
 import os
 import sys
 from collections.abc import Sequence
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from functools import partial
 from os.path import (
     abspath,
@@ -1238,12 +1238,9 @@ class Step:
 
         """
         if not exclusive or self.search_attr("_input_dir") is None:
-            try:
+            with suppress(Exception):
                 if isfile(input):
                     self.input_dir = split(input)[0]
-            except Exception:
-                # Not a file-checkable object. Ignore.
-                pass
 
     def get_pars(self, full_spec=True):
         """Retrieve the configuration parameters of a step

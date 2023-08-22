@@ -252,9 +252,11 @@ class DelegationHandler(logging.Handler):
 
     @log.setter
     def log(self, log):
-        assert log is None or (
+        if log is not None and not (
             isinstance(log, logging.Logger) and log.name.startswith(STPIPE_ROOT_LOGGER)
-        )
+        ):
+            raise AssertionError("Can't set the log to a root logger")
+
         self._logs[threading.current_thread()] = log
 
 

@@ -406,6 +406,7 @@ def step_from_cmdline(args, cls=None):
 def step_script(cls):
     import sys
 
-    assert issubclass(cls, Step)
+    if not issubclass(cls, Step):
+        raise AssertionError("cls must be a subclass of Step")
 
     return step_from_cmdline(sys.argv[1:], cls=cls)
