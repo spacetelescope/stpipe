@@ -89,6 +89,7 @@ def _build_arg_parser_from_spec(spec, step_class, parent=None):
             else:
                 comment = subspec.inline_comments.get(key) or ""
                 comment = comment.lstrip("#").strip()
+                default_value_string = val.split("(")[1].rstrip(")")
                 argument = "--" + ".".join(parts + [key])
                 if argument[2:] in built_in_configuration_parameters:
                     raise ValueError(
@@ -98,7 +99,7 @@ def _build_arg_parser_from_spec(spec, step_class, parent=None):
                 parser.add_argument(
                     "--" + ".".join(parts + [key]),
                     type=str,
-                    help=comment,
+                    help=f"{comment} [{default_value_string}]",
                     metavar="",
                 )
 
