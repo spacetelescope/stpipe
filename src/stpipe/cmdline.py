@@ -92,7 +92,7 @@ def _build_arg_parser_from_spec(spec, step_class, parent=None):
                 # Only show default value if it is not None or the empty string
                 default_value_string = val.split("(")[1].rstrip(")").strip()
                 if default_value_string.lstrip("default=") in ["None", "''", '""']:
-                    help_string = ""
+                    help_string = comment
                 else:
                     help_string = f"{comment} [{default_value_string}]"
                 argument = "--" + ".".join(parts + [key])
