@@ -2,6 +2,8 @@
 ==================
 
 - Print out ``jwst`` or ``romancal`` versions from ``strun --version``. [#98]
+- Print default parameter values for ``strun <step_alias> --help`` [#101]
+- Move ``strun`` to entrypoints [#101]
 
 0.5.0 (2023-04-19)
 ==================
