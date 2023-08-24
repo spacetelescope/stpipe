@@ -21,6 +21,8 @@ from os.path import (
 from pathlib import Path
 from typing import ClassVar
 
+import yaml
+
 try:
     from astropy.io import fits
 
@@ -428,9 +430,18 @@ class Step:
 
             step_result = None
 
-            self.log.info("Step %s running with args %s.", self.name, args)
-
-            self.log.info("Step %s parameters are: %s", self.name, self.get_pars())
+            # log Step or Pipeline parameters from top level only
+            if self.parent is None:
+                self.log.info(
+                    "Step %s parameters are: %s",
+                    self.name,
+                    "\n"
+                    + yaml.dump(self.get_pars(), sort_keys=False)
+                    # Convert serialized YAML types true/false/null to Python types
+                    .replace(" false", " False")
+                    .replace(" true", " True")
+                    .replace(" null", " None"),
+                )
 
             if len(args):
                 self.set_primary_input(args[0])
@@ -1288,9 +1299,8 @@ class Step:
         pars_dict = {}
         for key, value in pars.items():
             if isinstance(value, cmdline.FromCommandLine):
-                pars_dict[key] = str(value)
-            else:
-                pars_dict[key] = value
+                raise RuntimeError("FromCommandLine is used!  FAIL FAIL FAIL")
+            pars_dict[key] = value
         return pars_dict
 
     def export_config(self, filename, include_metadata=False):
