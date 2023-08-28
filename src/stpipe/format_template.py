@@ -105,7 +105,7 @@ class FormatTemplate(Formatter):
     """
 
     def __init__(self, separator="_", key_formats=None, remove_unused=False):
-        """Inialize class
+        """Initialize class
 
         Parameters
         ----------
