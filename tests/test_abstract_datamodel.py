@@ -4,7 +4,7 @@ Test that the AbstractDataModel interface works properly
 
 import pytest
 
-from ..step import AbstractDataModel
+from stpipe.datamodel import AbstractDataModel
 
 
 def test_roman_datamodel():
