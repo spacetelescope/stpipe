@@ -87,7 +87,7 @@ def _build_arg_parser_from_spec(spec, step_class, parent=None):
             parts = []
         for key, val in subspec.items():
             if isinstance(val, dict):
-                build_from_spec(val, parts + [key])
+                build_from_spec(val, [*parts, key])
             else:
                 comment = subspec.inline_comments.get(key) or ""
                 comment = comment.lstrip("#").strip()
@@ -97,14 +97,14 @@ def _build_arg_parser_from_spec(spec, step_class, parent=None):
                     help_string = comment
                 else:
                     help_string = f"{comment} [{default_value_string}]"
-                argument = "--" + ".".join(parts + [key])
+                argument = "--" + ".".join([*parts, key])
                 if argument[2:] in built_in_configuration_parameters:
                     raise ValueError(
                         "The Step's spec is trying to override a built-in parameter"
                         f" {argument!r}"
                     )
                 parser.add_argument(
-                    "--" + ".".join(parts + [key]),
+                    "--" + ".".join([*parts, key]),
                     type=str,
                     help=help_string,
                     metavar="",

@@ -154,7 +154,7 @@ class FormatTemplate(Formatter):
                     #  0: The first replacement field. There should only be one.
                     #  2: Get the format spec.
                     #  -1: Get the last character representing the type.
-                    format_type = list(self.parse(key_format))[0][2][-1]
+                    format_type = next(iter(self.parse(key_format)))[2][-1]
 
                     try:
                         value = key_format.format(CONVERSION[format_type](value))
@@ -177,7 +177,7 @@ class FormatTemplate(Formatter):
             for unused in unused_keys
             if formatted_kwargs[unused] is not None
         ]
-        result_parts = [result] + unused_values
+        result_parts = [result, *unused_values]
         return self.separator.join(result_parts)
 
     # Make the instance callable

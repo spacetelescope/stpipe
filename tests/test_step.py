@@ -1,6 +1,7 @@
 """Test step.Step"""
 import logging
 import re
+from typing import ClassVar
 
 import asdf
 import pytest
@@ -36,7 +37,7 @@ class SimplePipe(Pipeline):
         output_ext = string(default='simplestep')
     """
 
-    step_defs = {"step1": SimpleStep}
+    step_defs: ClassVar = {"step1": SimpleStep}
 
 
 class LoggingPipeline(Pipeline):

@@ -3,6 +3,7 @@ Pipeline
 """
 from collections.abc import Sequence
 from os.path import dirname, join
+from typing import ClassVar
 
 from . import config_parser, crds_client, log
 from .extern.configobj.configobj import ConfigObj, Section
@@ -24,7 +25,7 @@ class Pipeline(Step):
     """
     # A set of steps used in the Pipeline.  Should be overridden by
     # the subclass.
-    step_defs = {}
+    step_defs: ClassVar = {}
 
     def __init__(self, *args, **kwargs):
         """

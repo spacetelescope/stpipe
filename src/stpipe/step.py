@@ -18,6 +18,7 @@ from os.path import (
     split,
     splitext,
 )
+from typing import ClassVar
 
 try:
     from astropy.io import fits
@@ -69,7 +70,7 @@ class Step:
 
     # Reference types for both command line override
     # definition and reference prefetch
-    reference_file_types = []
+    reference_file_types: ClassVar = []
 
     # Set to False in subclasses to skip prefetch,
     # but by default attempt to prefetch
