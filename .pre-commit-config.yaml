@@ -50,7 +50,7 @@ repos:
   rev: 'v0.0.286'
   hooks:
     - id: ruff
-      args: ["--fix", "--force-exclude"]
+      args: ["--fix"]
       exclude: "scripts/strun"
 
 - repo: https://github.com/pycqa/isort
