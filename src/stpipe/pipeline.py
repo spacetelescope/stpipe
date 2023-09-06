@@ -7,6 +7,7 @@ from os.path import dirname, join
 from . import config_parser, crds_client, log
 from .extern.configobj.configobj import ConfigObj, Section
 from .step import Step, get_disable_crds_steppars
+from .utilities import _not_set
 
 # For classmethods, the logger to use is the
 # delegator, since the pipeline has not yet been instantiated.
@@ -112,7 +113,7 @@ class Pipeline(Step):
         return config
 
     @classmethod
-    def load_spec_file(cls, preserve_comments=False):
+    def load_spec_file(cls, preserve_comments=_not_set):
         spec = config_parser.get_merged_spec_file(
             cls, preserve_comments=preserve_comments
         )

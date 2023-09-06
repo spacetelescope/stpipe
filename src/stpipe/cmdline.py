@@ -279,7 +279,7 @@ def just_the_step_from_cmdline(args, cls=None):
     # all of the expected reference files
 
     # load_spec_file is a method of both Step and Pipeline
-    spec = step_class.load_spec_file(preserve_comments=True)
+    spec = step_class.load_spec_file()
 
     parser2 = _build_arg_parser_from_spec(spec, step_class, parent=parser1)
 

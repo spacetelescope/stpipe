@@ -29,6 +29,7 @@ except ImportError:
 from . import config, config_parser, crds_client, log, utilities
 from .datamodel import AbstractDataModel
 from .format_template import FormatTemplate
+from .utilities import _not_set
 
 
 class Step:
@@ -90,7 +91,7 @@ class Step:
         return config
 
     @classmethod
-    def load_spec_file(cls, preserve_comments=False):
+    def load_spec_file(cls, preserve_comments=_not_set):
         spec = config_parser.get_merged_spec_file(
             cls, preserve_comments=preserve_comments
         )
@@ -105,7 +106,7 @@ class Step:
 
     @classmethod
     def print_configspec(cls):
-        specfile = cls.load_spec_file(preserve_comments=True)
+        specfile = cls.load_spec_file()
         specfile.write(sys.stdout.buffer)
 
     @classmethod
