@@ -5,6 +5,7 @@ import logging
 import os
 import os.path
 import textwrap
+import warnings
 from inspect import isclass
 
 from asdf import ValidationError as AsdfValidationError
@@ -20,6 +21,7 @@ from .extern.configobj.configobj import (
     get_extra_values,
 )
 from .extern.configobj.validate import ValidateError, Validator, VdtTypeError
+from .utilities import _not_set
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -130,7 +132,7 @@ def _config_obj_from_step_config(config):
     return configobj
 
 
-def get_merged_spec_file(cls, preserve_comments=False):
+def get_merged_spec_file(cls, preserve_comments=_not_set):
     """
     Creates a merged spec file for a Step class and all of its
     subclasses.
@@ -141,6 +143,8 @@ def get_merged_spec_file(cls, preserve_comments=False):
         A class or instance of a `Step`-based class.
 
     preserve_comments : bool, optional
+        This argument is deprecated and appears to have no
+        effect on the returned spec.
         When True, preserve the comments in the spec file
     """
     if not isclass(cls):
@@ -162,7 +166,7 @@ def get_merged_spec_file(cls, preserve_comments=False):
     return config
 
 
-def load_spec_file(cls, preserve_comments=False):
+def load_spec_file(cls, preserve_comments=_not_set):
     """
     Load the spec file corresponding to the given class.
 
@@ -172,6 +176,8 @@ def load_spec_file(cls, preserve_comments=False):
         A class or instance of a `Step`-based class.
 
     preserve_comments: bool
+        This argument is deprecated and appears to have no
+        effect on the returned spec.
         True to keep comments in the resulting `ConfigObj`
 
     Returns
@@ -179,6 +185,9 @@ def load_spec_file(cls, preserve_comments=False):
     spec_file: ConfigObj
         The resulting configuration object
     """
+    if preserve_comments is not _not_set:
+        msg = "preserve_comments is deprecated"
+        warnings.warn(msg, DeprecationWarning)
     # Don't use 'hasattr' here, because we don't want to inherit spec
     # from the base class.
     if not isclass(cls):

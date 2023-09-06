@@ -135,3 +135,16 @@ def get_fully_qualified_class_name(cls_or_obj):
         return cls.__name__  # Avoid reporting __builtin__
     else:
         return module + "." + cls.__name__
+
+
+class _NotSet:
+    """
+    Special value indicating that a parameter is not set.  Distinct
+    from None. Instead of using this class use the _not_set instance
+    below
+    """
+
+    pass
+
+
+_not_set = _NotSet()
