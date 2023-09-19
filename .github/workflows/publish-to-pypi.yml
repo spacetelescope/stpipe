@@ -2,7 +2,9 @@ name: Publish to PyPI
 
 on:
   release:
-    types: [released, pull_request, workflow_dispatch]
+    types: [ released ]
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   publish:
@@ -11,4 +13,3 @@ jobs:
       upload_to_pypi: ${{ github.event_name == 'released'}}
     secrets:
       pypi_token: ${{ secrets.PYPI_PASSWORD_STSCI_MAINTAINER }}
-
