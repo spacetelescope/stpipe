@@ -6,12 +6,7 @@ on:
 
 jobs:
   publish:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish.yml@v1
-    with:
-      targets: |
-        - linux
-        - macos
-      sdist: true
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish_pure_python.yml@v1
     secrets:
       pypi_token: ${{ secrets.PYPI_PASSWORD_STSCI_MAINTAINER }}
 
