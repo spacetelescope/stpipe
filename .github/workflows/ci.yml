@@ -1,4 +1,4 @@
-name: CI
+name: test
 
 on:
   push:
@@ -35,7 +35,7 @@ jobs:
         - linux: test-cov-xdist
           coverage: 'codecov'
   test_downstream:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@main
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
     with:
       setenv: |
         CRDS_PATH: ${{ needs.crds.outputs.path }}
