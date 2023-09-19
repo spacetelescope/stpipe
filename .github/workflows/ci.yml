@@ -23,7 +23,6 @@ jobs:
     with:
       envs: |
         - linux: check-style
-        - linux: build-dist
   test:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
     with:
