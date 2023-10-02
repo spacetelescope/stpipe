@@ -1,4 +1,9 @@
-0.5.1 (unreleased)
+0.6.0 (unreleased)
+==================
+
+-
+
+0.5.1 (2023-10-02)
 ==================
 
 - Print out ``jwst`` or ``romancal`` versions from ``strun --version``. [#98]
