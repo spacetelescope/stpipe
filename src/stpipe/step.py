@@ -1474,7 +1474,7 @@ def preserve_step_pars(step):
     """Context manager to preserve step parameters
 
     Ensure step parameters are not modified during a block
-    of operations. Allows local re-use of a Step instance without
+    of operations. Allows local reuse of a Step instance without
     having to worry about side-effects on that Step. If used with
     a `Pipeline`, all substep parameters are also restored.
 
