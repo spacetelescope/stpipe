@@ -9,7 +9,7 @@ from stpipe.datamodel import AbstractDataModel
 
 def test_roman_datamodel():
     roman_datamodels = pytest.importorskip("roman_datamodels.datamodels")
-    import roman_datamodels.tests.util as rutil
+    rutil = pytest.importorskip("roman_datamodels.tests.util")
 
     roman_image_tree = rutil.mk_level2_image()
     image_model = roman_datamodels.ImageModel(roman_image_tree)
