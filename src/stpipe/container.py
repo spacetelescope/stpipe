@@ -1,5 +1,4 @@
 import abc
-import inspect
 
 
 class AbstractModelContainer(abc.ABC):
@@ -30,20 +29,6 @@ class AbstractModelContainer(abc.ABC):
             function = getattr(C, function_name, None)
             if function is None or not callable(function):
                 return False
-
-            # check that functionaccepts the required arguments/parameter
-            signature = inspect.signature(function)
-            target_signature = inspect.signature(getattr(cls, function_name))
-            for parameter_name in target_signature.parameters:
-                if parameter_name == "self":
-                    pass
-                # check that this required parameter/argument exists in the function signature
-                if parameter_name not in signature.parameters:
-                    return False
-                parameter = signature.parameters[parameter_name]
-                # make sure the required parameter is not positional only
-                if parameter.kind == inspect.Parameter.POSITIONAL_ONLY:
-                    return False
 
         return True
 
