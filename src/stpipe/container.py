@@ -39,7 +39,7 @@ class AbstractModelContainer(abc.ABC):
         save_signature = inspect.signature(C.save)
         target_signature = inspect.signature(cls.save)
         for parameter in target_signature.parameters:
-            if parameter == 'self':
+            if parameter == "self":
                 pass
             # check that this parameter/argument exists in the save function
             if parameter not in save_signature.parameters:
