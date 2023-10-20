@@ -4,7 +4,6 @@ Step
 import gc
 import os
 import sys
-from collections.abc import Sequence
 from contextlib import contextmanager
 from functools import partial
 from os.path import (
@@ -27,6 +26,7 @@ except ImportError:
     DISCOURAGED_TYPES = None
 
 from . import config, config_parser, crds_client, log, utilities
+from .container import AbstractModelContainer
 from .datamodel import AbstractDataModel
 from .format_template import FormatTemplate
 from .utilities import _not_set
@@ -450,7 +450,7 @@ class Step:
                     self.log.info("Step skipped.")
                     if isinstance(args[0], AbstractDataModel):
                         if self.class_alias is not None:
-                            if isinstance(args[0], Sequence):
+                            if isinstance(args[0], AbstractModelContainer):
                                 for model in args[0]:
                                     try:
                                         model[
@@ -492,7 +492,7 @@ class Step:
                         step_result = hook_results
 
                 # Update meta information
-                if not isinstance(step_result, Sequence):
+                if not isinstance(step_result, AbstractModelContainer):
                     results = [step_result]
                 else:
                     results = step_result
@@ -552,7 +552,7 @@ class Step:
         Parameters
         ----------
         result : a datamodel that is an instance of AbstractDataModel or
-                 collections.abc.Sequence
+                 AbstractModelContainer
                  One step result (potentially of many).
 
         reference_files_used : list of tuple
@@ -827,7 +827,7 @@ class Step:
             # log as such and return an empty config object
             try:
                 model = cls._datamodels_open(dataset)
-                if isinstance(model, Sequence):
+                if isinstance(model, AbstractModelContainer):
                     # Pull out first model in ModelContainer
                     model = model[0]
                 crds_parameters = model.get_crds_parameters()
@@ -970,7 +970,7 @@ class Step:
         if not force and not self.save_results and not output_file:
             return
 
-        if isinstance(model, Sequence):
+        if isinstance(model, AbstractModelContainer):
             save_model_func = partial(
                 self.save_model,
                 suffix=suffix,
