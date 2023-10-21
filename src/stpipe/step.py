@@ -4,6 +4,7 @@ Step
 import gc
 import os
 import sys
+from collections.abc import Sequence
 from contextlib import contextmanager
 from functools import partial
 from os.path import (
@@ -492,7 +493,7 @@ class Step:
                         step_result = hook_results
 
                 # Update meta information
-                if not isinstance(step_result, AbstractModelContainer):
+                if not isinstance(step_result, Sequence):
                     results = [step_result]
                 else:
                     results = step_result
