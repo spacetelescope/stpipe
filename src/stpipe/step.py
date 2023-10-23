@@ -28,8 +28,8 @@ except ImportError:
     DISCOURAGED_TYPES = None
 
 from . import config, config_parser, crds_client, log, utilities
-from .datamodel import AbstractDataModel
 from .format_template import FormatTemplate
+from .protocols import DataModel
 from .utilities import _not_set
 
 
@@ -458,7 +458,7 @@ class Step:
                 # Run the Step-specific code.
                 if self.skip:
                     self.log.info("Step skipped.")
-                    if isinstance(args[0], AbstractDataModel):
+                    if isinstance(args[0], DataModel):
                         if self.class_alias is not None:
                             if isinstance(args[0], Sequence):
                                 for model in args[0]:
@@ -472,7 +472,7 @@ class Step:
                                             "header: %s",
                                             e,
                                         )
-                            elif isinstance(args[0], AbstractDataModel):
+                            elif isinstance(args[0], DataModel):
                                 try:
                                     args[0][
                                         f"meta.cal_step.{self.class_alias}"
@@ -530,7 +530,7 @@ class Step:
                     for idx, result in enumerate(results_to_save):
                         if len(results_to_save) <= 1:
                             idx = None
-                        if isinstance(result, AbstractDataModel):
+                        if isinstance(result, DataModel):
                             self.save_model(result, idx=idx, format=self.name_format)
                         elif hasattr(result, "save"):
                             try:
@@ -565,7 +565,7 @@ class Step:
 
         Parameters
         ----------
-        result : a datamodel that is an instance of AbstractDataModel or
+        result : an object following the DataModel protocol or
                  collections.abc.Sequence
                  One step result (potentially of many).
 
@@ -743,7 +743,7 @@ class Step:
         """
         override_name = crds_client.get_override_name(reference_file_type)
         path = getattr(self, override_name, None)
-        if isinstance(path, AbstractDataModel):
+        if isinstance(path, DataModel):
             return path
 
         return abspath(path) if path and path != "N/A" else path
@@ -758,7 +758,7 @@ class Step:
 
         Parameters
         ----------
-        input_file : a datamodel that is an instance of AbstractDataModel
+        input_file : a datamodel follows the DataModel protocol
             A model of the input file.  Metadata on this input file
             will be used by the CRDS "bestref" algorithm to obtain a
             reference file.
@@ -773,7 +773,7 @@ class Step:
         """
         override = self.get_ref_override(reference_file_type)
         if override is not None:
-            if isinstance(override, AbstractDataModel):
+            if isinstance(override, DataModel):
                 self._reference_files_used.append(
                     (reference_file_type, override.override_handle)
                 )
@@ -809,7 +809,7 @@ class Step:
         cls : stpipe.Step
             Either a class or instance of a class derived
             from `Step`.
-        dataset : A datamodel that is an instance of AbstractDataModel
+        dataset : A datamodel that follows the DataModel protocol
             A model of the input file.  Metadata on this input file will
             be used by the CRDS "bestref" algorithm to obtain a reference
             file.
@@ -837,7 +837,7 @@ class Step:
             if crds_observatory is None:
                 raise ValueError("Need a valid name for crds_observatory.")
         else:
-            # If the dataset is not an operable instance of AbstractDataModel,
+            # If the dataset is not an operable DataModel protocol object,
             # log as such and return an empty config object
             try:
                 model = cls._datamodels_open(dataset)
@@ -847,7 +847,7 @@ class Step:
                 crds_parameters = model.get_crds_parameters()
                 crds_observatory = model.crds_observatory
             except (OSError, TypeError, ValueError):
-                logger.warning("Input dataset is not an instance of AbstractDataModel.")
+                logger.warning("Input dataset does not follow the DataModel protocol.")
                 disable = True
 
         # Check if retrieval should be attempted.
@@ -907,7 +907,7 @@ class Step:
 
         Parameters
         ----------
-        obj : str or instance of AbstractDataModel
+        obj : str or object following the DataModel protocol
             The object to base the name on. If a datamodel,
             use Datamodel.meta.filename.
 
@@ -922,7 +922,7 @@ class Step:
         if not exclusive or parent_input_filename is None:
             if isinstance(obj, str):
                 self._input_filename = obj
-            elif isinstance(obj, AbstractDataModel):
+            elif isinstance(obj, DataModel):
                 try:
                     self._input_filename = obj.meta.filename
                 except AttributeError:
@@ -945,7 +945,7 @@ class Step:
 
         Parameters
         ----------
-        model : a instance of AbstractDataModel
+        model : an object following the DataModel protocol
             The model to save.
 
         suffix : str
@@ -1193,7 +1193,7 @@ class Step:
 
         Returns
         -------
-        datamodel : instance of AbstractDataModel
+        datamodel : an object following the DataModel protocol
             Object opened as a datamodel
         """
         # Use the parent method if available, since this step
