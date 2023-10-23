@@ -1,10 +1,11 @@
 """
 Test that the Protocols work correctly
 """
+from itertools import chain, combinations
 
 import pytest
 
-from stpipe.protocols import DataModel
+from stpipe.protocols import DataModel, ModelContainer
 
 
 def test_roman_datamodel():
@@ -22,36 +23,76 @@ def test_jwst_datamodel():
     assert isinstance(image_model, DataModel)
 
 
-class GoodDataModel:
-    def __init__(self):
-        pass
-
+def _base_methods():
     def crds_observatory(self):
-        pass
-
-    def get_crds_parameters(self):
         pass
 
     def save(self):
         pass
 
+    return crds_observatory, save
 
-class BadDataModel:
-    def __init__(self):
-        pass
 
-    def crds_observatory(self):
-        pass
-
+def _datamodel_methods():
     def get_crds_parameters(self):
         pass
 
-
-def test_good_datamodel():
-    gdm = GoodDataModel()
-    assert isinstance(gdm, DataModel)
+    return get_crds_parameters, *_base_methods()
 
 
-def test_bad_datamodel():
-    bdm = BadDataModel()
-    assert not isinstance(bdm, DataModel)
+def _modelcontainer_methods():
+    def __iter__(self):
+        pass
+
+    def read_asn(self):
+        pass
+
+    def from_asn(self):
+        pass
+
+    return __iter__, read_asn, from_asn, *_base_methods()
+
+
+def _powerset(iterable):
+    return [
+        [this]
+        for this in chain.from_iterable(
+            list(combinations(iterable, r)) for r in range(len(iterable))
+        )
+    ]
+
+
+@pytest.fixture()
+def data_object(request):
+    print(request.param)
+    return type(
+        "DataObject",
+        (object,),
+        {method.__name__: method for method in request.param[0]},
+    )
+
+
+@pytest.mark.parametrize("data_object", [[_datamodel_methods()]], indirect=True)
+def test_good_datamodel(data_object):
+    """Test that an object with all methods is a DataModel"""
+    assert isinstance(data_object(), DataModel)
+
+
+@pytest.mark.parametrize("data_object", _powerset(_datamodel_methods()), indirect=True)
+def test_bad_datamodel(data_object):
+    """Test that any object missing at any of the methods is not a DataModel"""
+    assert not isinstance(data_object(), DataModel)
+
+
+@pytest.mark.parametrize("data_object", [[_modelcontainer_methods()]], indirect=True)
+def test_good_modelcontainer(data_object):
+    """Test that an object with all methods is a ModelContainer"""
+    assert isinstance(data_object(), ModelContainer)
+
+
+@pytest.mark.parametrize(
+    "data_object", _powerset(_modelcontainer_methods()), indirect=True
+)
+def test_bad_modelcontainer(data_object):
+    """Test that any object missing at any of the methods is not a ModelContainer"""
+    assert not isinstance(data_object(), ModelContainer)
