@@ -11,6 +11,7 @@
 - Move ``strun`` to entrypoints [#101]
 - Deprecate ``preserve_comments`` fix spec parsing for inline comments with
   a closing parenthesis [#107]
+- Fix regex issue in internal configobj [#108]
 
 0.5.0 (2023-04-19)
 ==================
