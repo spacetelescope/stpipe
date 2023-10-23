@@ -1,13 +1,13 @@
 """
 Pipeline
 """
-from collections.abc import Sequence
 from os.path import dirname, join
 from typing import ClassVar
 
 from astropy.extern.configobj.configobj import ConfigObj, Section
 
 from . import config_parser, crds_client, log
+from .protocols import ModelContainer
 from .step import Step, get_disable_crds_steppars
 from .utilities import _not_set
 
@@ -183,8 +183,8 @@ class Pipeline(Step):
         #
         # Iterate over the steps in the pipeline
         with cls._datamodels_open(dataset, asn_n_members=1) as model:
-            if isinstance(model, Sequence):
-                crds_parameters = model._models[0].get_crds_parameters()
+            if isinstance(model, ModelContainer):
+                crds_parameters = next(iter(model)).get_crds_parameters()
                 crds_observatory = model.crds_observatory
             else:
                 crds_parameters = model.get_crds_parameters()
@@ -281,7 +281,7 @@ class Pipeline(Step):
 
         No garbage collection.
         """
-        if isinstance(model_or_container, Sequence):
+        if isinstance(model_or_container, ModelContainer):
             # recurse on each contained model
             for contained_model in model_or_container:
                 self._precache_references_opened(contained_model)
@@ -299,7 +299,7 @@ class Pipeline(Step):
         ----------
         model :  `DataModel`
             Only a `DataModel` instance is allowed.
-            Cannot be a filename, Sequence, etc.
+            Cannot be a filename, `ModelContainer`, etc.
         """
         ovr_refs = {
             reftype: self.get_ref_override(reftype)

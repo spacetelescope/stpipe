@@ -29,7 +29,7 @@ except ImportError:
 
 from . import config, config_parser, crds_client, log, utilities
 from .format_template import FormatTemplate
-from .protocols import DataModel
+from .protocols import DataModel, ModelContainer
 from .utilities import _not_set
 
 
@@ -460,7 +460,7 @@ class Step:
                     self.log.info("Step skipped.")
                     if isinstance(args[0], DataModel):
                         if self.class_alias is not None:
-                            if isinstance(args[0], Sequence):
+                            if isinstance(args[0], ModelContainer):
                                 for model in args[0]:
                                     try:
                                         model[
@@ -565,8 +565,7 @@ class Step:
 
         Parameters
         ----------
-        result : an object following the DataModel protocol or
-                 collections.abc.Sequence
+        result : an object following the DataModel or ModelContainer protocols
                  One step result (potentially of many).
 
         reference_files_used : list of tuple
@@ -841,9 +840,9 @@ class Step:
             # log as such and return an empty config object
             try:
                 model = cls._datamodels_open(dataset)
-                if isinstance(model, Sequence):
+                if isinstance(model, ModelContainer):
                     # Pull out first model in ModelContainer
-                    model = model[0]
+                    model = next(iter(model))
                 crds_parameters = model.get_crds_parameters()
                 crds_observatory = model.crds_observatory
             except (OSError, TypeError, ValueError):
@@ -984,7 +983,7 @@ class Step:
         if not force and not self.save_results and not output_file:
             return None
 
-        if isinstance(model, Sequence):
+        if isinstance(model, ModelContainer):
             save_model_func = partial(
                 self.save_model,
                 suffix=suffix,
