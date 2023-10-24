@@ -5,8 +5,9 @@ from collections.abc import Sequence
 from os.path import dirname, join
 from typing import ClassVar
 
+from astropy.extern.configobj.configobj import ConfigObj, Section
+
 from . import config_parser, crds_client, log
-from .extern.configobj.configobj import ConfigObj, Section
 from .step import Step, get_disable_crds_steppars
 from .utilities import _not_set
 

@@ -9,9 +9,10 @@ import sys
 import threading
 from contextlib import contextmanager
 
+from astropy.extern.configobj import validate
+from astropy.extern.configobj.configobj import ConfigObj
+
 from . import config_parser
-from .extern.configobj import validate
-from .extern.configobj.configobj import ConfigObj
 
 STPIPE_ROOT_LOGGER = "stpipe"
 DEFAULT_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
