@@ -16,7 +16,7 @@ env:
 
 jobs:
   webbpsf-data:
-    if: (github.repository == 'spacetelescope/romancal' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'update webbpsf data')))
+    if: (github.repository == 'spacetelescope/stpipe' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'update webbpsf data')))
     name: download and cache WebbPSF data
     runs-on: ubuntu-latest
     env:
@@ -60,7 +60,7 @@ jobs:
           # use actions/gh-actions-cache to allow filtering by key
           gh extension install actions/gh-actions-cache
 
-          RECENT=$(gh actions-cache list -R spacetelescope/romancal --key webbpsf- --sort created-at | cut -f 1 | head -n 1)
+          RECENT=$(gh actions-cache list -R spacetelescope/stpipe --key webbpsf- --sort created-at | cut -f 1 | head -n 1)
           echo "RECENT=$RECENT"
           HASH=$(echo $RECENT | cut -d '-' -f 2)
           echo "HASH=$HASH"
