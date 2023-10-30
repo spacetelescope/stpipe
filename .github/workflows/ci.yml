@@ -31,7 +31,7 @@ jobs:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
     with:
       setenv: |
-        CRDS_PATH: ${{ needs.crds.outputs.path }}
+        CRDS_PATH: /tmp/data/crds_cache
         CRDS_CLIENT_RETRY_COUNT: 3
         CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
       envs: |
