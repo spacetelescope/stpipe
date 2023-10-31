@@ -2,6 +2,7 @@
 from functools import partial
 
 import pytest
+
 from stpipe.format_template import FormatTemplate
 
 

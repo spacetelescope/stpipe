@@ -5,6 +5,7 @@ from typing import ClassVar
 
 import asdf
 import pytest
+
 import stpipe.config_parser as cp
 from stpipe import cmdline
 from stpipe.pipeline import Pipeline

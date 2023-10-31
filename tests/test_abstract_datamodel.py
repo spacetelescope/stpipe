@@ -3,6 +3,7 @@ Test that the AbstractDataModel interface works properly
 """
 
 import pytest
+
 from stpipe.datamodel import AbstractDataModel
 
 

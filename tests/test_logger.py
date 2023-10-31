@@ -2,6 +2,7 @@ import io
 import logging
 
 import pytest
+
 from stpipe import log as stpipe_log
 
 

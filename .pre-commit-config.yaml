@@ -36,10 +36,24 @@ repos:
   rev: 'v0.1.4'
   hooks:
     - id: ruff
-      args: ["--fix"]
+      args: ["--fix", "--show-fixes"]
       exclude: "scripts/strun"
 
-- repo: https://github.com/psf/black
+- repo: https://github.com/psf/black-pre-commit-mirror
   rev: 23.10.1
   hooks:
     - id: black
+
+- repo: https://github.com/adamchainz/blacken-docs
+  rev: 1.16.0
+  hooks:
+  - id: blacken-docs
+    additional_dependencies:
+    - black==22.12.0
+
+
+- repo: https://github.com/scientific-python/cookie
+  rev: 2023.08.23
+  hooks:
+    - id: sp-repo-review
+      additional_dependencies: ["repo-review[cli]"]
