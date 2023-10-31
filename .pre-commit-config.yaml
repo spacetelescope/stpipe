@@ -40,12 +40,6 @@ repos:
     - id: flynt
       exclude: "src/stpipe/extern/.*"
 
-- repo: https://github.com/asottile/pyupgrade
-  rev: 'v3.15.0'
-  hooks:
-    - id: pyupgrade
-      args: ["--py38-plus"]
-
 - repo: https://github.com/astral-sh/ruff-pre-commit
   rev: 'v0.1.4'
   hooks:

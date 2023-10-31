@@ -164,12 +164,8 @@ class FormatTemplate(Formatter):
                         break
                 else:
                     raise RuntimeError(
-                        "No suitable formatting for {key}: {value} found. Given"
-                        " formatting options:\n\t{formats}".format(
-                            key=key,
-                            value=value,
-                            formats=self.key_formats[key],
-                        )
+                        f"No suitable formatting for {key}: {value} found. Given"
+                        f" formatting options:\n\t{self.key_formats[key]}"
                     )
             formatted_kwargs[key] = value
         result = super().format(format_string, **formatted_kwargs)
