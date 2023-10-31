@@ -189,7 +189,11 @@ class Step:
 
     @classmethod
     def _parse_class_and_name(
-        cls, config, parent=None, name=None, config_file=None  # noqa: ARG003
+        cls,
+        config,
+        parent=None,  # noqa: ARG003
+        name=None,
+        config_file=None,
     ):
         if "class" in config:
             step_class = utilities.import_class(

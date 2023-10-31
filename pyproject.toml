@@ -82,6 +82,9 @@ testpaths = [
 filterwarnings = [
     "error::ResourceWarning",
 ]
+markers = [
+    "soctests",
+]
 
 [tool.ruff]
 src = [
@@ -132,6 +135,9 @@ extend-select = [
     'NPY',     # NumPy-specific checks (recommendations from NumPy)
     'PERF',    # Perflint (performance linting)
     'RUF',     # ruff specific checks
+]
+ignore = [
+    "ISC001",  # conflicts with ruff formatter
 ]
 
 [tool.ruff.lint.extend-per-file-ignores]
