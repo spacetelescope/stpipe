@@ -1,7 +1,7 @@
 0.6.0 (unreleased)
 ==================
 
--
+- Update style and linting checking [#103]
 
 0.5.1 (2023-10-02)
 ==================
