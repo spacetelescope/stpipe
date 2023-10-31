@@ -16,4 +16,5 @@ warnings.warn(
     "stpipe.extern.configobj is deprecated in favor of astropy.extern.configobj, "
     "please use that instead.",
     DeprecationWarning,
+    stacklevel=2,
 )

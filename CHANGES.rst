@@ -2,6 +2,9 @@
 ==================
 
 - Update style and linting checking [#103]
+- Fix regex issue in internal configobj [#108]
+- Remove bundled ``configobj`` package in favor of the ``configobj`` package
+  bundled into ``astropy``. [#122]
 
 0.5.1 (2023-10-02)
 ==================
@@ -11,7 +14,6 @@
 - Move ``strun`` to entrypoints [#101]
 - Deprecate ``preserve_comments`` fix spec parsing for inline comments with
   a closing parenthesis [#107]
-- Fix regex issue in internal configobj [#108]
 
 0.5.0 (2023-04-19)
 ==================
