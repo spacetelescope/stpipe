@@ -90,8 +90,15 @@ src = [
     "docs",
     "setup.py",
 ]
-target-version = "py39"
-select = [
+line-length = 88
+extend-exclude = [
+    'docs',
+    'src/stpipe/extern',
+    'scripts/strun',
+]
+
+[tool.ruff.lint]
+extend-select = [
     'F',      # Pyflakes
     'W', 'E', # pycodestyle
     'I',      # isort
@@ -126,14 +133,8 @@ select = [
     'PERF',    # Perflint (performance linting)
     'RUF',     # ruff specific checks
 ]
-line-length = 88
-extend-exclude = [
-    'docs',
-    'src/stpipe/extern',
-    'scripts/strun',
-]
 
-[tool.ruff.extend-per-file-ignores]
+[tool.ruff.lint.extend-per-file-ignores]
 "tests/*.py" = ["S101", "S603", "S607", "INP001", "ARG001"]
 "src/stpipe/tests/*.py" = ["S101"]
 "src/stpipe/cli/*.py" = ["T201"]
