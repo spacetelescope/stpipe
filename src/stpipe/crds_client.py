@@ -8,6 +8,7 @@ directly in modules other than this crds_client so that dependency order and
 general integration can be managed here.
 """
 import re
+import logging
 
 import crds
 from crds.core import config, crds_cache_locking, heavy_client, log
@@ -49,6 +50,13 @@ def get_multiple_reference_paths(parameters, reference_file_types, observatory):
         raise TypeError("First argument must be a dict of parameters")
 
     log.set_log_time(True)
+
+    def filter_pars_errors(record):
+        return not record.getMessage().startswith(
+            "Error determining best reference for 'pars-"
+            )
+    log.prepend_crds_filter(filter_pars_errors)
+
     return _get_refpaths(parameters, tuple(reference_file_types), observatory)
 
 
