@@ -3,6 +3,7 @@ Pipeline
 """
 from collections.abc import Sequence
 from os.path import dirname, join
+from typing import ClassVar
 
 from . import config_parser, crds_client, log
 from .extern.configobj.configobj import ConfigObj, Section
@@ -24,7 +25,7 @@ class Pipeline(Step):
     """
     # A set of steps used in the Pipeline.  Should be overridden by
     # the subclass.
-    step_defs = {}
+    step_defs: ClassVar = {}
 
     def __init__(self, *args, **kwargs):
         """
@@ -173,7 +174,7 @@ class Pipeline(Step):
             disable = get_disable_crds_steppars()
         if disable:
             logger.debug(
-                f"{reftype.upper()}: CRDS parameter reference retrieval disabled."
+                "%s: CRDS parameter reference retrieval disabled.", reftype.upper()
             )
             return refcfg
 
@@ -196,7 +197,7 @@ class Pipeline(Step):
             )
         #
         # Now merge any config parameters from the step cfg file
-        logger.debug(f"Retrieving pipeline {reftype.upper()} parameters from CRDS")
+        logger.debug("Retrieving pipeline %s parameters from CRDS", reftype.upper())
         try:
             ref_file = crds_client.get_reference_file(
                 crds_parameters,
@@ -204,13 +205,13 @@ class Pipeline(Step):
                 crds_observatory,
             )
         except (AttributeError, crds_client.CrdsError):
-            logger.debug(f"{reftype.upper()}: No parameters found")
+            logger.debug("%s: No parameters found", reftype.upper())
         else:
             if ref_file != "N/A":
-                logger.info(f"{reftype.upper()} parameters found: {ref_file}")
+                logger.info("%s parameters found: %s", reftype.upper(), ref_file)
                 refcfg = cls.merge_pipeline_config(refcfg, ref_file)
             else:
-                logger.debug(f"No {reftype.upper()} reference files found.")
+                logger.debug("No %s reference files found.", reftype.upper())
 
         return refcfg
 
@@ -266,7 +267,7 @@ class Pipeline(Step):
             ) as model:
                 self._precache_references_opened(model)
         except (ValueError, TypeError, OSError):
-            self.log.info(f"First argument {input_file} does not appear to be a model")
+            self.log.info("First argument %s does not appear to be a model", input_file)
 
     def _precache_references_opened(self, model_or_container):
         """Pre-fetches references for `model_or_container`.
@@ -308,10 +309,9 @@ class Pipeline(Step):
         fetch_types = sorted(set(self.reference_file_types) - set(ovr_refs.keys()))
 
         self.log.info(
-            "Prefetching reference files for dataset: "
-            + repr(model.meta.filename)
-            + " reftypes = "
-            + repr(fetch_types)
+            "Prefetching reference files for dataset: %r reftypes = %r",
+            model.meta.filename,
+            fetch_types,
         )
         crds_refs = crds_client.get_multiple_reference_paths(
             model.get_crds_parameters(), fetch_types, model.crds_observatory
@@ -321,7 +321,9 @@ class Pipeline(Step):
 
         for reftype, refpath in sorted(ref_path_map.items()):
             how = "Override" if reftype in ovr_refs else "Prefetch"
-            self.log.info(f"{how} for {reftype.upper()} reference file is '{refpath}'.")
+            self.log.info(
+                "%s for %s reference file is '%s'.", how, reftype.upper(), refpath
+            )
             crds_client.check_reference_open(refpath)
 
     def get_pars(self, full_spec=True):
@@ -344,7 +346,7 @@ class Pipeline(Step):
         """
         pars = super().get_pars(full_spec=full_spec)
         pars["steps"] = {}
-        for step_name, step_class in self.step_defs.items():
+        for step_name in self.step_defs.keys():
             pars["steps"][step_name] = getattr(self, step_name).get_pars(
                 full_spec=full_spec
             )

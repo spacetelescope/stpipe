@@ -9,7 +9,7 @@ from stpipe.entry_points import StepInfo
 
 
 @pytest.fixture(autouse=True)
-def monkey_patch_get_steps(monkeypatch):
+def _monkey_patch_get_steps(monkeypatch):
     def _get_steps():
         return [
             StepInfo(

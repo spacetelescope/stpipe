@@ -16,7 +16,6 @@ class Command(abc.ABC):
         -------
         str
         """
-        pass
 
     @abc.abstractclassmethod
     def add_subparser(cls, subparsers):
@@ -27,7 +26,6 @@ class Command(abc.ABC):
         ----------
         subparsers : argparse._SubParsersAction
         """
-        pass
 
     @abc.abstractclassmethod
     def run(cls, args):
@@ -44,4 +42,3 @@ class Command(abc.ABC):
         int
             Exit status code.
         """
-        pass

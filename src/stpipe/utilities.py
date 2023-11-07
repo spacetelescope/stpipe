@@ -45,7 +45,7 @@ def import_class(full_name, subclassof=object, config_file=None):
     #   package.subPackage.subsubpackage.className
     # in the input parameter `full_name`. This means that
     #   1. We HAVE to be able to say
-    #       from package.subPackage.subsubpackage import className
+    #       `from package.subPackage.subsubpackage import className`
     #   2. If `subclassof` is defined, the newly imported Python class MUST be a
     #      subclass of `subclassof`, which HAS to be a Python class.
 
@@ -73,7 +73,8 @@ def import_class(full_name, subclassof=object, config_file=None):
             raise TypeError(
                 f"Object {class_name} from package {package_name} is not a class"
             )
-        elif not issubclass(step_class, subclassof):
+
+        if not issubclass(step_class, subclassof):
             raise TypeError(
                 f"Class {class_name} from package {package_name} is not a subclass of"
                 f" {subclassof.__name__}"
@@ -100,8 +101,8 @@ def get_spec_file_path(step_class):
 
     # Since `step_class` could be defined in a file called whatever,
     # we need the source file basedir and the class name.
-    dir = os.path.dirname(step_source_file)
-    return os.path.join(dir, step_class.__name__ + ".spec")
+    dir_ = os.path.dirname(step_source_file)
+    return os.path.join(dir_, step_class.__name__ + ".spec")
 
 
 def find_spec_file(step_class):
@@ -133,8 +134,8 @@ def get_fully_qualified_class_name(cls_or_obj):
     module = cls.__module__
     if module is None or module == str.__class__.__module__:
         return cls.__name__  # Avoid reporting __builtin__
-    else:
-        return module + "." + cls.__name__
+
+    return module + "." + cls.__name__
 
 
 class _NotSet:
@@ -143,8 +144,6 @@ class _NotSet:
     from None. Instead of using this class use the _not_set instance
     below
     """
-
-    pass
 
 
 _not_set = _NotSet()

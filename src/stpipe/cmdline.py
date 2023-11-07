@@ -45,10 +45,10 @@ def _get_config_and_class(identifier):
             step_class = utilities.import_class(
                 utilities.resolve_step_class_alias(identifier), Step
             )
-        except (ImportError, AttributeError, TypeError):
+        except (ImportError, AttributeError, TypeError) as err:
             raise ValueError(
                 f"{identifier!r} is not a path to a config file or a Python Step class"
-            )
+            ) from err
         # Don't validate yet
         config = config_parser.config_from_dict({})
         name = None
@@ -82,10 +82,12 @@ def _build_arg_parser_from_spec(spec, step_class, parent=None):
         description=step_class.__doc__,
     )
 
-    def build_from_spec(subspec, parts=[]):
+    def build_from_spec(subspec, parts=None):
+        if parts is None:
+            parts = []
         for key, val in subspec.items():
             if isinstance(val, dict):
-                build_from_spec(val, parts + [key])
+                build_from_spec(val, [*parts, key])
             else:
                 comment = subspec.inline_comments.get(key) or ""
                 comment = comment.lstrip("#").strip()
@@ -95,14 +97,14 @@ def _build_arg_parser_from_spec(spec, step_class, parent=None):
                     help_string = comment
                 else:
                     help_string = f"{comment} [{default_value_string}]"
-                argument = "--" + ".".join(parts + [key])
+                argument = "--" + ".".join([*parts, key])
                 if argument[2:] in built_in_configuration_parameters:
                     raise ValueError(
                         "The Step's spec is trying to override a built-in parameter"
                         f" {argument!r}"
                     )
                 parser.add_argument(
-                    "--" + ".".join(parts + [key]),
+                    "--" + ".".join([*parts, key]),
                     type=str,
                     help=help_string,
                     metavar="",
@@ -129,8 +131,6 @@ class FromCommandLine(str):
     as instances of this class, we can later (in `config_parser.py`)
     use isinstance to see where the values came from.
     """
-
-    pass
 
 
 def _override_config_from_args(config, args):
@@ -263,7 +263,9 @@ def just_the_step_from_cmdline(args, cls=None):
             try:
                 log.load_configuration(log_config)
             except Exception as e:
-                raise ValueError(f"Error parsing logging config {log_config!r}:\n{e}")
+                raise ValueError(
+                    f"Error parsing logging config {log_config!r}:\n{e}"
+                ) from e
     except Exception as e:
         _print_important_message("ERROR PARSING CONFIGURATION:", str(e))
         parser1.print_help()
@@ -336,7 +338,7 @@ def just_the_step_from_cmdline(args, cls=None):
         # If the configobj validator failed, print usage information.
         _print_important_message("ERROR PARSING CONFIGURATION:", str(e))
         parser2.print_help()
-        raise ValueError(str(e))
+        raise ValueError(str(e)) from e
 
     # Define the primary input file.
     # Always have an output_file set on the outermost step
@@ -394,7 +396,7 @@ def step_from_cmdline(args, cls=None):
         _print_important_message(f"ERROR RUNNING STEP {step_class.__name__!r}:", str(e))
 
         if debug_on_exception:
-            import pdb
+            import pdb  # noqa: T100
 
             pdb.post_mortem()
         else:
@@ -406,6 +408,7 @@ def step_from_cmdline(args, cls=None):
 def step_script(cls):
     import sys
 
-    assert issubclass(cls, Step)
+    if not issubclass(cls, Step):
+        raise AssertionError("cls must be a subclass of Step")
 
     return step_from_cmdline(sys.argv[1:], cls=cls)

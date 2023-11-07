@@ -6,7 +6,8 @@ import argparse
 import re
 import sys
 
-from .. import entry_points
+from stpipe import entry_points
+
 from .command import Command
 
 

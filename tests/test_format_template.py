@@ -7,7 +7,7 @@ from stpipe.format_template import FormatTemplate
 
 
 @pytest.mark.parametrize(
-    "key_formats, template, expected, fields, errors",
+    ("key_formats", "template", "expected", "fields", "errors"),
     [
         # No replacement at all.
         (

@@ -5,7 +5,7 @@ import gc
 import os
 import sys
 from collections.abc import Sequence
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from functools import partial
 from os.path import (
     abspath,
@@ -18,6 +18,7 @@ from os.path import (
     split,
     splitext,
 )
+from typing import ClassVar
 
 try:
     from astropy.io import fits
@@ -69,7 +70,7 @@ class Step:
 
     # Reference types for both command line override
     # definition and reference prefetch
-    reference_file_types = []
+    reference_file_types: ClassVar = []
 
     # Set to False in subclasses to skip prefetch,
     # but by default attempt to prefetch
@@ -87,7 +88,7 @@ class Step:
         return f"pars-{cls.__name__.lower()}"
 
     @classmethod
-    def merge_config(cls, config, config_file):
+    def merge_config(cls, config, config_file):  # noqa: ARG003
         return config
 
     @classmethod
@@ -187,7 +188,13 @@ class Step:
         return cmdline.step_from_cmdline(args)
 
     @classmethod
-    def _parse_class_and_name(cls, config, parent=None, name=None, config_file=None):
+    def _parse_class_and_name(
+        cls,
+        config,
+        parent=None,  # noqa: ARG003
+        name=None,
+        config_file=None,
+    ):
         if "class" in config:
             step_class = utilities.import_class(
                 utilities.resolve_step_class_alias(config["class"]),
@@ -285,15 +292,13 @@ class Step:
             else:
                 kwargs[k] = config[k]
 
-        step = cls(
+        return cls(
             name=name,
             parent=parent,
             config_file=config_file,
             _validate_kwds=False,
             **kwargs,
         )
-
-        return step
 
     def __init__(
         self,
@@ -345,9 +350,9 @@ class Step:
             name = self.__class__.__name__
         self.name = name
         if parent is None:
-            self.qualified_name = ".".join([log.STPIPE_ROOT_LOGGER, self.name])
+            self.qualified_name = f"{log.STPIPE_ROOT_LOGGER}.{self.name}"
         else:
-            self.qualified_name = ".".join([parent.qualified_name, self.name])
+            self.qualified_name = f"{parent.qualified_name}.{self.name}"
         self.parent = parent
 
         # Set the parameters as member variables
@@ -360,7 +365,10 @@ class Step:
         self.log.setLevel(log.logging.DEBUG)
 
         # Log the fact that we have been init-ed.
-        self.log.info(f"{self.__class__.__name__} instance created.")
+        self.log.info(
+            "%s instance created.",
+            self.__class__.__name__,
+        )
 
         # Store the config file path so config filenames can be resolved
         # against it.
@@ -386,7 +394,9 @@ class Step:
         for i, arg in enumerate(args):
             if isinstance(arg, discouraged_types):
                 self.log.error(
-                    f"{msg} {i} object.  Use an instance of AbstractDataModel instead."
+                    "%s %s object.  Use an instance of AbstractDataModel instead.",
+                    msg,
+                    i,
                 )
 
     @property
@@ -417,9 +427,9 @@ class Step:
 
             step_result = None
 
-            self.log.info(f"Step {self.name} running with args {args}.")
+            self.log.info("Step %s running with args %s.", self.name, args)
 
-            self.log.info(f"Step {self.name} parameters are: {self.get_pars()}")
+            self.log.info("Step %s parameters are: %s", self.name, self.get_pars())
 
             if len(args):
                 self.set_primary_input(args[0])
@@ -456,10 +466,11 @@ class Step:
                                         model[
                                             f"meta.cal_step.{self.class_alias}"
                                         ] = "SKIPPED"
-                                    except AttributeError as e:
+                                    except AttributeError as e:  # noqa: PERF203
                                         self.log.info(
-                                            "Could not record skip into DataModel"
-                                            f" header: {e}"
+                                            "Could not record skip into DataModel "
+                                            "header: %s",
+                                            e,
                                         )
                             elif isinstance(args[0], AbstractDataModel):
                                 try:
@@ -469,7 +480,8 @@ class Step:
                                 except AttributeError as e:
                                     self.log.info(
                                         "Could not record skip into DataModel"
-                                        f" header: {e}"
+                                        " header: %s",
+                                        e,
                                     )
                     step_result = args[0]
                 else:
@@ -479,7 +491,9 @@ class Step:
                         step_result = self.process(*args)
                     except TypeError as e:
                         if "process() takes exactly" in str(e):
-                            raise TypeError("Incorrect number of arguments to step")
+                            raise TypeError(
+                                "Incorrect number of arguments to step"
+                            ) from e
                         raise
 
                 # Warn if returning a discouraged object
@@ -533,10 +547,10 @@ class Step:
                                     " `--save_results=false`"
                                 )
                             else:
-                                self.log.info(f"Saving file {output_path}")
+                                self.log.info("Saving file %s", output_path)
                                 result.save(output_path, overwrite=True)
 
-                self.log.info(f"Step {self.name} done")
+                self.log.info("Step %s done", self.name)
             finally:
                 log.delegator.log = orig_log
 
@@ -559,8 +573,8 @@ class Step:
             List of reference files used when running the step, each
             a tuple in the form (str reference type, str reference URI).
         """
-        pass
 
+    @staticmethod
     def remove_suffix(name):
         """
         Remove a known Step filename suffix from a filename
@@ -700,16 +714,16 @@ class Step:
             if value is None:
                 value = getattr(self, attribute, default)
             return value
-        else:
-            value = getattr(self, attribute, None)
-            if value is None:
-                try:
-                    value = self.parent.search_attr(attribute)
-                except AttributeError:
-                    pass
-            if value is None:
-                value = default
-            return value
+
+        value = getattr(self, attribute, None)
+        if value is None:
+            try:
+                value = self.parent.search_attr(attribute)
+            except AttributeError:
+                pass
+        if value is None:
+            value = default
+        return value
 
     def _precache_references(self, input_file):
         """Because Step precaching precedes calls to get_reference_file() almost
@@ -719,7 +733,6 @@ class Step:
         true precache operations and avoids having to override the more complex
         Step.run() instead.
         """
-        pass
 
     def get_ref_override(self, reference_file_type):
         """Determine and return any override for `reference_file_type`.
@@ -732,8 +745,8 @@ class Step:
         path = getattr(self, override_name, None)
         if isinstance(path, AbstractDataModel):
             return path
-        else:
-            return abspath(path) if path and path != "N/A" else path
+
+        return abspath(path) if path and path != "N/A" else path
 
     def get_reference_file(self, input_file, reference_file_type):
         """
@@ -765,7 +778,8 @@ class Step:
                     (reference_file_type, override.override_handle)
                 )
                 return override
-            elif override.strip() != "":
+
+            if override.strip() != "":
                 self._reference_files_used.append(
                     (reference_file_type, basename(override))
                 )
@@ -841,12 +855,12 @@ class Step:
             disable = get_disable_crds_steppars()
         if disable:
             logger.info(
-                f"{reftype.upper()}: CRDS parameter reference retrieval disabled."
+                "%s: CRDS parameter reference retrieval disabled.", reftype.upper()
             )
             return config_parser.ConfigObj()
 
         # Retrieve step parameters from CRDS
-        logger.debug(f"Retrieving step {reftype.upper()} parameters from CRDS")
+        logger.debug("Retrieving step %s parameters from CRDS", reftype.upper())
         try:
             ref_file = crds_client.get_reference_file(
                 crds_parameters,
@@ -854,23 +868,23 @@ class Step:
                 crds_observatory,
             )
         except (AttributeError, crds_client.CrdsError):
-            logger.debug(f"{reftype.upper()}: No parameters found")
+            logger.debug("%s: No parameters found", reftype.upper())
             return config_parser.ConfigObj()
         if ref_file != "N/A":
-            logger.info(f"{reftype.upper()} parameters found: {ref_file}")
+            logger.info("%s parameters found: %s", reftype.upper(), ref_file)
             ref = config_parser.load_config_file(ref_file)
 
             ref_pars = {
                 par: value for par, value in ref.items() if par not in ["class", "name"]
             }
             logger.debug(
-                f"{reftype.upper()} parameters retrieved from CRDS: {ref_pars}"
+                "%s parameters retrieved from CRDS: %s", reftype.upper(), ref_pars
             )
 
             return ref
-        else:
-            logger.debug(f"No {reftype.upper()} reference files found.")
-            return config_parser.ConfigObj()
+
+        logger.debug("No %s reference files found.", reftype.upper())
+        return config_parser.ConfigObj()
 
     @classmethod
     def reference_uri_to_cache_path(cls, reference_uri, observatory):
@@ -923,7 +937,7 @@ class Step:
         idx=None,
         output_file=None,
         force=False,
-        format=None,
+        format=None,  # noqa: A002
         **components,
     ):
         """
@@ -968,7 +982,7 @@ class Step:
 
         # Check if saving is even specified.
         if not force and not self.save_results and not output_file:
-            return
+            return None
 
         if isinstance(model, Sequence):
             save_model_func = partial(
@@ -998,7 +1012,7 @@ class Step:
                     **components,
                 )
             )
-            self.log.info(f"Saved model in {output_path}")
+            self.log.info("Saved model in %s", output_path)
 
         return output_path
 
@@ -1122,9 +1136,7 @@ class Step:
 
         output_dir = step.search_attr("output_dir", default="")
         output_dir = expandvars(expanduser(output_dir))
-        full_output_path = join(output_dir, basename)
-
-        return full_output_path
+        return join(output_dir, basename)
 
     def closeout(self, to_close=None, to_del=None):
         """Close out step processing
@@ -1152,12 +1164,12 @@ class Step:
             try:
                 if hasattr(item, "close"):
                     item.close()
-            except Exception as exception:
-                self.log.debug(f'Could not close "{item}"Reason:\n{exception}')
+            except Exception as exception:  # noqa: PERF203
+                self.log.debug('Could not close "%s"Reason:\n%s', item, exception)
         for item in to_del:
             try:
                 del item
-            except NameError as error:
+            except NameError as error:  # noqa: PERF203
                 self.log.debug("An error has occurred: %s", error)
         gc.collect()
 
@@ -1220,7 +1232,7 @@ class Step:
 
         return full_path
 
-    def _set_input_dir(self, input, exclusive=True):
+    def _set_input_dir(self, input_, exclusive=True):
         """Set the input directory
 
         If sufficient information is at hand, set a value
@@ -1228,7 +1240,7 @@ class Step:
 
         Parameters
         ----------
-        input : str
+        input_ : str
             Input to determine path from.
 
         exclusive : bool
@@ -1237,12 +1249,9 @@ class Step:
 
         """
         if not exclusive or self.search_attr("_input_dir") is None:
-            try:
-                if isfile(input):
-                    self.input_dir = split(input)[0]
-            except Exception:
-                # Not a file-checkable object. Ignore.
-                pass
+            with suppress(Exception):
+                if isfile(input_):
+                    self.input_dir = split(input_)[0]
 
     def get_pars(self, full_spec=True):
         """Retrieve the configuration parameters of a step
@@ -1330,11 +1339,11 @@ class Step:
                         getattr(self, step_name).update_pars(step_parameters)
             else:
                 self.log.debug(
-                    f"Parameter {parameter} is not valid for step {self}. Ignoring."
+                    "Parameter %s is not valid for step %s. Ignoring.", parameter, self
                 )
 
     @classmethod
-    def build_config(cls, input, **kwargs):
+    def build_config(cls, input, **kwargs):  # noqa: A002
         """Build the ConfigObj to initialize a Step
 
         A Step config is built in the following order:
@@ -1461,8 +1470,10 @@ def get_disable_crds_steppars(default=None):
     if default:
         if isinstance(default, bool):
             return default
-        elif isinstance(default, str):
+
+        if isinstance(default, str):
             return default in truths
+
         raise ValueError(f"default must be string or boolean: {default}")
 
     flag = os.environ.get("STPIPE_DISABLE_CRDS_STEPPARS", "")

@@ -49,8 +49,7 @@ def get_multiple_reference_paths(parameters, reference_file_types, observatory):
         raise TypeError("First argument must be a dict of parameters")
 
     log.set_log_time(True)
-    refpaths = _get_refpaths(parameters, tuple(reference_file_types), observatory)
-    return refpaths
+    return _get_refpaths(parameters, tuple(reference_file_types), observatory)
 
 
 def _get_refpaths(data_dict, reference_file_types, observatory):
@@ -67,11 +66,10 @@ def _get_refpaths(data_dict, reference_file_types, observatory):
             reftypes=reference_file_types,
             observatory=observatory,
         )
-    refpaths = {
+    return {
         filetype: filepath if "N/A" not in filepath.upper() else "N/A"
         for (filetype, filepath) in bestrefs.items()
     }
-    return refpaths
 
 
 def check_reference_open(refpath):

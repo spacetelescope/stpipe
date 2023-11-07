@@ -29,7 +29,7 @@ class SystemCall(Step):
     """  # noqa: E501
 
     def process(self, *args):
-        from .. import datamodels
+        from .. import datamodels  # noqa: TID252
 
         newargs = []
         for i, arg in enumerate(args):
@@ -48,7 +48,7 @@ class SystemCall(Step):
             env[var] = val or None
 
         # Start the process and wait for it to finish.
-        self.log.info(f"Spawning {cmd_str!r}")
+        self.log.info("Spawning %r", cmd_str)
         try:
             p = subprocess.Popen(
                 args=[cmd_str],
@@ -60,19 +60,18 @@ class SystemCall(Step):
             )
             err = p.wait()
         except Exception as e:
-            msg = f"Failed with an exception: \n{e}"
-            self.log.info(msg)
+            self.log.info("Failed with an exception: \n%s", e)
 
             if self.failure_as_exception:
                 raise
         else:
-            self.log.info(f"Done with errorcode {err}")
+            self.log.info("Done with errorcode %s", err)
 
             # Log STDOUT/ERR if we are asked to do so.
             if self.log_stdout:
-                self.log.info(f"STDOUT: {p.stdout.read()}")
+                self.log.info("STDOUT: %s", p.stdout.read())
             if self.log_stderr:
-                self.log.info(f"STDERR: {p.stderr.read()}")
+                self.log.info("STDERR: %s", p.stderr.read())
 
             if self.exitcode_as_exception and err != 0:
                 raise OSError(f"{cmd_str!r} returned error code {err}")

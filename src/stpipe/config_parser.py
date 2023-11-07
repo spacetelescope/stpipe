@@ -70,33 +70,34 @@ def _get_output_file_check(root_dir):
             path = os.path.join(root_dir, path)
 
         path = os.path.abspath(path)
-        dir = os.path.dirname(path)
-        if dir and not os.path.exists(dir):
-            os.makedirs(dir)
+        dir_ = os.path.dirname(path)
+        if dir_ and not os.path.exists(dir_):
+            os.makedirs(dir_)
 
         return path
 
     return _output_file_check
 
 
-def _is_datamodel(value, default=None):
+def _is_datamodel(value):
     """Verify that value is either is a DataModel."""
     if isinstance(value, AbstractDataModel):
         return value
-    else:
-        raise VdtTypeError(value)
+
+    raise VdtTypeError(value)
 
 
-def _is_string_or_datamodel(value, default=None):
+def _is_string_or_datamodel(value):
     """Verify that value is either a string (nominally a reference file path)
     or a DataModel (possibly one with no corresponding file.)
     """
     if isinstance(value, AbstractDataModel):
         return value
-    elif isinstance(value, str):
+
+    if isinstance(value, str):
         return value
-    else:
-        raise VdtTypeError(value)
+
+    raise VdtTypeError(value)
 
 
 def load_config_file(config_file):
@@ -187,7 +188,7 @@ def load_spec_file(cls, preserve_comments=_not_set):
     """
     if preserve_comments is not _not_set:
         msg = "preserve_comments is deprecated"
-        warnings.warn(msg, DeprecationWarning)
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
     # Don't use 'hasattr' here, because we don't want to inherit spec
     # from the base class.
     if not isclass(cls):
@@ -211,7 +212,7 @@ def load_spec_file(cls, preserve_comments=_not_set):
             raise_errors=True,
             list_values=False,
         )
-    return
+    return None
 
 
 def merge_config(into, new):
@@ -355,12 +356,12 @@ def validate(
                 else:
                     section_list.append("[missing section]")
                 section_string = "/".join(section_list)
-                if err == False:
+                if err is False:
                     if allow_missing:
                         config[key] = spec[key]
                         continue
-                    else:
-                        err = "missing"
+
+                    err = "missing"
 
                 messages.append(f"Config parameter {section_string!r}: {err}")
 
@@ -392,7 +393,6 @@ def string_to_python_type(section, key):
     else:
         typed_val = _parse(val)
     section[key] = typed_val
-    return
 
 
 def _parse(val):
@@ -401,12 +401,15 @@ def _parse(val):
     """
     if val.lower() == "true":
         return True
-    elif val.lower() == "false":
+
+    if val.lower() == "false":
         return False
+
     try:
         return int(val)
     except ValueError:
         pass
+
     try:
         return float(val)
     except ValueError:

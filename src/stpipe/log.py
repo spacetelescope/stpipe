@@ -32,7 +32,7 @@ level = DEBUG
 # LOGS AS EXCEPTIONS
 
 
-class LoggedException(Exception):
+class LoggedException(Exception):  # noqa: N818
     """
     This is an exception used when a log record is converted into an
     exception.
@@ -83,7 +83,7 @@ class LogConfig:
         handler=None,
         level=logging.NOTSET,
         break_level=logging.NOTSET,
-        format=None,
+        format=None,  # noqa: A002
     ):
         if name in ("", ".", "root"):
             name = "*"
@@ -97,7 +97,7 @@ class LogConfig:
         self.level = level
         self.break_level = break_level
         if format is None:
-            format = DEFAULT_FORMAT
+            format = DEFAULT_FORMAT  # noqa: A001
         self.format = format
 
     def match(self, log_name):
@@ -117,14 +117,17 @@ class LogConfig:
         """
         if handler_str.startswith("file:"):
             return logging.FileHandler(handler_str[5:], "w", "utf-8", True)
-        elif handler_str.startswith("append:"):
+
+        if handler_str.startswith("append:"):
             return logging.FileHandler(handler_str[7:], "a", "utf-8", True)
-        elif handler_str == "stdout":
+
+        if handler_str == "stdout":
             return logging.StreamHandler(sys.stdout)
-        elif handler_str == "stderr":
+
+        if handler_str == "stderr":
             return logging.StreamHandler(sys.stderr)
-        else:
-            raise ValueError(f"Can't parse handler {handler_str!r}")
+
+        raise ValueError(f"Can't parse handler {handler_str!r}")
 
     def apply(self, log):
         """
@@ -180,10 +183,11 @@ def load_configuration(config_file):
             value = int(value)
         except ValueError:
             pass
+
         try:
             value = logging._checkLevel(value)
-        except ValueError:
-            raise validate.VdtTypeError(value)
+        except ValueError as err:
+            raise validate.VdtTypeError(value) from err
         return value
 
     spec = config_parser.load_spec_file(LogConfig)
@@ -203,10 +207,8 @@ def load_configuration(config_file):
                 cfg.match_and_apply(log)
 
 
-def getLogger(name=None):
-    log = logging.getLogger(name)
-
-    return log
+def getLogger(name=None):  # noqa: N802
+    return logging.getLogger(name)
 
 
 def _find_logging_config_file():
@@ -217,8 +219,7 @@ def _find_logging_config_file():
         if os.path.exists(file):
             return os.path.abspath(file)
 
-    buffer = io.BytesIO(DEFAULT_CONFIGURATION)
-    return buffer
+    return io.BytesIO(DEFAULT_CONFIGURATION)
 
 
 ###########################################################################
@@ -252,9 +253,11 @@ class DelegationHandler(logging.Handler):
 
     @log.setter
     def log(self, log):
-        assert log is None or (
+        if log is not None and not (
             isinstance(log, logging.Logger) and log.name.startswith(STPIPE_ROOT_LOGGER)
-        )
+        ):
+            raise AssertionError("Can't set the log to a root logger")
+
         self._logs[threading.current_thread()] = log
 
 

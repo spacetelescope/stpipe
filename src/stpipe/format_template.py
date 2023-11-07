@@ -127,7 +127,7 @@ class FormatTemplate(Formatter):
         if key_formats:
             self.key_formats.update(key_formats)
 
-    def format(self, format_string, **kwargs):
+    def format(self, format_string, **kwargs):  # noqa: A003
         """Perform the formatting
 
         Parameters
@@ -154,7 +154,7 @@ class FormatTemplate(Formatter):
                     #  0: The first replacement field. There should only be one.
                     #  2: Get the format spec.
                     #  -1: Get the last character representing the type.
-                    format_type = list(self.parse(key_format))[0][2][-1]
+                    format_type = next(iter(self.parse(key_format)))[2][-1]
 
                     try:
                         value = key_format.format(CONVERSION[format_type](value))
@@ -164,12 +164,8 @@ class FormatTemplate(Formatter):
                         break
                 else:
                     raise RuntimeError(
-                        "No suitable formatting for {key}: {value} found. Given"
-                        " formatting options:\n\t{formats}".format(
-                            key=key,
-                            value=value,
-                            formats=self.key_formats[key],
-                        )
+                        f"No suitable formatting for {key}: {value} found. Given"
+                        f" formatting options:\n\t{self.key_formats[key]}"
                     )
             formatted_kwargs[key] = value
         result = super().format(format_string, **formatted_kwargs)
@@ -181,15 +177,13 @@ class FormatTemplate(Formatter):
             for unused in unused_keys
             if formatted_kwargs[unused] is not None
         ]
-        result_parts = [result] + unused_values
-        result = self.separator.join(result_parts)
-
-        return result
+        result_parts = [result, *unused_values]
+        return self.separator.join(result_parts)
 
     # Make the instance callable
     __call__ = format
 
-    def get_value(self, key, args, kwargs):
+    def get_value(self, key, args, kwargs):  # noqa: ARG002
         """Return a given field value
 
         Parameters
