@@ -2,9 +2,9 @@ import contextlib
 from collections.abc import Mapping
 
 import pytest
+from astropy.extern.configobj.configobj import ConfigObj, Section
 
 from stpipe import config_parser
-from stpipe.extern.configobj.configobj import ConfigObj, Section
 from stpipe.utilities import _not_set
 
 

@@ -73,9 +73,6 @@ addopts = [
     "-ra",
     "--color=yes"
 ]
-norecursedirs = [
-    'src/stpipe/extern',
-]
 testpaths = [
     'tests',
 ]
@@ -96,7 +93,6 @@ src = [
 line-length = 88
 extend-exclude = [
     'docs',
-    'src/stpipe/extern',
     'scripts/strun',
 ]
 
@@ -156,13 +152,9 @@ force-exclude = '''
     | \.git
     | \.pytest_cache
     | \.tox
-    | src/stpipe/extern
   )/
 )
 '''
-
-[tool.flynt]
-exclude = ["src/stpipe/extern/*"]
 
 [tool.codespell]
 skip="*.pdf,*.fits,*.asdf,.tox,build,./tags,.git,docs/_build"

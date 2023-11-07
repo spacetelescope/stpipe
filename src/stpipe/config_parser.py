@@ -10,17 +10,17 @@ from inspect import isclass
 
 from asdf import ValidationError as AsdfValidationError
 from asdf import open as asdf_open
-
-from . import utilities
-from .config import StepConfig
-from .datamodel import AbstractDataModel
-from .extern.configobj.configobj import (
+from astropy.extern.configobj.configobj import (
     ConfigObj,
     Section,
     flatten_errors,
     get_extra_values,
 )
-from .extern.configobj.validate import ValidateError, Validator, VdtTypeError
+from astropy.extern.configobj.validate import ValidateError, Validator, VdtTypeError
+
+from . import utilities
+from .config import StepConfig
+from .datamodel import AbstractDataModel
 from .utilities import _not_set
 
 # Configure logger
