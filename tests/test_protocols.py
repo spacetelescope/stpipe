@@ -26,7 +26,7 @@ def _datamodel_methods():
 
 
 def _modelcontainer_methods():
-    def __iter__(self):
+    def __iter__(self):  # noqa: N807
         pass
 
     def read_asn(self):
@@ -49,7 +49,6 @@ def _powerset(iterable):
 
 @pytest.fixture()
 def data_object(request):
-    print(request.param)
     return type(
         "DataObject",
         (object,),
