@@ -1,5 +1,5 @@
 """
-Integration tests with JWST pipeline
+Integration tests with ROMAN pipeline
 """
 
 from inspect import getmembers, isclass
