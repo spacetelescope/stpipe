@@ -5,6 +5,8 @@
 - Fix regex issue in internal configobj [#108]
 - Remove bundled ``configobj`` package in favor of the ``configobj`` package
   bundled into ``astropy``. [#122]
+- Refactor ``AbstractDataModel`` into a Python protocol as that is how it was
+  effectively used. [#120]
 
 0.5.1 (2023-10-02)
 ==================
