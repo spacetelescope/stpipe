@@ -23,6 +23,7 @@ class Pipeline(Step):
 
     # Configuration
     spec = """
+    verbose = boolean(default=True)  # Show verbose output
     """
     # A set of steps used in the Pipeline.  Should be overridden by
     # the subclass.
@@ -53,6 +54,11 @@ class Pipeline(Step):
                 )
 
             setattr(self, key, new_step)
+
+        if self.verbose:
+            self.log.setLevel(log.logging.DEBUG)
+        else:
+            self.log.setLevel(log.logging.CRITICAL)
 
     @property
     def reference_file_types(self):
