@@ -51,6 +51,7 @@ class Step:
     suffix             = string(default=None)        # Default suffix for output files
     search_output_file = boolean(default=True)       # Use outputfile define in parent step
     input_dir          = string(default=None)        # Input directory
+    verbose            = boolean(default=True)       # Show verbose output
     """  # noqa: E501
     # Nickname used to refer to this class in lieu of the fully-qualified class
     # name.  Must be globally unique!
@@ -362,7 +363,10 @@ class Step:
         # Create a new logger for this step
         self.log = log.getLogger(self.qualified_name)
 
-        self.log.setLevel(log.logging.DEBUG)
+        if self.verbose:
+            self.log.setLevel(log.logging.DEBUG)
+        else:
+            self.log.setLevel(log.logging.CRITICAL)
 
         # Log the fact that we have been init-ed.
         self.log.info(
