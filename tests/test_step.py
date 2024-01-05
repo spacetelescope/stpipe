@@ -8,6 +8,7 @@ import pytest
 
 import stpipe.config_parser as cp
 from stpipe import cmdline
+from stpipe.log import record_logs
 from stpipe.pipeline import Pipeline
 from stpipe.step import Step
 
@@ -73,6 +74,21 @@ class ListArgStep(Step):
         pixel_scale_ratio = float(default=0.65)
         output_ext = string(default='listargstep')
     """
+
+
+class ProcessStep(Step):
+    """A Step with parameters"""
+
+    spec = """
+        str1 = string(default='default')
+        str2 = string(default='default')
+        str3 = string(default='default')
+        str4 = string(default='default')
+        output_ext = string(default='simplestep')
+    """
+
+    def process(self):
+        return None
 
 
 @pytest.fixture()
@@ -407,3 +423,31 @@ def test_log_records():
     assert any(
         r.message == "This step has called out a warning." for r in pipeline.log_records
     )
+
+
+def test_step_verbose():
+    # Run method
+    with record_logs() as logs_run:
+        step = ProcessStep(verbose=False)
+        _ = step.run()
+
+    # Call method
+    with record_logs() as logs_call:
+        _ = ProcessStep.call(verbose=False)
+
+    assert len(logs_run) == 0
+    assert len(logs_call) == 0
+
+
+def test_pipeline_verbose():
+    # Run method
+    with record_logs() as logs_run:
+        pipe = LoggingPipeline(verbose=False)
+        _ = pipe.run()
+
+    # Call method
+    with record_logs() as logs_call:
+        _ = LoggingPipeline.call(verbose=False)
+
+    assert len(logs_run) == 0
+    assert len(logs_call) == 0
