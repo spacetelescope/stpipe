@@ -11,14 +11,15 @@ def test_func():
 class HovercraftFullOfEels:
     pass
 
-class Foo(Step):
 
+class Foo(Step):
     def process(self, input_data):
         pass
 
 
 def test_import_class():
     from stpipe import Step
+
     step_class = import_class("stpipe.Step", subclassof=Step)
     assert step_class is Step
 

@@ -3,8 +3,7 @@ Pre- and post-hooks
 """
 import inspect
 
-from . import function_wrapper
-from . import utilities
+from . import function_wrapper, utilities
 from .step import Step
 
 
@@ -87,11 +86,13 @@ def get_hook_objects(step, hooktype, hooks):
     hooktype : str, "pre" or "post"
         strings, to indicate whether it is a pre- or post-hook
     hooks : str or class
-        path to executible script, or Step class to run as hook
+        path to executable script, or Step class to run as hook
 
     Returns
     -------
     list of callables that can be run as a hook
     """
-    return [hook_from_string_or_class(step, hooktype, i, hook)
-            for i, hook in enumerate(hooks)]
+    return [
+        hook_from_string_or_class(step, hooktype, i, hook)
+        for i, hook in enumerate(hooks)
+    ]

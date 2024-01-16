@@ -26,7 +26,6 @@ class SystemCall(Step):
     """  # noqa: E501
 
     def process(self, *args):
-
         newargs = []
         for i, arg in enumerate(args):
             if isinstance(arg, AbstractDataModel):

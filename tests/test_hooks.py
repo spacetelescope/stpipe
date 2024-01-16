@@ -1,7 +1,5 @@
 import pytest
-
-from jwst.stpipe import Step, Pipeline
-
+from jwst.stpipe import Pipeline, Step
 
 pytest.importorskip("jwst")
 
@@ -38,7 +36,6 @@ class MyPipeline(Pipeline):
 
 
 class HookStep(Step):
-
     class_alias = "myhook"
 
     spec = """
