@@ -9,8 +9,12 @@ class FunctionWrapper(Step):
     This Step wraps an ordinary Python function.
     """
 
-    def __init__(self, func, *args):
-        Step.__init__(self, func.__name__, *args)
+    spec = """
+    output_ext = string(default="fits")
+    """
+
+    def __init__(self, func, *args, **kwargs):
+        Step.__init__(self, func.__name__, *args, **kwargs)
 
         self._func = func
 
