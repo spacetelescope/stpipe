@@ -1,6 +1,5 @@
 import pytest
 
-
 Step = pytest.importorskip("jwst.stpipe.Step")
 Pipeline = pytest.importorskip("jwst.stpipe.Pipeline")
 
