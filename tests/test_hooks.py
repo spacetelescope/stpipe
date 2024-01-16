@@ -1,7 +1,8 @@
 import pytest
-from jwst.stpipe import Pipeline, Step
 
-pytest.importorskip("jwst")
+
+Step = pytest.importorskip("jwst.stpipe.Step")
+Pipeline = pytest.importorskip("jwst.stpipe.Pipeline")
 
 
 class ShovelPixelsStep(Step):
