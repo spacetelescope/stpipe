@@ -63,13 +63,13 @@ def test_hook_as_step_class(caplog):
     datamodels = pytest.importorskip("stdatamodels.jwst.datamodels")
     model = datamodels.ImageModel((10, 10))
 
-    steps = dict(
-        cancelnoise=dict(
-            post_hooks=[
+    steps = {
+        "cancelnoise": {
+            "post_hooks": [
                 HookStep,
             ]
-        )
-    )
+        }
+    }
 
     MyPipeline.call(model, steps=steps)
 
@@ -82,13 +82,13 @@ def test_hook_as_step_instance(caplog):
     datamodels = pytest.importorskip("stdatamodels.jwst.datamodels")
     model = datamodels.ImageModel((10, 10))
 
-    steps = dict(
-        shovelpixels=dict(
-            post_hooks=[
+    steps = {
+        "shovelpixels": {
+            "post_hooks": [
                 HookStep(param1="foo", param2=3),
             ]
-        )
-    )
+        }
+    }
 
     MyPipeline.call(model, steps=steps)
 
@@ -100,13 +100,13 @@ def test_hook_as_string_of_importable_step_class(caplog):
     datamodels = pytest.importorskip("stdatamodels.jwst.datamodels")
     model = datamodels.ImageModel((10, 10))
 
-    steps = dict(
-        shovelpixels=dict(
-            post_hooks=[
+    steps = {
+        "shovelpixels": {
+            "post_hooks": [
                 "test_hooks.HookStep",
             ]
-        )
-    )
+        }
+    }
 
     MyPipeline.call(model, steps=steps)
 
@@ -118,13 +118,13 @@ def test_hook_as_string_of_importable_function(caplog):
     datamodels = pytest.importorskip("stdatamodels.jwst.datamodels")
     model = datamodels.ImageModel((10, 10))
 
-    steps = dict(
-        shovelpixels=dict(
-            post_hooks=[
+    steps = {
+        "shovelpixels": {
+            "post_hooks": [
                 "test_hooks.hook_function",
             ]
-        )
-    )
+        }
+    }
 
     MyPipeline.call(model, steps=steps)
 
@@ -140,14 +140,14 @@ def test_hook_as_subproccess(caplog, tmp_path):
     model.save(path)
 
     # Run post_hooks of "fitsinfo" and "fitsheader" CLI scripts from astropy
-    steps = dict(
-        shovelpixels=dict(
-            post_hooks=[
+    steps = {
+        "shovelpixels": {
+            "post_hooks": [
                 "fitsinfo {0}",
                 "fitsheader {0}",
             ]
-        )
-    )
+        }
+    }
 
     MyPipeline.call(model, steps=steps)
 
