@@ -4,7 +4,7 @@ from stpipe import Step
 from stpipe.utilities import import_class, import_func
 
 
-def test_func():
+def what_is_your_quest():
     pass
 
 
@@ -26,7 +26,7 @@ def test_import_class():
 
 def test_import_class_on_func():
     with pytest.raises(TypeError):
-        import_class("test_utilities.test_func", subclassof=Step)
+        import_class("test_utilities.what_is_your_quest", subclassof=Step)
 
 
 def test_import_class_not_subclass():
@@ -35,8 +35,8 @@ def test_import_class_not_subclass():
 
 
 def test_import_func():
-    step_func = import_func("test_utilities.test_func")
-    assert step_func is test_func
+    step_func = import_func("test_utilities.what_is_your_quest")
+    assert step_func is what_is_your_quest
 
 
 def test_import_func_on_class():
