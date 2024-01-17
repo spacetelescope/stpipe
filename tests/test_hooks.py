@@ -1,7 +1,8 @@
 import pytest
 
-Step = pytest.importorskip("jwst.stpipe.Step")
-Pipeline = pytest.importorskip("jwst.stpipe.Pipeline")
+pytest.importorskip("jwst")
+
+from jwst.stpipe import Pipeline, Step  # noqa: E402
 
 
 class ShovelPixelsStep(Step):
@@ -33,6 +34,7 @@ class MyPipeline(Pipeline):
         result = self.cancelnoise(result)
 
         return result
+
 
 
 class HookStep(Step):
@@ -131,12 +133,12 @@ def test_hook_as_string_of_importable_function(caplog):
     assert "Running hook_function on data array of size (10, 10)" in caplog.text
 
 
-def test_hook_as_subproccess(caplog, tmp_path):
+def test_hook_as_subproccess(caplog, tmp_cwd):
     """Test a string of a terminal command"""
     datamodels = pytest.importorskip("stdatamodels.jwst.datamodels")
     model = datamodels.ImageModel((10, 10))
     filename = "test_hook_as_subprocess.fits"
-    path = tmp_path / filename
+    path = tmp_cwd / filename
     model.save(path)
 
     # Run post_hooks of "fitsinfo" and "fitsheader" CLI scripts from astropy
