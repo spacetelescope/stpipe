@@ -47,3 +47,8 @@ def test_import_func_on_class():
 def test_import_class_no_module():
     with pytest.raises(ImportError):
         import_class("Foo", subclassof=Step)
+
+
+def test_import_func_no_module():
+    with pytest.raises(ImportError):
+        import_func("foo")
