@@ -36,7 +36,6 @@ class MyPipeline(Pipeline):
         return result
 
 
-
 class HookStep(Step):
     class_alias = "myhook"
 
