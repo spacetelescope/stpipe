@@ -24,7 +24,7 @@ class CancelNoiseStep(Step):
 class MyPipeline(Pipeline):
     class_alias = "mypipeline"
 
-    step_defs = {
+    step_defs = {  # noqa: RUF012
         "shovelpixels": ShovelPixelsStep,
         "cancelnoise": CancelNoiseStep,
     }
@@ -33,7 +33,7 @@ class MyPipeline(Pipeline):
         result = self.shovelpixels(input_data)
         result = self.cancelnoise(result)
 
-        return result
+        return result  # noqa: RET504
 
 
 class HookStep(Step):
