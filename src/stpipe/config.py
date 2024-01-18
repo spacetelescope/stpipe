@@ -4,7 +4,7 @@ will eventually fully replace config_parser.py, but we'll need to maintain
 both until we replace configobj with traitlets.
 """
 from copy import deepcopy
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 import asdf
 
@@ -111,7 +111,7 @@ class StepConfig:
             meta = deepcopy(_META_TEMPLATE)
             meta["date"] = meta["date"].replace(
                 _TEMPLATE_PLACEHOLDER,
-                datetime.now(UTC)
+                datetime.now(timezone.utc)
                 .replace(microsecond=0)
                 .isoformat()
                 .removesuffix("+00:00"),
