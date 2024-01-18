@@ -5,6 +5,7 @@
 - Fix regex issue in internal configobj [#108]
 - Remove bundled ``configobj`` package in favor of the ``configobj`` package
   bundled into ``astropy``. [#122]
+- Fix ``datetime.utcnow()`` DeprecationWarning [#134]
 
 0.5.1 (2023-10-02)
 ==================
