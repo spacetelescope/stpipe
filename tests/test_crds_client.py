@@ -3,10 +3,6 @@ import pytest
 from stpipe import crds_client
 
 
-@pytest.mark.skip(
-    "CRDS logs in a non-standard way, and pytest can't capture it. "
-    "See https://github.com/pytest-dev/pytest/issues/5997"
-)
 def test_pars_log_filtering(caplog):
     # A bogus pars- reffile will raise an exception in CRDS
     with pytest.raises(Exception, match="Error determining best reference"):
