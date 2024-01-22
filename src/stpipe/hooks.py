@@ -1,6 +1,7 @@
 """
 Pre- and post-hooks
 """
+import ast
 import inspect
 
 from . import function_wrapper, utilities
@@ -40,6 +41,18 @@ def hook_from_string_or_class(step, hooktype, num, command):
         except ImportError:
             # String is possibly a subproc, so handle this later
             pass
+        except AttributeError:
+            # String points to an instance of a Step
+            # So import the class
+            class_string, _, params = command.partition("(")
+            step_class = utilities.import_class(
+                class_string, subclassof=Step, config_file=step.config_file
+            )
+            # Then convert rest of string to args and instantiate the class
+            kwargs_string = params.strip(")")
+            expr = ast.parse(f"dict({kwargs_string}\n)", mode="eval")
+            kwargs = {kw.arg: ast.literal_eval(kw.value) for kw in expr.body.keywords}
+            return step_class(**kwargs)
         except TypeError:
             # String points to a function
             step_func = utilities.import_func(command)

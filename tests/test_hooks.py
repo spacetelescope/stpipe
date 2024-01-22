@@ -21,6 +21,20 @@ class CancelNoiseStep(Step):
         return input_data
 
 
+class HookStep(Step):
+    class_alias = "myhook"
+
+    spec = """
+    param1 = string(default="bar")
+    param2 = float(default=1)
+    """
+
+    def process(self, input_data):
+        self.log.info("Running HookStep with %s and %s", self.param1, self.param2)
+
+        return input_data
+
+
 class MyPipeline(Pipeline):
     class_alias = "mypipeline"
 
@@ -34,20 +48,6 @@ class MyPipeline(Pipeline):
         result = self.cancelnoise(result)
 
         return result  # noqa: RET504
-
-
-class HookStep(Step):
-    class_alias = "myhook"
-
-    spec = """
-    param1 = string(default="bar")
-    param2 = float(default=1)
-    """
-
-    def process(self, input_data):
-        self.log.info("Running HookStep with %s and %s", self.param1, self.param2)
-
-        return input_data
 
 
 def hook_function(input_data):
@@ -71,7 +71,6 @@ def test_hook_as_step_class(caplog):
             ]
         }
     }
-
     MyPipeline.call(model, steps=steps)
 
     assert "Running HookStep with bar and 1" in caplog.text
@@ -90,7 +89,6 @@ def test_hook_as_step_instance(caplog):
             ]
         }
     }
-
     MyPipeline.call(model, steps=steps)
 
     assert "Running HookStep with foo and 3" in caplog.text
@@ -108,10 +106,26 @@ def test_hook_as_string_of_importable_step_class(caplog):
             ]
         }
     }
-
     MyPipeline.call(model, steps=steps)
 
     assert "Running HookStep" in caplog.text
+
+
+def test_hook_as_string_of_step_instance(caplog):
+    """Test a string of a fully-qualified Step instance w/params"""
+    datamodels = pytest.importorskip("stdatamodels.jwst.datamodels")
+    model = datamodels.ImageModel((10, 10))
+
+    steps = {
+        "shovelpixels": {
+            "post_hooks": [
+                "test_hooks.HookStep(param1='foo', param2=2)",
+            ]
+        }
+    }
+    MyPipeline.call(model, steps=steps)
+
+    assert "Running HookStep with foo and 2" in caplog.text
 
 
 def test_hook_as_string_of_importable_function(caplog):
@@ -126,13 +140,12 @@ def test_hook_as_string_of_importable_function(caplog):
             ]
         }
     }
-
     MyPipeline.call(model, steps=steps)
 
     assert "Running hook_function on data array of size (10, 10)" in caplog.text
 
 
-def test_hook_as_subproccess(caplog, tmp_cwd):
+def test_hook_as_systemcall(caplog, tmp_cwd):
     """Test a string of a terminal command"""
     datamodels = pytest.importorskip("stdatamodels.jwst.datamodels")
     model = datamodels.ImageModel((10, 10))
@@ -149,13 +162,11 @@ def test_hook_as_subproccess(caplog, tmp_cwd):
             ]
         }
     }
-
     MyPipeline.call(model, steps=steps)
 
     # Logs from fitsinfo
-    assert "shovelpixels.post_hook0" in caplog.text
     assert "SystemCall instance created" in caplog.text
-    assert f"hook_args: (<ImageModel(10, 10) from {filename}>,)" in caplog.text
+    assert "Spawning 'fitsinfo stpipe.MyPipeline.shovelpixels.post_hook0" in caplog.text
 
     # logs from fitsheader
     assert "DATAMODL= 'ImageModel'" in caplog.text
