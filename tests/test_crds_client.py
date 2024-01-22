@@ -7,7 +7,7 @@ from stpipe import crds_client
     "CRDS logs via stderr and pytest can't capture it. "
     "See https://github.com/pytest-dev/pytest/issues/5997"
 )
-def test_pars_log_filtering(caplog):
+def test_pars_log_filtering(capfd):
     # A bogus pars- reffile will raise an exception in CRDS
     with pytest.raises(Exception, match="Error determining best reference"):
         crds_client.get_multiple_reference_paths(
@@ -33,6 +33,7 @@ def test_pars_log_filtering(caplog):
     # https://github.com/pytest-dev/pytest/issues/5997
     # So don't rely on this test passing (currently) to be actually testing what
     # you think it is.
+    captured = capfd.readouterr()
     assert (
-        "Error determining best reference for 'pars-snowblindstep'" not in caplog.text
+        "Error determining best reference for 'pars-crunchyfrogstep'" not in captured.err
     )
