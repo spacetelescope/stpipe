@@ -6,6 +6,7 @@
 - Remove bundled ``configobj`` package in favor of the ``configobj`` package
   bundled into ``astropy``. [#122]
 - Fix ``datetime.utcnow()`` DeprecationWarning [#134]
+- Filter out log messages about non-existing pars- reffiles [#135]
 
 0.5.1 (2023-10-02)
 ==================
