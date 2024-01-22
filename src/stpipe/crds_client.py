@@ -52,10 +52,9 @@ def get_multiple_reference_paths(parameters, reference_file_types, observatory):
     log.set_log_time(True)
 
     def parsfilter(record):
-        if not record.getMessage().strip().startswith(
-            "Error determining best reference for 'pars-"
-        ):
-            return True
+        if "Error determining best reference for 'pars-" in record.getMessage():
+            return False
+        return True
 
     logging.getLogger("CRDS").addFilter(parsfilter)
 
