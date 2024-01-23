@@ -1,23 +1,18 @@
+from crds.core.exceptions import CrdsLookupError
 import pytest
 
 from stpipe import crds_client
 
 
-def test_missing_pars_log_filtering(caplog):
+def test_missing_pars_log_filtering(capfd):
+    # CRDS needs stdatamodels to handle JWST lookups
+    pytest.importorskip("stdatamodels.jwst")
+
     # A made-up pars- reffile will raise an exception in CRDS
-    with pytest.raises(Exception, match="Error determining best reference"):
+    with pytest.raises(CrdsLookupError):
         crds_client.get_multiple_reference_paths(
             parameters={
-                "meta.instrument.detector": "NRCA1",
-                "meta.instrument.filter": "F140M",
                 "meta.instrument.name": "NIRCAM",
-                "meta.instrument.pupil": "CLEAR",
-                "meta.observation.date": "2012-04-22",
-                "meta.subarray.name": "FULL",
-                "meta.subarray.xsize": 2048,
-                "meta.subarray.xstart": 1,
-                "meta.subarray.ysize": 2048,
-                "meta.subarray.ystart": 1,
                 "meta.telescope": "JWST",
             },
             reference_file_types=["pars-crunchyfrogstep"],
@@ -29,6 +24,7 @@ def test_missing_pars_log_filtering(caplog):
     # https://github.com/pytest-dev/pytest/issues/5997
     # So don't rely on this test passing (currently) to be actually testing what
     # you think it is.
+    capture = capfd.readouterr()
     assert (
-        "Error determining best reference for 'pars-crunchyfrogstep'" not in caplog.text
+        "Error determining best reference for 'pars-crunchyfrogstep'" not in capture.err
     )
