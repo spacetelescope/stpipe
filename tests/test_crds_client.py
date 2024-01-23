@@ -1,5 +1,5 @@
-from crds.core.exceptions import CrdsLookupError
 import pytest
+from crds.core.exceptions import CrdsLookupError
 
 from stpipe import crds_client
 
