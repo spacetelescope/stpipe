@@ -1,13 +1,10 @@
-import os
-from unittest import mock
-
 import pytest
 
 from stpipe import crds_client
 
 
-@mock.patch.dict(os.environ, {"CRDS_SERVER_URL": "https://jwst-crds.stsci.edu"})
-def test_pars_log_filtering(caplog):
+def test_pars_log_filtering(caplog, monkeypatch):
+    monkeypatch.setenv("CRDS_SERVER_URL", "https://jwst-crds.stsci.edu")
     # A bogus pars- reffile will raise an exception in CRDS
     with pytest.raises(Exception, match="Error determining best reference"):
         crds_client.get_multiple_reference_paths(
