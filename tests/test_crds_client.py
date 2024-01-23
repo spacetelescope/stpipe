@@ -3,9 +3,8 @@ import pytest
 from stpipe import crds_client
 
 
-def test_pars_log_filtering(caplog, monkeypatch):
-    monkeypatch.setenv("CRDS_SERVER_URL", "https://jwst-crds.stsci.edu")
-    # A bogus pars- reffile will raise an exception in CRDS
+def test_missing_pars_log_filtering(caplog):
+    # A made-up pars- reffile will raise an exception in CRDS
     with pytest.raises(Exception, match="Error determining best reference"):
         crds_client.get_multiple_reference_paths(
             parameters={
