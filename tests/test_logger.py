@@ -24,11 +24,10 @@ level = WARNING
 format = '%(message)s'
 """
 
-    fd = io.StringIO()
-    fd.write(configuration)
-    fd.seek(0)
-    stpipe_log.load_configuration(fd)
-    fd.close()
+    with io.StringIO() as fd:
+        fd.write(configuration)
+        fd.seek(0)
+        stpipe_log.load_configuration(fd)
 
     log = stpipe_log.getLogger(stpipe_log.STPIPE_ROOT_LOGGER)
 
