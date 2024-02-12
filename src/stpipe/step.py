@@ -562,7 +562,8 @@ class Step:
                                 self.log.info("Saving file %s", output_path)
                                 result.save(output_path, overwrite=True)
 
-                self.log.info("Step %s done", self.name)
+                if not self.skip:
+                    self.log.info("Step %s done", self.name)
             finally:
                 log.delegator.log = orig_log
 
