@@ -1300,8 +1300,9 @@ class Step:
         pars_dict = {}
         for key, value in pars.items():
             if isinstance(value, cmdline.FromCommandLine):
-                raise RuntimeError("FromCommandLine is used!  FAIL FAIL FAIL")
-            pars_dict[key] = value
+                pars_dict[key] = str(value)
+            else:
+                pars_dict[key] = value
         return pars_dict
 
     def export_config(self, filename, include_metadata=False):
