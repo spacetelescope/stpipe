@@ -7,6 +7,7 @@ WARNING:  stpipe and crds have circular dependencies.  Do not use crds imports
 directly in modules other than this crds_client so that dependency order and
 general integration can be managed here.
 """
+import logging
 import re
 
 import crds
@@ -49,6 +50,14 @@ def get_multiple_reference_paths(parameters, reference_file_types, observatory):
         raise TypeError("First argument must be a dict of parameters")
 
     log.set_log_time(True)
+
+    def parsfilter(record):
+        if "Error determining best reference for 'pars-" in record.getMessage():
+            return False
+        return True
+
+    logging.getLogger("CRDS").addFilter(parsfilter)
+
     return _get_refpaths(parameters, tuple(reference_file_types), observatory)
 
 

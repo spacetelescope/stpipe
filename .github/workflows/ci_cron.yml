@@ -23,6 +23,10 @@ jobs:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
     if: (github.repository == 'spacetelescope/stpipe' && (github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'Weekly CI')))
     with:
+      setenv: |
+        CRDS_PATH: /tmp/data/crds_cache
+        CRDS_CLIENT_RETRY_COUNT: 3
+        CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
       envs: |
         - macos: py39-xdist
         - macos: py310-xdist
