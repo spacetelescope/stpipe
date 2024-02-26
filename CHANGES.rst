@@ -8,6 +8,8 @@
 - Fix ``datetime.utcnow()`` DeprecationWarning [#134]
 - Provide ``asn_n_members=1`` when opening the ``Step`` dataset for
   ``get_crds_parameters`` [#142]
+- Use ``ModelContainer.get_crds_parameters`` instead of ``get_crds_parameters``
+  on the first model in the container [#144]
 
 0.5.1 (2023-10-02)
 ==================
