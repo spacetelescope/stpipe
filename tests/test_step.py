@@ -284,9 +284,13 @@ def test_step_list_args(config_file_list_arg_step):
     correctly.
     """
     config, returned_config_file = ListArgStep.build_config(
-        "science.fits", config_file=str(config_file_list_arg_step)
+        "science.fits", config_file=config_file_list_arg_step
     )
-    assert returned_config_file == str(config_file_list_arg_step)
+    assert returned_config_file == config_file_list_arg_step
+
+    # Command line tests below need the config file path to be a string
+    returned_config_file = str(returned_config_file)
+
     c, *_ = cmdline.just_the_step_from_cmdline(
         [
             "filename.fits",

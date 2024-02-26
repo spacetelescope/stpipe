@@ -1377,7 +1377,7 @@ class Step:
         if "config_file" in kwargs:
             config_file = kwargs["config_file"]
             del kwargs["config_file"]
-            config_from_file = config_parser.load_config_file(config_file)
+            config_from_file = config_parser.load_config_file(str(config_file))
             config_parser.merge_config(config, config_from_file)
             config_dir = os.path.dirname(config_file)
         else:
