@@ -76,9 +76,9 @@ class ListArgStep(Step):
 
 
 @pytest.fixture()
-def config_file_pipe(tmpdir):
+def config_file_pipe(tmp_path):
     """Create a config file"""
-    config_file = str(tmpdir / "simple_pipe.asdf")
+    config_file = tmp_path / "simple_pipe.asdf"
 
     tree = {
         "class": "test_step.SimplePipe",
@@ -104,9 +104,9 @@ def config_file_pipe(tmpdir):
 
 
 @pytest.fixture()
-def config_file_step(tmpdir):
+def config_file_step(tmp_path):
     """Create a config file"""
-    config_file = str(tmpdir / "simple_step.asdf")
+    config_file = tmp_path / "simple_step.asdf"
 
     tree = {
         "class": "test_step.SimpleStep",
@@ -122,9 +122,9 @@ def config_file_step(tmpdir):
 
 
 @pytest.fixture()
-def config_file_list_arg_step(tmpdir):
+def config_file_list_arg_step(tmp_path):
     """Create a config file"""
-    config_file = str(tmpdir / "list_arg_step.asdf")
+    config_file = tmp_path / "list_arg_step.asdf"
 
     tree = {
         "class": "test_step.ListArgStep",
@@ -284,9 +284,9 @@ def test_step_list_args(config_file_list_arg_step):
     correctly.
     """
     config, returned_config_file = ListArgStep.build_config(
-        "science.fits", config_file=config_file_list_arg_step
+        "science.fits", config_file=str(config_file_list_arg_step)
     )
-    assert returned_config_file == config_file_list_arg_step
+    assert returned_config_file == str(config_file_list_arg_step)
     c, *_ = cmdline.just_the_step_from_cmdline(
         [
             "filename.fits",
@@ -376,10 +376,10 @@ def test_step_list_args(config_file_list_arg_step):
         )
 
 
-def test_logcfg_routing(tmpdir):
-    cfg = f"""[*]\nlevel = INFO\nhandler = file:{tmpdir}/myrun.log"""
+def test_logcfg_routing(tmp_path):
+    cfg = f"""[*]\nlevel = INFO\nhandler = file:{tmp_path}/myrun.log"""
 
-    logcfg_file = str(tmpdir / "stpipe-log.cfg")
+    logcfg_file = tmp_path / "stpipe-log.cfg"
 
     with open(logcfg_file, "w") as f:
         f.write(cfg)
@@ -394,7 +394,7 @@ def test_logcfg_routing(tmpdir):
                     logdict[log].removeHandler(handler)
                     handler.close()
 
-    with open(tmpdir / "myrun.log") as f:
+    with open(tmp_path / "myrun.log") as f:
         fulltext = "\n".join(list(f))
 
     assert "called out a warning" in fulltext

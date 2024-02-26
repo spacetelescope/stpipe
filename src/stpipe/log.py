@@ -5,6 +5,7 @@ import fnmatch
 import io
 import logging
 import os
+import pathlib
 import sys
 import threading
 from contextlib import contextmanager
@@ -176,7 +177,7 @@ def load_configuration(config_file):
 
     Parameters
     ----------
-    config_file : str or readable file-like object
+    config_file : str, pathlib.Path instance or readable file-like object
     """
 
     def _level_check(value):
@@ -192,6 +193,8 @@ def load_configuration(config_file):
         return value
 
     spec = config_parser.load_spec_file(LogConfig)
+    if isinstance(config_file, pathlib.Path):
+        config_file = str(config_file)
     config = ConfigObj(config_file, raise_errors=True, interpolation=False)
     val = validate.Validator()
     val.functions["level"] = _level_check
