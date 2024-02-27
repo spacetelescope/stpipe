@@ -18,6 +18,7 @@ from os.path import (
     split,
     splitext,
 )
+from pathlib import Path
 from typing import ClassVar
 
 try:
@@ -248,7 +249,7 @@ class Step:
             If not provided, try the following (in order):
             - The ``name`` parameter in the config file fragment
             - The name of returned class
-        config_file : str, optional
+        config_file : str or pathlib.Path, optional
             The path to the config file that created this step, if
             any.  This is used to resolve relative file name
             parameters in the config file.
@@ -323,7 +324,7 @@ class Step:
             fully-qualified name for this step, and to determine
             the mode in which to run this step.
 
-        config_file : str path, optional
+        config_file : str or pathlib.Path, optional
             The path to the config file that this step was initialized
             with.  Use to determine relative path names of other config files.
 
@@ -907,7 +908,7 @@ class Step:
 
         Parameters
         ----------
-        obj : str or instance of AbstractDataModel
+        obj : str, pathlib.Path, or instance of AbstractDataModel
             The object to base the name on. If a datamodel,
             use Datamodel.meta.filename.
 
@@ -920,8 +921,8 @@ class Step:
         err_message = f"Cannot set master input file name from object {obj}"
         parent_input_filename = self.search_attr("_input_filename")
         if not exclusive or parent_input_filename is None:
-            if isinstance(obj, str):
-                self._input_filename = obj
+            if isinstance(obj, (str, Path)):
+                self._input_filename = str(obj)
             elif isinstance(obj, AbstractDataModel):
                 try:
                     self._input_filename = obj.meta.filename
@@ -1298,7 +1299,7 @@ class Step:
 
         Parameters
         ----------
-        filename : str or pathlib.PurePath
+        filename : str or pathlib.Path
             Path to config file.
 
         include_metadata : bool, optional
@@ -1376,7 +1377,7 @@ class Step:
         if "config_file" in kwargs:
             config_file = kwargs["config_file"]
             del kwargs["config_file"]
-            config_from_file = config_parser.load_config_file(config_file)
+            config_from_file = config_parser.load_config_file(str(config_file))
             config_parser.merge_config(config, config_from_file)
             config_dir = os.path.dirname(config_file)
         else:
