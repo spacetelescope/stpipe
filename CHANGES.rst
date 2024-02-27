@@ -6,6 +6,8 @@
 - Remove bundled ``configobj`` package in favor of the ``configobj`` package
   bundled into ``astropy``. [#122]
 - Fix ``datetime.utcnow()`` DeprecationWarning [#134]
+- Provide ``asn_n_members=1`` when opening the ``Step`` dataset for
+  ``get_crds_parameters`` [#142]
 - Fix bug in handling of ``pathlib.Path`` objects as ``Step`` inputs [#143]
 
 0.5.1 (2023-10-02)
