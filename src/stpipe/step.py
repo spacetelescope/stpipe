@@ -430,17 +430,23 @@ class Step:
 
             step_result = None
 
+            self.log.info("Step %s running with args %s.", self.name, args)
             # log Step or Pipeline parameters from top level only
             if self.parent is None:
                 self.log.info(
-                    "Step %s parameters are: %s",
+                    "Step %s parameters are:%s",
                     self.name,
-                    "\n"
-                    + yaml.dump(self.get_pars(), sort_keys=False)
-                    # Convert serialized YAML types true/false/null to Python types
-                    .replace(" false", " False")
-                    .replace(" true", " True")
-                    .replace(" null", " None"),
+                    # Add an indent to each line of the YAML output
+                    "\n  "
+                    + "\n  ".join(
+                        yaml.dump(self.get_pars(), sort_keys=False)
+                        .strip()
+                        # Convert serialized YAML types true/false/null to Python types
+                        .replace(" false", " False")
+                        .replace(" true", " True")
+                        .replace(" null", " None")
+                        .splitlines()
+                    ),
                 )
 
             if len(args):
