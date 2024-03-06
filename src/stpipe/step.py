@@ -21,6 +21,8 @@ from os.path import (
 from pathlib import Path
 from typing import ClassVar
 
+import yaml
+
 try:
     from astropy.io import fits
 
@@ -429,8 +431,23 @@ class Step:
             step_result = None
 
             self.log.info("Step %s running with args %s.", self.name, args)
-
-            self.log.info("Step %s parameters are: %s", self.name, self.get_pars())
+            # log Step or Pipeline parameters from top level only
+            if self.parent is None:
+                self.log.info(
+                    "Step %s parameters are:%s",
+                    self.name,
+                    # Add an indent to each line of the YAML output
+                    "\n  "
+                    + "\n  ".join(
+                        yaml.dump(self.get_pars(), sort_keys=False)
+                        .strip()
+                        # Convert serialized YAML types true/false/null to Python types
+                        .replace(" false", " False")
+                        .replace(" true", " True")
+                        .replace(" null", " None")
+                        .splitlines()
+                    ),
+                )
 
             if len(args):
                 self.set_primary_input(args[0])
@@ -551,7 +568,8 @@ class Step:
                                 self.log.info("Saving file %s", output_path)
                                 result.save(output_path, overwrite=True)
 
-                self.log.info("Step %s done", self.name)
+                if not self.skip:
+                    self.log.info("Step %s done", self.name)
             finally:
                 log.delegator.log = orig_log
 

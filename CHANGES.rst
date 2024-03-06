@@ -9,6 +9,7 @@
 - Provide ``asn_n_members=1`` when opening the ``Step`` dataset for
   ``get_crds_parameters`` [#142]
 - Fix bug in handling of ``pathlib.Path`` objects as ``Step`` inputs [#143]
+- Log readable Step parameters [#140]
 
 0.5.1 (2023-10-02)
 ==================
