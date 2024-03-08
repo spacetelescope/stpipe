@@ -80,7 +80,7 @@ def _get_output_file_check(root_dir):
 
 
 def _is_datamodel(value):
-    """Verify that value is either is a DataModel."""
+    """Verify that value is a DataModel."""
     if isinstance(value, AbstractDataModel):
         return value
 

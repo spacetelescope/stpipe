@@ -27,6 +27,8 @@ jobs:
         - macos: py311-xdist
         - linux: py311-cov-xdist
           coverage: 'codecov'
+        - linux: py311-downstreamdeps-cov-xdist
+          coverage: 'codecov'
         - linux: py312-xdist-nolegacypath
   test_downstream:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1

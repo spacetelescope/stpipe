@@ -4,6 +4,7 @@ Utilities
 import inspect
 import os
 import sys
+import types
 
 from . import entry_points
 
@@ -54,7 +55,7 @@ def import_class(full_name, subclassof=object, config_file=None):
 
     try:
         full_name = full_name.strip()
-        package_name, sep, class_name = full_name.rpartition(".")
+        package_name, _, class_name = full_name.rpartition(".")
         if not package_name:
             raise ImportError(f"{full_name} is not a Python class")
         imported = __import__(
@@ -84,6 +85,39 @@ def import_class(full_name, subclassof=object, config_file=None):
             del sys.path[0]
 
     return step_class
+
+
+def import_func(full_name):
+    """
+    Import the Python class `full_name` given in full Python package format,
+    e.g.::
+
+        package.subpackage.subsubpackage.function_name
+
+    Return the imported function.
+    """
+    full_name = full_name.strip()
+    package_name, _, func_name = full_name.rpartition(".")
+    if not package_name:
+        raise ImportError(f"{full_name} is not a fully qualified path to function")
+    imported = __import__(
+        package_name,
+        globals(),
+        locals(),
+        [
+            func_name,
+        ],
+        level=0,
+    )
+
+    step_func = getattr(imported, func_name)
+
+    if not isinstance(step_func, types.FunctionType):
+        raise TypeError(
+            f"Object {func_name} from package {package_name} is not a function"
+        )
+
+    return step_func
 
 
 def get_spec_file_path(step_class):

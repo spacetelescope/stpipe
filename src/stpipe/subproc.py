@@ -1,6 +1,7 @@
 import os
 import subprocess
 
+from .datamodel import AbstractDataModel
 from .step import Step
 
 
@@ -11,30 +12,24 @@ class SystemCall(Step):
 
     spec = """
     # SystemCall is a step to run external processes as Steps.
-
     # The command can pass along arguments that were passed to the step.
     # To refer to positional arguments, use {0}, {1}, {2}, etc.
     # To refer to keyword arguments, use {keyword}.
+
     command = string() # The command to execute
-
     env = string_list(default=list()) # Environment variables to define
-
     log_stdout = boolean(default=True) # Do we want to log STDOUT?
-
     log_stderr = boolean(default=True) # Do we want to log STDERR?
-
     exitcode_as_exception = boolean(default=True) # Should a non-zero exit code be converted into an exception?
-
     failure_as_exception = boolean(default=True) # If subprocess fails to run at all, should that be an exception?
+    output_ext = string(default="fits")
     """  # noqa: E501
 
     def process(self, *args):
-        from .. import datamodels  # noqa: TID252
-
         newargs = []
         for i, arg in enumerate(args):
-            if isinstance(arg, datamodels.DataModel):
-                filename = f"{self.qualified_name}.{i:04d}.{arg.getfileext()}"
+            if isinstance(arg, AbstractDataModel):
+                filename = f"{self.qualified_name}.{i:04d}.{self.output_ext}"
                 arg.save(filename)
                 newargs.append(filename)
             else:
@@ -75,3 +70,6 @@ class SystemCall(Step):
 
             if self.exitcode_as_exception and err != 0:
                 raise OSError(f"{cmd_str!r} returned error code {err}")
+        finally:
+            p.stdout.close()
+            p.stderr.close()

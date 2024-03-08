@@ -9,15 +9,15 @@ from stpipe.datamodel import AbstractDataModel
 
 def test_roman_datamodel():
     roman_datamodels = pytest.importorskip("roman_datamodels.datamodels")
-    import roman_datamodels.tests.util as rutil
+    from roman_datamodels.maker_utils import mk_level2_image
 
-    roman_image_tree = rutil.mk_level2_image()
+    roman_image_tree = mk_level2_image()
     image_model = roman_datamodels.ImageModel(roman_image_tree)
     assert isinstance(image_model, AbstractDataModel)
 
 
 def test_jwst_datamodel():
-    jwst_datamodel = pytest.importorskip("jwst.datamodels")
+    jwst_datamodel = pytest.importorskip("stdatamodels.jwst.datamodels")
     image_model = jwst_datamodel.ImageModel()
     assert isinstance(image_model, AbstractDataModel)
 

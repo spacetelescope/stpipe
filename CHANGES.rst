@@ -10,6 +10,9 @@
   ``get_crds_parameters`` [#142]
 - Fix bug in handling of ``pathlib.Path`` objects as ``Step`` inputs [#143]
 - Log readable Step parameters [#140]
+- Fix handling of functions and subprocesses as Step pre- and post-hooks.  Add
+  ability to pass imported python functions and ``Step`` subclasses directly as
+  hooks. And allow ``Step`` subclass instances with set parameters as hooks. [#133]
 
 0.5.1 (2023-10-02)
 ==================
