@@ -8,9 +8,9 @@ from . import function_wrapper, utilities
 from .step import Step
 
 
-def hook_from_string_or_class(step, hooktype, num, command):
+def hook_from_string(step, hooktype, num, command):
     """
-    Generate hook from string (or pass along the class)
+    Generate hook from string, function, Step or Step instance
 
     Parameters
     ----------
@@ -105,7 +105,4 @@ def get_hook_objects(step, hooktype, hooks):
     -------
     list of callables that can be run as a hook
     """
-    return [
-        hook_from_string_or_class(step, hooktype, i, hook)
-        for i, hook in enumerate(hooks)
-    ]
+    return [hook_from_string(step, hooktype, i, hook) for i, hook in enumerate(hooks)]
