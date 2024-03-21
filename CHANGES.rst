@@ -1,4 +1,4 @@
-0.6.0 (unreleased)
+0.5.2 (2024-03-21)
 ==================
 
 - Update style and linting checking [#103]
