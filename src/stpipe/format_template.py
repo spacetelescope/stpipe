@@ -2,6 +2,7 @@
 
 Format template string allowing partial formatting.
 """
+
 from collections import defaultdict
 from string import Formatter
 
