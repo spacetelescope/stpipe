@@ -3,6 +3,7 @@ Implementation of Step methods related to ASDF config files.  This module
 will eventually fully replace config_parser.py, but we'll need to maintain
 both until we replace configobj with traitlets.
 """
+
 from copy import deepcopy
 from datetime import datetime, timezone
 

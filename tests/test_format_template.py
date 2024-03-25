@@ -1,4 +1,5 @@
 """FormatTemplate tests"""
+
 from functools import partial
 
 import pytest
