@@ -540,7 +540,7 @@ class Step:
                 # Save the output file if one was specified
                 if not self.skip and self.save_results:
                     # Setup the save list.
-                    if not isinstance(step_result, list | tuple):
+                    if not isinstance(step_result, (list, tuple)):
                         results_to_save = [step_result]
                     else:
                         results_to_save = step_result
@@ -939,7 +939,7 @@ class Step:
         err_message = f"Cannot set master input file name from object {obj}"
         parent_input_filename = self.search_attr("_input_filename")
         if not exclusive or parent_input_filename is None:
-            if isinstance(obj, str | Path):
+            if isinstance(obj, (str, Path)):
                 self._input_filename = str(obj)
             elif isinstance(obj, AbstractDataModel):
                 try:
