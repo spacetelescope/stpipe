@@ -518,23 +518,31 @@ class Step:
                     if hook_results is not None:
                         step_result = hook_results
 
+                # FIXME this will index the ModelContainer which differs from below
                 # Update meta information
-                if not isinstance(step_result, Sequence):
-                    results = [step_result]
+                if hasattr(step_result, "finalize_result"):
+                    step_result.finalize_result(self, self._reference_files_used)
                 else:
-                    results = step_result
+                    if not isinstance(step_result, Sequence):
+                        results = [step_result]
+                    else:
+                        results = step_result
 
-                # The finalize_result hook allows subclasses to add
-                # metadata (like the cal code package version) before
-                # the result is saved.
-                for result in results:
-                    self.finalize_result(result, self._reference_files_used)
+                    # The finalize_result hook allows subclasses to add
+                    # metadata (like the cal code package version) before
+                    # the result is saved.
+                    for result in results:
+                        self.finalize_result(result, self._reference_files_used)
 
                 self._reference_files_used = []
 
                 # Save the output file if one was specified
                 if not self.skip and self.save_results:
                     # Setup the save list.
+                    # FIXME this will put the ModelContainer in a list (so it
+                    # will not be indexed and instead Step.save_model will
+                    # be called for jwst, does roman pass the AbstractDataModel test?)
+                    # see save_model...
                     if not isinstance(step_result, list | tuple):
                         results_to_save = [step_result]
                     else:
@@ -967,6 +975,9 @@ class Step:
         if not force and not self.save_results and not output_file:
             return None
 
+        # FIXME this again has special handling of ModelContainer/Sequence
+        # where when called during results saving will create a partial
+        # and pass it to ModelContainer.save
         if isinstance(model, Sequence):
             save_model_func = partial(
                 self.save_model,
