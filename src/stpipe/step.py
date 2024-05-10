@@ -1157,41 +1157,6 @@ class Step:
         output_dir = expandvars(expanduser(output_dir))
         return join(output_dir, basename)
 
-    def closeout(self, to_close=None, to_del=None):
-        """Close out step processing
-
-        Parameters
-        ----------
-        to_close : [object(, ...)]
-            List of objects with a `close` method to execute
-            The objects will also be deleted
-
-        to_del : [object(, ...)]
-            List of objects to simply delete
-
-        Notes
-        -----
-        Other operations, such as forced garbage collection
-        will also be done.
-        """
-        if to_close is None:
-            to_close = []
-        if to_del is None:
-            to_del = []
-        to_del += to_close
-        for item in to_close:
-            try:
-                if hasattr(item, "close"):
-                    item.close()
-            except Exception as exception:  # noqa: PERF203
-                self.log.debug('Could not close "%s"Reason:\n%s', item, exception)
-        for item in to_del:
-            try:
-                del item
-            except NameError as error:  # noqa: PERF203
-                self.log.debug("An error has occurred: %s", error)
-        gc.collect()
-
     @classmethod
     def _datamodels_open(cls, init, **kwargs):
         """
