@@ -61,8 +61,9 @@ def test_preserve_comments_deprecation(value):
     assert "inline comment (with parentheses)" in spec.inline_comments["bar"]
 
 
-@pytest.mark.parametrize("action",
-                         ["default", "error", "ignore", "always", "module", "once"])
+@pytest.mark.parametrize(
+    "action", ["default", "error", "ignore", "always", "module", "once"]
+)
 def test_validate_extra_value_warning(action):
     """Test that extra values in the configuration raise warnings.
 
@@ -78,8 +79,9 @@ def test_validate_extra_value_warning(action):
     config_parser.EXTRA_VALUE_WARNING_ACTION = action
     if action == "error":
         # Error is raised
-        with pytest.raises(config_parser.ValidationError,
-                           match="Extra value 'unexpected'"):
+        with pytest.raises(
+            config_parser.ValidationError, match="Extra value 'unexpected'"
+        ):
             config_parser.validate(config, spec)
     elif action == "ignore":
         # No warnings or errors issued
@@ -88,6 +90,7 @@ def test_validate_extra_value_warning(action):
             config_parser.validate(config, spec)
     else:
         # Warning is issued
-        with pytest.warns(config_parser.ValidationError,
-                          match="Extra value 'unexpected'"):
+        with pytest.warns(
+            config_parser.ValidationError, match="Extra value 'unexpected'"
+        ):
             config_parser.validate(config, spec)
