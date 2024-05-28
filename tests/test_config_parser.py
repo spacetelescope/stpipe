@@ -62,7 +62,7 @@ def test_preserve_comments_deprecation(value):
 
 def test_validate_extra_value():
     """Test that extra values in the configuration raise warnings only."""
-    config = ConfigObj({'expected': True, 'unexpected': False})
+    config = ConfigObj({"expected": True, "unexpected": False})
 
     class MockStep:
         spec = "expected = boolean(default=False) # Expected parameter"
