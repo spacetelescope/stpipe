@@ -372,7 +372,10 @@ def validate(
                 sections = "root"
             else:
                 sections = "/".join(sections)
-            messages.append(f"Extra value {name!r} in {sections}")
+
+            # For unrecognized values, just raise a warning
+            message = f"Extra value {name!r} in {sections}"
+            warnings.warn(message, RuntimeWarning, stacklevel=2)
 
         if len(messages):
             raise ValidationError("\n".join(messages))

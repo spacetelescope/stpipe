@@ -58,3 +58,15 @@ def test_preserve_comments_deprecation(value):
     assert "initial comment" in spec.initial_comment[0]
     assert "final comment" in spec.final_comment[0]
     assert "inline comment (with parentheses)" in spec.inline_comments["bar"]
+
+
+def test_validate_extra_value():
+    """Test that extra values in the configuration raise warnings only."""
+    config = ConfigObj({'expected': True, 'unexpected': False})
+
+    class MockStep:
+        spec = "expected = boolean(default=False) # Expected parameter"
+
+    spec = config_parser.load_spec_file(MockStep)
+    with pytest.warns(RuntimeWarning, match="Extra value 'unexpected'"):
+        config_parser.validate(config, spec)
