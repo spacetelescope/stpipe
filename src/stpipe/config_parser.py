@@ -27,9 +27,20 @@ from .utilities import _not_set
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+# Set default warning filter behavior for extra values in
+# configuration files.  The value may be any standard
+# warning action: set to "error" to raise an error instead
+# of a warning, for strict validation.
+EXTRA_VALUE_WARNING_ACTION = "default"
 
-class ValidationError(Exception):
-    pass
+
+class ValidationError(Warning):
+    """Validation error.
+
+    Inherit from Warning instead of Exception, so that
+    the same class can be used to issue a warning
+    or raise an error.
+    """
 
 
 def _get_input_file_check(root_dir):
@@ -373,9 +384,12 @@ def validate(
             else:
                 sections = "/".join(sections)
 
-            # For unrecognized values, just raise a warning
+            # For unrecognized values, raise a warning, with default
+            # action set in EXTRA_VALUE_WARNING_ACTION
             message = f"Extra value {name!r} in {sections}"
-            warnings.warn(message, RuntimeWarning, stacklevel=2)
+            with warnings.catch_warnings():
+                warnings.simplefilter(EXTRA_VALUE_WARNING_ACTION, ValidationError)
+                warnings.warn(message, ValidationError, stacklevel=2)
 
         if len(messages):
             raise ValidationError("\n".join(messages))

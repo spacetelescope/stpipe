@@ -1,4 +1,5 @@
 import contextlib
+import warnings
 from collections.abc import Mapping
 
 import pytest
@@ -60,13 +61,33 @@ def test_preserve_comments_deprecation(value):
     assert "inline comment (with parentheses)" in spec.inline_comments["bar"]
 
 
-def test_validate_extra_value():
-    """Test that extra values in the configuration raise warnings only."""
+@pytest.mark.parametrize("action",
+                         ["default", "error", "ignore", "always", "module", "once"])
+def test_validate_extra_value_warning(action):
+    """Test that extra values in the configuration raise warnings.
+
+    The warning behavior can be configured by modifying the
+    EXTRA_VALUE_WARNING_ACTION switch for the module
+    """
     config = ConfigObj({"expected": True, "unexpected": False})
 
     class MockStep:
         spec = "expected = boolean(default=False) # Expected parameter"
 
     spec = config_parser.load_spec_file(MockStep)
-    with pytest.warns(RuntimeWarning, match="Extra value 'unexpected'"):
-        config_parser.validate(config, spec)
+    config_parser.EXTRA_VALUE_WARNING_ACTION = action
+    if action == "error":
+        # Error is raised
+        with pytest.raises(config_parser.ValidationError,
+                           match="Extra value 'unexpected'"):
+            config_parser.validate(config, spec)
+    elif action == "ignore":
+        # No warnings or errors issued
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            config_parser.validate(config, spec)
+    else:
+        # Warning is issued
+        with pytest.warns(config_parser.ValidationError,
+                          match="Extra value 'unexpected'"):
+            config_parser.validate(config, spec)
