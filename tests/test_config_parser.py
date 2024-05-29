@@ -77,9 +77,7 @@ def test_validate_extra_value_warning(action, monkeypatch):
 
     spec = config_parser.load_spec_file(MockStep)
 
-    monkeypatch.setattr(
-        config_parser, "EXTRA_VALUE_WARNING_ACTION", action
-    )
+    monkeypatch.setattr(config_parser, "EXTRA_VALUE_WARNING_ACTION", action)
     if action == "error":
         # Error is raised
         with pytest.raises(
