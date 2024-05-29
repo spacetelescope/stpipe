@@ -64,7 +64,7 @@ def test_preserve_comments_deprecation(value):
 @pytest.mark.parametrize(
     "action", ["default", "error", "ignore", "always", "module", "once"]
 )
-def test_validate_extra_value_warning(action):
+def test_validate_extra_value_warning(action, monkeypatch):
     """Test that extra values in the configuration raise warnings.
 
     The warning behavior can be configured by modifying the
@@ -76,7 +76,10 @@ def test_validate_extra_value_warning(action):
         spec = "expected = boolean(default=False) # Expected parameter"
 
     spec = config_parser.load_spec_file(MockStep)
-    config_parser.EXTRA_VALUE_WARNING_ACTION = action
+
+    monkeypatch.setattr(
+        config_parser, "EXTRA_VALUE_WARNING_ACTION", action
+    )
     if action == "error":
         # Error is raised
         with pytest.raises(
