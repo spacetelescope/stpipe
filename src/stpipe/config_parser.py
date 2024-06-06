@@ -27,12 +27,6 @@ from .utilities import _not_set
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-# Set default warning filter behavior for extra values in
-# configuration files.  The value may be any standard
-# warning action: set to "error" to raise an error instead
-# of a warning, for strict validation.
-EXTRA_VALUE_WARNING_ACTION = "default"
-
 
 class ValidationError(Warning):
     """Validation error.
@@ -305,7 +299,8 @@ def config_from_dict(d, spec=None, root_dir=None, allow_missing=False):
 
 
 def validate(
-    config, spec, section=None, validator=None, root_dir=None, allow_missing=False
+    config, spec, section=None, validator=None, root_dir=None,
+        allow_missing=False, allow_extra=False
 ):
     """
     Parse config_file, in INI format, and do validation with the
@@ -332,6 +327,9 @@ def validate(
     allow_missing: bool
         If a parameter is not defined and has no default in the spec,
         set that parameter to its specification.
+
+    allow_extra: bool
+        If an unrecognized parameter is encountered, warn and ignore it.
     """
     if spec is None:
         config.walk(string_to_python_type)
@@ -378,18 +376,32 @@ def validate(
 
         extra_values = get_extra_values(config)
         if extra_values:
-            sections, name = extra_values[0]
-            if len(sections) == 0:
-                sections = "root"
-            else:
-                sections = "/".join(sections)
+            message = ["\n"]
+            for sections, name in extra_values:
+                if len(sections) == 0:
+                    sections = "root"
+                else:
+                    sections = "/".join(sections)
+                message.append(f"Extra value {name!r} in {sections}.")
+            message = "\n".join(message)
 
-            # For unrecognized values, raise a warning, with default
-            # action set in EXTRA_VALUE_WARNING_ACTION
-            message = f"Extra value {name!r} in {sections}"
-            with warnings.catch_warnings():
-                warnings.simplefilter(EXTRA_VALUE_WARNING_ACTION, ValidationError)
-                warnings.warn(message, ValidationError, stacklevel=2)
+            # For unrecognized values, raise a warning and strip them if desired
+            if allow_extra:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("always", ValidationError)
+                    warnings.warn(message, ValidationError, stacklevel=2)
+
+                for sections, name in extra_values:
+                    # get the subsection containing the value
+                    the_section = config
+                    for section in sections:
+                        the_section = the_section[section]
+
+                    # remove it
+                    del the_section[name]
+            else:
+                # Otherwise, raise an error
+                messages.append(message)
 
         if len(messages):
             raise ValidationError("\n".join(messages))

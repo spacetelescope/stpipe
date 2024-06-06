@@ -196,7 +196,7 @@ class Pipeline(Step):
                 crds_parameters,
                 crds_observatory=crds_observatory,
             )
-        #
+
         # Now merge any config parameters from the step cfg file
         logger.debug("Retrieving pipeline %s parameters from CRDS", reftype.upper())
         try:
@@ -211,6 +211,14 @@ class Pipeline(Step):
             if ref_file != "N/A":
                 logger.info("%s parameters found: %s", reftype.upper(), ref_file)
                 refcfg = cls.merge_pipeline_config(refcfg, ref_file)
+
+                # Validate now to warn and remove any extra values found
+                # in CRDS reference files.
+                spec = cls.load_spec_file()
+                spec["name"] = "string(default='')"
+                spec["class"] = "string(default='')"
+                config_parser.validate(refcfg, spec, allow_extra=True)
+
             else:
                 logger.debug("No %s reference files found.", reftype.upper())
 

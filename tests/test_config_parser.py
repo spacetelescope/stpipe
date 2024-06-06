@@ -1,5 +1,4 @@
 import contextlib
-import warnings
 from collections.abc import Mapping
 
 import pytest
@@ -62,13 +61,11 @@ def test_preserve_comments_deprecation(value):
 
 
 @pytest.mark.parametrize(
-    "action", ["default", "error", "ignore", "always", "module", "once"]
+    "allow_extra", [True, False]
 )
-def test_validate_extra_value_warning(action, monkeypatch):
-    """Test that extra values in the configuration raise warnings.
-
-    The warning behavior can be configured by modifying the
-    EXTRA_VALUE_WARNING_ACTION switch for the module
+def test_validate_extra_value_warning(allow_extra):
+    """
+    Test that extra values in the configuration raise warnings or errors.
     """
     config = ConfigObj({"expected": True, "unexpected": False})
 
@@ -77,21 +74,17 @@ def test_validate_extra_value_warning(action, monkeypatch):
 
     spec = config_parser.load_spec_file(MockStep)
 
-    monkeypatch.setattr(config_parser, "EXTRA_VALUE_WARNING_ACTION", action)
-    if action == "error":
+    if not allow_extra:
         # Error is raised
         with pytest.raises(
             config_parser.ValidationError, match="Extra value 'unexpected'"
         ):
-            config_parser.validate(config, spec)
-    elif action == "ignore":
-        # No warnings or errors issued
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            config_parser.validate(config, spec)
+            config_parser.validate(config, spec, allow_extra=allow_extra)
     else:
         # Warning is issued
         with pytest.warns(
             config_parser.ValidationError, match="Extra value 'unexpected'"
         ):
-            config_parser.validate(config, spec)
+            updated = config_parser.validate(config, spec, allow_extra=allow_extra)
+            assert "expected" in updated
+            assert "unexpected" not in updated

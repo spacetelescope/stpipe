@@ -7,7 +7,7 @@ import asdf
 import pytest
 
 import stpipe.config_parser as cp
-from stpipe import cmdline
+from stpipe import cmdline, crds_client
 from stpipe.pipeline import Pipeline
 from stpipe.step import Step
 
@@ -180,6 +180,57 @@ def _mock_step_crds(monkeypatch):
     )
 
 
+@pytest.fixture()
+def _mock_crds_reffile(monkeypatch, config_file_step, config_file_pipe):
+    """Mock a reference file returned from CRDS."""
+
+    def mock_crds_get_reference_file(crds_parameters, reftype, crds_observatory):
+        if crds_observatory == "step":
+            return config_file_step
+        return config_file_pipe
+
+    class SimpleModel:
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def get_crds_parameters(self):
+            return None
+
+    class SimpleStepModel(SimpleModel):
+        crds_observatory = "step"
+
+    class SimplePipeModel(SimpleModel):
+        crds_observatory = "pipe"
+
+    monkeypatch.setattr(
+        crds_client, "get_reference_file", mock_crds_get_reference_file
+    )
+
+    monkeypatch.setattr(
+        SimpleStep, "_datamodels_open", SimpleStepModel
+    )
+    monkeypatch.setattr(
+        SimplePipe, "_datamodels_open", SimplePipeModel
+    )
+
+    small_spec = """
+    str1 = string(default='default')
+    output_ext = string(default='simplestep')
+    """
+    monkeypatch.setattr(
+        SimpleStep, "spec", small_spec
+    )
+    monkeypatch.setattr(
+        SimplePipe, "spec", small_spec
+    )
+
 # #####
 # Tests
 # #####
@@ -236,6 +287,17 @@ def test_build_config_pipe_kwarg(config_file_pipe):
     assert config["steps"]["step1"]["str3"] == "from crds"
 
 
+@pytest.mark.usefixtures("_mock_crds_reffile")
+def test_build_config_pipe_extra_values():
+    """Test that extra values in CRDS files are discarded."""
+    with pytest.warns(cp.ValidationError, match="Extra value 'str2'"):
+        config, config_file = SimplePipe.build_config("science.fits")
+    assert config["str1"] == "from config"
+    assert "str2" not in config
+    assert config["steps"]["step1"]["str1"] == "from config"
+    assert "str2" not in config["steps"]["step1"]
+
+
 @pytest.mark.usefixtures("_mock_step_crds")
 def test_build_config_step_config_file(config_file_step):
     """Test that local config overrides defaults and CRDS-supplied file"""
@@ -276,6 +338,15 @@ def test_build_config_step_kwarg(config_file_step):
     assert config["str1"] == "from kwarg"
     assert config["str2"] == "from config"
     assert config["str3"] == "from crds"
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+def test_build_config_step_extra_values():
+    """Test that extra values in CRDS files are discarded."""
+    with pytest.warns(cp.ValidationError, match="Extra value 'str2'"):
+        config, config_file = SimpleStep.build_config("science.fits")
+    assert config["str1"] == "from config"
+    assert "str2" not in config
 
 
 @pytest.mark.usefixtures("_mock_step_crds")
