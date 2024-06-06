@@ -2,6 +2,8 @@
 ==================
 
 - Remove unused ``Step.closeout`` [#152]
+- Issue a warning instead of a validation error for extra values in
+  configuration files. [#153]
 
 0.5.2 (2024-03-21)
 ==================

@@ -900,6 +900,13 @@ class Step:
                 "%s parameters retrieved from CRDS: %s", reftype.upper(), ref_pars
             )
 
+            # Validate now to warn and remove any extra values found
+            # in CRDS reference files.
+            spec = cls.load_spec_file()
+            spec["name"] = "string(default='')"
+            spec["class"] = "string(default='')"
+            config_parser.validate(ref, spec, allow_extra=True)
+
             return ref
 
         logger.debug("No %s reference files found.", reftype.upper())
