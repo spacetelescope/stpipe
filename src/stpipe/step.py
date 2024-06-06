@@ -949,7 +949,6 @@ class Step:
         idx=None,
         output_file=None,
         force=False,
-        format=None,  # noqa: A002
         **components,
     ):
         """
@@ -974,13 +973,6 @@ class Step:
             Regardless of whether `save_results` is `False`
             and no `output_file` is specified, try saving.
 
-        format : str
-            The format of the file name.  This is a format
-            string that defines where `suffix` and the other
-            components go in the file name. If False,
-            it will be presumed `output_file` will have
-            all the necessary formatting.
-
         components : dict
             Other components to add to the file name.
 
@@ -1001,7 +993,6 @@ class Step:
                 self.save_model,
                 suffix=suffix,
                 force=force,
-                format=format,
                 **components,
             )
             output_path = model.save(
@@ -1020,7 +1011,6 @@ class Step:
                     basepath=output_file,
                     suffix=suffix,
                     idx=idx,
-                    name_format=format,
                     **components,
                 )
             )
@@ -1040,9 +1030,6 @@ class Step:
         basepath=None,
         ext=None,
         suffix=None,
-        name_format=None,
-        component_format="",
-        separator="_",
         **components,
     ):
         """Create the output path
@@ -1066,17 +1053,6 @@ class Step:
             If None, the `Step` default will be used.
             If False, no suffix replacement will be done.
 
-        name_format : str or None
-            The format string to use to form the base name.
-            If False, it will be presumed that `basepath`
-            has all the necessary formatting.
-
-        component_format : str
-            Format to use for the components
-
-        separator : str
-            Separator to use between replacement components
-
         components : dict
             dict of string replacements.
 
@@ -1087,10 +1063,10 @@ class Step:
         Notes
         -----
         The values found in the `components` dict are placed in the string
-        where the "{components}" replacement field is specified. If there are
-        more than one component, the components are separated by the `separator`
-        string.
+        where the "{components}" replacement field is specified separated by
+        underscores.
         """
+        separator = "_"
         if basepath is None and step.search_output_file:
             basepath = step.search_attr("output_file")
         if basepath is None:
@@ -1120,25 +1096,18 @@ class Step:
             suffix_sep = None
 
         # Setup formatting
-        if name_format is None:
-            name_format = default_name_format
-        elif not name_format:
-            name_format = basename + ".{ext}"
-            basename = ""
-            suffix_sep = ""
-            separator = ""
         formatter = FormatTemplate(
             separator=separator,
             remove_unused=True,
         )
 
         if len(components):
-            component_str = formatter(component_format, **components)
+            component_str = formatter("", **components)
         else:
             component_str = ""
 
         basename = formatter(
-            name_format,
+            default_name_format,
             basename=basename,
             suffix=suffix,
             suffix_sep=suffix_sep,
