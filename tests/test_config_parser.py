@@ -60,9 +60,7 @@ def test_preserve_comments_deprecation(value):
     assert "inline comment (with parentheses)" in spec.inline_comments["bar"]
 
 
-@pytest.mark.parametrize(
-    "allow_extra", [True, False]
-)
+@pytest.mark.parametrize("allow_extra", [True, False])
 def test_validate_extra_value_warning(allow_extra):
     """
     Test that extra values in the configuration raise warnings or errors.

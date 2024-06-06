@@ -299,8 +299,13 @@ def config_from_dict(d, spec=None, root_dir=None, allow_missing=False):
 
 
 def validate(
-    config, spec, section=None, validator=None, root_dir=None,
-        allow_missing=False, allow_extra=False
+    config,
+    spec,
+    section=None,
+    validator=None,
+    root_dir=None,
+    allow_missing=False,
+    allow_extra=False,
 ):
     """
     Parse config_file, in INI format, and do validation with the

@@ -190,7 +190,6 @@ def _mock_crds_reffile(monkeypatch, config_file_step, config_file_pipe):
         return config_file_pipe
 
     class SimpleModel:
-
         def __init__(self, *args, **kwargs):
             pass
 
@@ -209,27 +208,18 @@ def _mock_crds_reffile(monkeypatch, config_file_step, config_file_pipe):
     class SimplePipeModel(SimpleModel):
         crds_observatory = "pipe"
 
-    monkeypatch.setattr(
-        crds_client, "get_reference_file", mock_crds_get_reference_file
-    )
+    monkeypatch.setattr(crds_client, "get_reference_file", mock_crds_get_reference_file)
 
-    monkeypatch.setattr(
-        SimpleStep, "_datamodels_open", SimpleStepModel
-    )
-    monkeypatch.setattr(
-        SimplePipe, "_datamodels_open", SimplePipeModel
-    )
+    monkeypatch.setattr(SimpleStep, "_datamodels_open", SimpleStepModel)
+    monkeypatch.setattr(SimplePipe, "_datamodels_open", SimplePipeModel)
 
     small_spec = """
     str1 = string(default='default')
     output_ext = string(default='simplestep')
     """
-    monkeypatch.setattr(
-        SimpleStep, "spec", small_spec
-    )
-    monkeypatch.setattr(
-        SimplePipe, "spec", small_spec
-    )
+    monkeypatch.setattr(SimpleStep, "spec", small_spec)
+    monkeypatch.setattr(SimplePipe, "spec", small_spec)
+
 
 # #####
 # Tests
