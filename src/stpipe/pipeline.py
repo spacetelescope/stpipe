@@ -245,11 +245,6 @@ class Pipeline(Step):
         config_parser.merge_config(refcfg, pipeline_cfg)
         return refcfg
 
-    def set_input_filename(self, path):
-        self._input_filename = path
-        for key in self.step_defs:
-            getattr(self, key).set_input_filename(path)
-
     def _precache_references(self, input_file):
         """
         Precache all of the expected reference files before the Step's
