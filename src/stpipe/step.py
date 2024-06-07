@@ -623,13 +623,6 @@ class Step:
         """
         raise NotImplementedError("Steps have to override process().")
 
-    def resolve_file_name(self, file_name):
-        """
-        Resolve a file name expressed relative to this Step's
-        configuration file.
-        """
-        return join(dirname(self.config_file or ""), file_name)
-
     @classmethod
     def call(cls, *args, **kwargs):
         """
