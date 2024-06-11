@@ -891,20 +891,6 @@ class Step:
         logger.debug("No %s reference files found.", reftype.upper())
         return config_parser.ConfigObj()
 
-    @classmethod
-    def reference_uri_to_cache_path(cls, reference_uri, observatory):
-        """Convert an abstract CRDS reference URI to an absolute file path in the CRDS
-        cache.  Reference URI's are typically output to dataset headers to record the
-        reference files used.
-
-        e.g. 'crds://jwst_miri_flat_0177.fits'  -->
-            '/grp/crds/cache/references/jwst/jwst_miri_flat_0177.fits'
-
-        The CRDS cache is typically located relative to env var CRDS_PATH
-        with default value /grp/crds/cache.   See also https://jwst-crds.stsci.edu
-        """
-        return crds_client.reference_uri_to_cache_path(reference_uri, observatory)
-
     def set_primary_input(self, obj, exclusive=True):
         """
         Sets the name of the master input file and input directory.
