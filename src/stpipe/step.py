@@ -87,7 +87,7 @@ class Step:
         return f"pars-{cls.__name__.lower()}"
 
     @classmethod
-    def merge_config(cls, config, config_file):  # noqa: ARG003
+    def merge_config(cls, config, config_file):
         return config
 
     @classmethod
@@ -190,7 +190,7 @@ class Step:
     def _parse_class_and_name(
         cls,
         config,
-        parent=None,  # noqa: ARG003
+        parent=None,
         name=None,
         config_file=None,
     ):
@@ -472,7 +472,22 @@ class Step:
                 # Run the Step-specific code.
                 if self.skip:
                     self.log.info("Step skipped.")
-                    if isinstance(args[0], AbstractDataModel):
+                    if isinstance(args[0], AbstractModelLibrary):
+                        library = args[0]
+                        with library:
+                            for i, model in enumerate(library):
+                                try:
+                                    setattr(
+                                        model.meta.cal_step, self.class_alias, "SKIPPED"
+                                    )
+                                except AttributeError as e:
+                                    self.log.info(
+                                        "Could not record skip into DataModel "
+                                        "header: %s",
+                                        e,
+                                    )
+                                library.shelve(model, i)
+                    elif isinstance(args[0], AbstractDataModel):
                         if self.class_alias is not None:
                             if isinstance(args[0], Sequence):
                                 for model in args[0]:
@@ -497,21 +512,6 @@ class Step:
                                         " header: %s",
                                         e,
                                     )
-                    elif isinstance(args[0], AbstractModelLibrary):
-                        library = args[0]
-                        with library:
-                            for i, model in enumerate(library):
-                                try:
-                                    setattr(
-                                        model.meta.cal_step, self.class_alias, "SKIPPED"
-                                    )
-                                except AttributeError as e:
-                                    self.log.info(
-                                        "Could not record skip into DataModel "
-                                        "header: %s",
-                                        e,
-                                    )
-                                library.shelve(model, i)
                     step_result = args[0]
                 else:
                     if self.prefetch_references:
@@ -564,7 +564,7 @@ class Step:
                         if len(results_to_save) <= 1:
                             idx = None
                         if isinstance(
-                            result, (AbstractDataModel, AbstractModelLibrary)
+                            result, (AbstractDataModel | AbstractModelLibrary)
                         ):
                             self.save_model(result, idx=idx)
                         elif hasattr(result, "save"):
@@ -998,7 +998,7 @@ class Step:
         # FIXME this again has special handling of ModelContainer/Sequence
         # where when called during results saving will create a partial
         # and pass it to ModelContainer.save
-        if isinstance(model, (Sequence, AbstractModelLibrary)):
+        if isinstance(model, (Sequence | AbstractModelLibrary)):
             save_model_func = partial(
                 self.save_model,
                 suffix=suffix,

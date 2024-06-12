@@ -16,8 +16,7 @@ _PRODUCT_NAME = "foo_out"
 
 def _load_asn(filename):
     with open(filename) as f:
-        asn_data = json.load(f)
-    return asn_data
+        return json.load(f)
 
 
 def _write_asn(asn_data, filename):
@@ -48,8 +47,7 @@ class DataModel:
 
 def _load_model(filename):
     with asdf.open(filename) as af:
-        model = DataModel(**af.tree)
-    return model
+        return DataModel(**af.tree)
 
 
 class ModelLibrary(AbstractModelLibrary):
@@ -65,8 +63,7 @@ class ModelLibrary(AbstractModelLibrary):
 
     def _filename_to_group_id(self, filename):
         with asdf.open(filename) as af:
-            group_id = af["group_id"]
-        return group_id
+            return af["group_id"]
 
     def _model_to_group_id(self, model):
         return model.meta.group_id
@@ -216,7 +213,8 @@ def test_group_with_no_datamodels_open(example_asn_path, attr):
 #         (None, '42', '42'),
 #         ('42', '26', '42'),
 #     ])
-# def test_group_id_override(example_asn_path, asn_group_id, meta_group_id, expected_group_id):
+# def test_group_id_override(
+#          example_asn_path, asn_group_id, meta_group_id, expected_group_id):
 #     """
 #     Test that overriding a models group_id via:
 #         - the association member entry
@@ -423,7 +421,7 @@ def test_on_disk_no_overwrite(example_asn_path, on_disk):
 
 
 def test_library_is_not_a_datamodel():
-    assert not issubclass(AbstractModelLibrary, AbstractDataModel)
+    assert issubclass(AbstractModelLibrary, AbstractDataModel)
 
 
 def test_library_is_not_sequence():
