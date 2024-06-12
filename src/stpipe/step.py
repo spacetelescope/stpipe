@@ -34,6 +34,7 @@ except ImportError:
 from . import config, config_parser, crds_client, log, utilities
 from .datamodel import AbstractDataModel
 from .format_template import FormatTemplate
+from .library import AbstractModelLibrary
 from .utilities import _not_set
 
 
@@ -496,6 +497,21 @@ class Step:
                                         " header: %s",
                                         e,
                                     )
+                    elif isinstance(args[0], AbstractModelLibrary):
+                        library = args[0]
+                        with library:
+                            for i, model in enumerate(library):
+                                try:
+                                    setattr(
+                                        model.meta.cal_step, self.class_alias, "SKIPPED"
+                                    )
+                                except AttributeError as e:
+                                    self.log.info(
+                                        "Could not record skip into DataModel "
+                                        "header: %s",
+                                        e,
+                                    )
+                                library.shelve(model, i)
                     step_result = args[0]
                 else:
                     if self.prefetch_references:
@@ -518,9 +534,9 @@ class Step:
                     if hook_results is not None:
                         step_result = hook_results
 
-                # FIXME this will index the ModelContainer which differs from below
                 # Update meta information
-                if hasattr(step_result, "finalize_result"):
+                if isinstance(step_result, AbstractModelLibrary):
+                    # TODO: can this be combined with the below "save_results"?
                     step_result.finalize_result(self, self._reference_files_used)
                 else:
                     if not isinstance(step_result, Sequence):
@@ -539,10 +555,6 @@ class Step:
                 # Save the output file if one was specified
                 if not self.skip and self.save_results:
                     # Setup the save list.
-                    # FIXME this will put the ModelContainer in a list (so it
-                    # will not be indexed and instead Step.save_model will
-                    # be called for jwst, does roman pass the AbstractDataModel test?)
-                    # see save_model...
                     if not isinstance(step_result, list | tuple):
                         results_to_save = [step_result]
                     else:
@@ -551,9 +563,12 @@ class Step:
                     for idx, result in enumerate(results_to_save):
                         if len(results_to_save) <= 1:
                             idx = None
-                        if isinstance(result, AbstractDataModel):
+                        if isinstance(
+                            result, (AbstractDataModel, AbstractModelLibrary)
+                        ):
                             self.save_model(result, idx=idx)
                         elif hasattr(result, "save"):
+                            # TODO: is this ever used?
                             try:
                                 output_path = self.make_output_path(idx=idx)
                             except AttributeError:
@@ -756,6 +771,7 @@ class Step:
         """
         override_name = crds_client.get_override_name(reference_file_type)
         path = getattr(self, override_name, None)
+        # TODO: not sure if this needs updating for ModelLibrary...
         if isinstance(path, AbstractDataModel):
             return path
 
@@ -785,6 +801,7 @@ class Step:
         reference_file : path of reference file,  a string
         """
         override = self.get_ref_override(reference_file_type)
+        # TODO: not sure if this needs updating for ModelLibrary...
         if override is not None:
             if isinstance(override, AbstractDataModel):
                 self._reference_files_used.append(
@@ -923,6 +940,9 @@ class Step:
                 self._input_filename = str(obj)
             elif isinstance(obj, AbstractDataModel):
                 try:
+                    # TODO: I believe (but haven't confirmed) that this fails
+                    # for ModelContainer. Check this and figure out if there
+                    # is anything that could be done for ModelLibrary
                     self._input_filename = obj.meta.filename
                 except AttributeError:
                     self.log.debug(err_message)
@@ -978,7 +998,7 @@ class Step:
         # FIXME this again has special handling of ModelContainer/Sequence
         # where when called during results saving will create a partial
         # and pass it to ModelContainer.save
-        if isinstance(model, Sequence):
+        if isinstance(model, (Sequence, AbstractModelLibrary)):
             save_model_func = partial(
                 self.save_model,
                 suffix=suffix,

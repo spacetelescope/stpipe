@@ -1,11 +1,12 @@
 import json
 import os
-from contextlib import nullcontext
+from collections.abc import Sequence
 
 import asdf
 import pytest
 
-from stpipe.library import BorrowError, ClosedLibraryError, AbstractModelLibrary
+from stpipe.datamodel import AbstractDataModel
+from stpipe.library import AbstractModelLibrary, BorrowError, ClosedLibraryError
 
 _GROUP_IDS = ["1", "1", "2"]
 _N_MODELS = len(_GROUP_IDS)
@@ -14,7 +15,7 @@ _PRODUCT_NAME = "foo_out"
 
 
 def _load_asn(filename):
-    with open(filename, "r") as f:
+    with open(filename) as f:
         asn_data = json.load(f)
     return asn_data
 
@@ -64,14 +65,14 @@ class ModelLibrary(AbstractModelLibrary):
 
     def _filename_to_group_id(self, filename):
         with asdf.open(filename) as af:
-            group_id = af['group_id']
+            group_id = af["group_id"]
         return group_id
 
     def _model_to_group_id(self, model):
         return model.meta.group_id
 
 
-@pytest.fixture
+@pytest.fixture()
 def example_asn_path(tmp_path):
     """
     Fixture that creates a simple association, saves it (and the models)
@@ -100,7 +101,7 @@ def example_asn_path(tmp_path):
     return asn_filename
 
 
-@pytest.fixture
+@pytest.fixture()
 def example_library(example_asn_path):
     """
     Fixture that builds off of `example_asn_path` and returns a
@@ -200,7 +201,7 @@ def test_group_with_no_datamodels_open(example_asn_path, attr):
     # this will serve as a smoke test to see if any of the attribute
     # accesses (or instance creation) attempts to open models
     def no_open(*args, **kwargs):
-        raise Exception()
+        raise Exception
 
     # use example_asn_path here to make the instance after we've patched
     # datamodels.open
@@ -394,7 +395,7 @@ def test_on_disk_model_modification(example_asn_path, modify):
         library.shelve(model, 0, modify=modify)
         model = library.borrow(0)
         if modify:
-            assert getattr(model.meta, "foo") == "bar"
+            assert model.meta.foo == "bar"
         else:
             assert getattr(model.meta, "foo", None) is None
         # shelve the model so the test doesn't fail because of an un-returned
@@ -421,6 +422,9 @@ def test_on_disk_no_overwrite(example_asn_path, on_disk):
         library2.shelve(model, 0)
 
 
-# TODO container conversion
-# TODO index
-# TODO memmap?
+def test_library_is_not_a_datamodel():
+    assert not issubclass(AbstractModelLibrary, AbstractDataModel)
+
+
+def test_library_is_not_sequence():
+    assert not issubclass(AbstractModelLibrary, Sequence)
