@@ -281,6 +281,11 @@ class Pipeline(Step):
             # recurse on each contained model
             for contained_model in model_or_container:
                 self._precache_references_opened(contained_model)
+        elif isinstance(model_or_container, AbstractModelLibrary):
+            with model_or_container:
+                for i, model in enumerate(model_or_container):
+                    self._precache_references_impl(model)
+                    model_or_container.shelve(model, i, modify=False)
         else:
             # precache a single model object
             self._precache_references_impl(model_or_container)

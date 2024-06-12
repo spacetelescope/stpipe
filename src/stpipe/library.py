@@ -2,12 +2,11 @@ import abc
 import copy
 import os.path
 import tempfile
-from collections.abc import Iterable, MutableMapping, Sequence
+from collections.abc import Iterable, MutableMapping
 from pathlib import Path
 from types import MappingProxyType
 
 import asdf
-
 
 __all__ = ["LibraryError", "BorrowError", "ClosedLibraryError", "AbstractModelLibrary"]
 
@@ -17,15 +16,11 @@ class LibraryError(Exception):
     Generic ModelLibrary related exception
     """
 
-    pass
-
 
 class BorrowError(LibraryError):
     """
     Exception indicating an issue with model borrowing
     """
-
-    pass
 
 
 class ClosedLibraryError(LibraryError):
@@ -33,8 +28,6 @@ class ClosedLibraryError(LibraryError):
     Exception indicating a library method was used outside of a
     ``with`` context (that "opens" the library).
     """
-
-    pass
 
 
 class _Ledger(MutableMapping):
@@ -145,10 +138,10 @@ class AbstractModelLibrary(abc.ABC):
             self._asn = init
 
             if asn_exptypes is not None:
-                raise NotImplementedError()
+                raise NotImplementedError
 
             if asn_n_members is not None:
-                raise NotImplementedError()
+                raise NotImplementedError
 
             self._members = self._asn["products"][0]["members"]
 
@@ -200,7 +193,9 @@ class AbstractModelLibrary(abc.ABC):
                     # has issues, if this is a widely supported mode (vs providing
                     # an association) it might make the most sense to make a fake
                     # association with the filenames at load time.
-                    model = self._datamodels_open(model_or_filename, **self._datamodels_open_kwargs)
+                    model = self._datamodels_open(
+                        model_or_filename, **self._datamodels_open_kwargs
+                    )
                 else:
                     model = model_or_filename
                 filename = model.meta.filename
@@ -234,10 +229,10 @@ class AbstractModelLibrary(abc.ABC):
                 )
 
             if asn_exptypes is not None:
-                raise NotImplementedError()
+                raise NotImplementedError
 
             if asn_n_members is not None:
-                raise NotImplementedError()
+                raise NotImplementedError
 
             # make a fake association
             self._asn = {
@@ -251,9 +246,9 @@ class AbstractModelLibrary(abc.ABC):
 
         elif isinstance(init, self.__class__):
             # TODO clone/copy?
-            raise NotImplementedError()
+            raise NotImplementedError
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
 
     def __del__(self):
         if hasattr(self, "_temp_dir"):
@@ -302,7 +297,9 @@ class AbstractModelLibrary(abc.ABC):
         # if this model is in memory, return it
         if self._on_disk:
             if index in self._temp_filenames:
-                model = self._datamodels_open(self._temp_filenames[index], **self._datamodels_open_kwargs)
+                model = self._datamodels_open(
+                    self._temp_filenames[index], **self._datamodels_open_kwargs
+                )
             else:
                 model = self._load_member(index)
         else:
