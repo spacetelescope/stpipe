@@ -26,7 +26,6 @@ class AbstractDataModel(abc.ABC):
                 any(hasattr(CC, "crds_observatory") for CC in mro)
                 and any(hasattr(CC, "get_crds_parameters") for CC in mro)
                 and any(hasattr(CC, "save") for CC in mro)
-                and any(hasattr(CC, "meta") for CC in mro)
             ):
                 return True
         return False

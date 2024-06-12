@@ -24,7 +24,7 @@ def test_jwst_datamodel():
 
 class GoodDataModel:
     def __init__(self):
-        pass
+        self.meta = {}
 
     def crds_observatory(self):
         pass
@@ -38,7 +38,7 @@ class GoodDataModel:
 
 class BadDataModel:
     def __init__(self):
-        pass
+        self.meta = {}
 
     def crds_observatory(self):
         pass
