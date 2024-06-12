@@ -1,6 +1,7 @@
 """
 Entry point implementations.
 """
+
 import os
 
 from asdf.resource import DirectoryResourceMapping

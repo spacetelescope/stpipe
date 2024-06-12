@@ -2,6 +2,7 @@
 Implements the 'stpipe list' command, which lists available
 Step subclasses.
 """
+
 import argparse
 import re
 import sys
