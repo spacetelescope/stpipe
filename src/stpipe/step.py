@@ -541,22 +541,10 @@ class Step:
                             result, (AbstractDataModel | AbstractModelLibrary)
                         ):
                             self.save_model(result, idx=idx)
-                        elif hasattr(result, "save"):
-                            try:
-                                output_path = self.make_output_path(idx=idx)
-                            except AttributeError:
-                                self.log.warning(
-                                    "`save_results` has been requested, but cannot"
-                                    " determine filename."
-                                )
-                                self.log.warning(
-                                    "Specify an output file with `--output_file` or set"
-                                    " `--save_results=false`"
-                                )
-                            else:
-                                self.log.info("Saving file %s", output_path)
-                                result.save(output_path, overwrite=True)
-
+                        else:
+                            if hasattr(result, "save"):
+                                raise Exception(f"non-datamodel result with a save: {result}")
+                                # what has "save"? Does anything ever reach this code
                 if not self.skip:
                     self.log.info("Step %s done", self.name)
             finally:
