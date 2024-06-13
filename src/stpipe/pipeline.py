@@ -9,6 +9,7 @@ from typing import ClassVar
 from astropy.extern.configobj.configobj import ConfigObj, Section
 
 from . import config_parser, crds_client, log
+from .library import AbstractModelLibrary
 from .step import Step, get_disable_crds_steppars
 from .utilities import _not_set
 
