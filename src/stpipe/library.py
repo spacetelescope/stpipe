@@ -118,6 +118,7 @@ class AbstractModelLibrary(abc.ABC):
         self._on_disk = on_disk
         self._open = False
         self._ledger = _Ledger()
+        self._loaded_models = {}
 
         self._datamodels_open_kwargs = datamodels_open_kwargs
 
@@ -128,66 +129,36 @@ class AbstractModelLibrary(abc.ABC):
             else:
                 self._temp_path = Path(temp_directory)
             self._temp_filenames = {}
-        else:
-            self._loaded_models = {}
 
-        if isinstance(init, MutableMapping):
-            # init is an association dictionary
-            asn_data = init
-            self._asn_dir = os.path.abspath(".")
-            self._asn = init
+        if asn_exptypes is not None:
+            # if a single string, treat this as a single item list
+            if isinstance(asn_exptypes, str):
+                asn_exptypes = [asn_exptypes]
+            # convert these to lower case to allow case insensitive matching below
+            asn_exptypes = [exptype.lower() for exptype in asn_exptypes]
 
-            if asn_exptypes is not None:
-                raise NotImplementedError
-
-            if asn_n_members is not None:
-                raise NotImplementedError
-
-            self._members = self._asn["products"][0]["members"]
-
-            for member in self._members:
-                if "group_id" not in member:
-                    filename = os.path.join(self._asn_dir, member["expname"])
-                    member["group_id"] = self._filename_to_group_id(filename)
-        elif isinstance(init, (str, Path)):
+        if isinstance(init, (str, Path)):
             # init is an association filename (or path)
             asn_path = os.path.abspath(os.path.expanduser(os.path.expandvars(init)))
             self._asn_dir = os.path.dirname(asn_path)
 
             # load association
             asn_data = self._load_asn(asn_path)
-
-            # keep track of the association filename
-            if "table_name" not in asn_data:
-                asn_data["table_name"] = os.path.basename(asn_path)
-
-            if asn_exptypes is not None:
-                asn_data["products"][0]["members"] = [
-                    m
-                    for m in asn_data["products"][0]["members"]
-                    if m["exptype"] in asn_exptypes
-                ]
-
-            if asn_n_members is not None:
-                asn_data["products"][0]["members"] = asn_data["products"][0]["members"][
-                    :asn_n_members
-                ]
-
-            # make members easier to access
-            self._asn = asn_data
-            self._members = self._asn["products"][0]["members"]
-
-            # check that all members have a group_id
-            for member in self._members:
-                if "group_id" not in member:
-                    filename = os.path.join(self._asn_dir, member["expname"])
-                    member["group_id"] = self._filename_to_group_id(filename)
+        elif isinstance(init, MutableMapping):
+            # we will modify the asn below so do a deep copy
+            asn_data = copy.deepcopy(init)
+            self._asn_dir = os.path.abspath(".")
         elif isinstance(init, Iterable):  # assume a list of models
+            if on_disk:
+                raise NotImplementedError("on_disk cannot be used for lists of models")
+
             # init is a list of models
             # make a fake asn from the models
             filenames = set()
             members = []
             for index, model_or_filename in enumerate(init):
+                if asn_n_members is not None and len(members) == asn_n_members:
+                    break
                 if isinstance(model_or_filename, str):
                     # TODO supporting a list of filenames by opening them as models
                     # has issues, if this is a widely supported mode (vs providing
@@ -198,57 +169,75 @@ class AbstractModelLibrary(abc.ABC):
                     )
                 else:
                     model = model_or_filename
+                exptype = getattr(model.meta, "exptype", "SCIENCE")
+
+                if asn_exptypes is not None and exptype.lower() not in asn_exptypes:
+                    continue
+
                 filename = model.meta.filename
                 if filename in filenames:
                     raise ValueError(
                         f"Models in library cannot use the same filename: {filename}"
                     )
-                if on_disk:
-                    raise NotImplementedError(
-                        "on_disk cannot be used for lists of models"
-                    )
-                self._loaded_models[index] = model
-                # FIXME: output models created during resample (during outlier detection
-                # an possibly others) do not have meta.observation which breaks the group_id
-                # code
-                try:
-                    group_id = self._model_to_group_id(model)
-                except AttributeError:
-                    group_id = str(index)
-                # FIXME: assign the group id here as it may have been computed above
-                # this is necessary for some tweakreg tests that pass in a list of models that
-                # don't have group_ids. If this is something we want to support there may
-                # be a cleaner way to do this.
-                model.meta["group_id"] = group_id
+                filenames.add(filename)
+
+                group_id = self._model_to_group_id(model)
+
                 members.append(
                     {
                         "expname": filename,
-                        "exptype": getattr(model.meta, "exptype", "SCIENCE"),
+                        "exptype": exptype,
                         "group_id": group_id,
                     }
                 )
 
-            if asn_exptypes is not None:
-                raise NotImplementedError
+                self._loaded_models[len(self._loaded_models)] = model
 
-            if asn_n_members is not None:
-                raise NotImplementedError
+            # since we've already filtered by asn type and n members reset these values
+            asn_exptypes = None
+            asn_n_members = None
 
             # make a fake association
-            self._asn = {
+            asn_data = {
+                # TODO other asn information?
                 "products": [
                     {
                         "members": members,
                     }
                 ],
             }
-            self._members = self._asn["products"][0]["members"]
-
+            self._asn_dir = None
         elif isinstance(init, self.__class__):
             # TODO clone/copy?
             raise NotImplementedError
         else:
             raise NotImplementedError
+
+        if asn_exptypes is not None:
+            asn_data["products"][0]["members"] = [
+                m
+                for m in asn_data["products"][0]["members"]
+                if m["exptype"] in asn_exptypes
+            ]
+
+        if asn_n_members is not None:
+            asn_data["products"][0]["members"] = asn_data["products"][0]["members"][
+                :asn_n_members
+            ]
+
+        self._asn = asn_data
+        self._members = self._asn["products"][0]["members"]
+
+        for member in self._members:
+            if "group_id" not in member:
+                filename = os.path.join(self._asn_dir, member["expname"])
+                member["group_id"] = self._filename_to_group_id(filename)
+
+        if not on_disk:
+            # if models were provided as input, assign the members here
+            # now that the fake asn data is complete
+            for i in self._loaded_models:
+                self._assign_member_to_model(self._loaded_models[i], self._members[i])
 
     def __del__(self):
         if hasattr(self, "_temp_dir"):
@@ -345,31 +334,32 @@ class AbstractModelLibrary(abc.ABC):
         for i in range(len(self)):
             yield self.borrow(i)
 
+    def _assign_member_to_model(self, model, member):
+        for attr in ("group_id", "tweakreg_catalog", "exptype"):
+            if attr in member:
+                setattr(model.meta, attr, member[attr])
+
+        if not hasattr(model.meta, "asn"):
+            model.meta.asn = {}
+
+        model.meta.asn["table_name"] = self.asn.get("table_name", "")
+        model.meta.asn["pool_name"] = self.asn.get("asn_pool", "")
+
     def _load_member(self, index):
         member = self._members[index]
         filename = os.path.join(self._asn_dir, member["expname"])
 
         model = self._datamodels_open(filename, **self._datamodels_open_kwargs)
 
-        # TODO do this patching in the sub-classes
-        # # patch model metadata with asn member info
-        # for attr in ("group_id", "tweakreg_catalog", "exptype"):
-        #     if attr in member:
-        #         # FIXME model.meta.group_id throws an error
-        #         # setattr(model.meta, attr, member[attr])
-        #         model.meta[attr] = member[attr]
+        self._assign_member_to_model(model, member)
 
-        # # and with general asn information
-        # if not hasattr(model.meta, "asn"):
-        #     model.meta["asn"] = {}
-        # model.meta.asn["table_name"] = self.asn.get("table_name", "")
-        # model.meta.asn["pool_name"] = self.asn["asn_pool"]
         return model
 
     def __copy__(self):
         # TODO make copy and deepcopy distinct and not require loading
         # all models into memory
-        assert not self._on_disk
+        if self._on_disk:
+            raise Exception()
         with self:
             model_copies = []
             for i, model in enumerate(self):

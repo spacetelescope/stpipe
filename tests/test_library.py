@@ -12,6 +12,7 @@ _GROUP_IDS = ["1", "1", "2"]
 _N_MODELS = len(_GROUP_IDS)
 _N_GROUPS = len(set(_GROUP_IDS))
 _PRODUCT_NAME = "foo_out"
+_INIT_TYPES = ("filename", "asn", "models")
 
 
 def _load_asn(filename):
@@ -69,20 +70,52 @@ class ModelLibrary(AbstractModelLibrary):
         return model.meta.group_id
 
 
-@pytest.fixture()
-def example_asn_path(tmp_path):
+def _library_to_models(library):
+    """
+    A few tests are easier to understand and write when
+    using the models in the library as a list. Generally
+    this should be avoided in the pipeline but tests are
+    different beasts.
+    """
+    with library:
+        models = list(library)
+        [library.shelve(m, modify=False) for m in models]
+    return models
+
+
+def _asn_path_to_init(asn_path, init_type):
+    if init_type == "filename":
+        return asn_path
+    elif init_type == "asn":
+        return _load_asn(asn_path)
+    elif init_type == "models":
+        return _library_to_models(ModelLibrary(asn_path))
+    assert False, f"unsupported {init_type}"
+
+
+@pytest.fixture
+def example_models():
+    """
+    Fixture to generate a few models with group ids from _GROUP_IDS
+    """
+    models = []
+    for i in range(_N_MODELS):
+        m = DataModel(group_id=_GROUP_IDS[i], index=i)
+        m.meta.filename = f"{i}.asdf"
+        models.append(m)
+    return models
+
+
+@pytest.fixture
+def example_asn_path(example_models, tmp_path):
     """
     Fixture that creates a simple association, saves it (and the models)
     to disk, and returns the path of the saved association
     """
     fns = []
-    for i in range(_N_MODELS):
-        m = DataModel(group_id=_GROUP_IDS[i], index=i)
-        base_fn = f"{i}.asdf"
-        # TODO meta.filename?
-        m.meta.filename = base_fn
-        m.save(str(tmp_path / base_fn))
-        fns.append(base_fn)
+    for m in example_models:
+        m.save(str(tmp_path / m.meta.filename))
+        fns.append(m.meta.filename)
     asn = {
         "asn_pool": "pool",
         "asn_id": "a0001",
@@ -98,7 +131,7 @@ def example_asn_path(tmp_path):
     return asn_filename
 
 
-@pytest.fixture()
+@pytest.fixture
 def example_library(example_asn_path):
     """
     Fixture that builds off of `example_asn_path` and returns a
@@ -135,26 +168,42 @@ def test_init_from_asn(example_asn_path):
     assert len(lib) == _N_MODELS
 
 
+def test_init_from_models(example_models):
+    lib = ModelLibrary(example_models)
+    assert len(lib) == _N_MODELS
+
+
+@pytest.mark.parametrize("init_type", _INIT_TYPES)
 @pytest.mark.parametrize("asn_n_members", range(_N_MODELS))
-def test_asn_n_members(example_asn_path, asn_n_members):
+def test_asn_n_members(example_asn_path, init_type, asn_n_members):
     """
     Test that creating a library with a `asn_n_members` filter
     includes only the first N members
     """
-    library = ModelLibrary(example_asn_path, asn_n_members=asn_n_members)
+    init = _asn_path_to_init(example_asn_path, init_type)
+    library = ModelLibrary(init, asn_n_members=asn_n_members)
     assert len(library) == asn_n_members
 
 
-def test_asn_exptypes(example_asn_path):
+@pytest.mark.parametrize("init_type", _INIT_TYPES)
+@pytest.mark.parametrize(
+    "exptype, n_models", (("science", _N_MODELS - 1), ("background", 1))
+)
+def test_asn_exptypes(example_asn_path, init_type, exptype, n_models):
     """
     Test that creating a library with a `asn_exptypes` filter
     includes only the members with a matching `exptype`
     """
     _set_custom_member_attr(example_asn_path, 0, "exptype", "background")
-    library = ModelLibrary(example_asn_path, asn_exptypes="science")
-    assert len(library) == _N_MODELS - 1
-    library = ModelLibrary(example_asn_path, asn_exptypes="background")
-    assert len(library) == 1
+
+    init = _asn_path_to_init(example_asn_path, init_type)
+
+    library = ModelLibrary(init, asn_exptypes=exptype)
+    assert len(library) == n_models
+    with library:
+        for i, model in enumerate(library):
+            assert model.meta.exptype == exptype
+            library.shelve(model, i, modify=False)
 
 
 def test_group_names(example_library):
@@ -253,7 +302,7 @@ def test_model_iteration(example_library, modify):
 @pytest.mark.parametrize("modify", (True, False))
 def test_model_indexing(example_library, modify):
     """
-    Test that borrowing models (using __getitem__)  and returning (or discarding)
+    Test that borrowing models and shelving
     models returns the appropriate models
     """
     with example_library:
@@ -263,12 +312,17 @@ def test_model_indexing(example_library, modify):
             example_library.shelve(model, i, modify=modify)
 
 
-def test_closed_library_model_getitem(example_library):
+def test_closed_library_model_borrow(example_library):
     """
     Test that indexing a library when it is not open triggers an error
     """
     with pytest.raises(ClosedLibraryError, match="ModelLibrary is not open"):
         example_library.borrow(0)
+
+
+def test_closed_library_model_shelve(example_library):
+    with pytest.raises(ClosedLibraryError, match="ModelLibrary is not open"):
+        example_library.shelve(DataModel(), 0)
 
 
 def test_closed_library_model_iter(example_library):
@@ -282,7 +336,7 @@ def test_closed_library_model_iter(example_library):
 
 def test_double_borrow_by_index(example_library):
     """
-    Test that double-borrowing a model (using __getitem__) results in an error
+    Test that double-borrowing a model results in an error
     """
     with pytest.raises(BorrowError, match="1 un-returned models"):
         with example_library:
@@ -293,8 +347,7 @@ def test_double_borrow_by_index(example_library):
 
 def test_double_borrow_during_iter(example_library):
     """
-    Test that double-borrowing a model (once via iter and once via __getitem__)
-    results in an error
+    Test that double-borrowing a model results in an error
     """
     with pytest.raises(BorrowError, match="1 un-returned models"):
         with example_library:
@@ -315,7 +368,7 @@ def test_non_borrowed(example_library, modify):
 
 
 @pytest.mark.parametrize("n_borrowed", (1, 2))
-def test_no_return_getitem(example_library, n_borrowed):
+def test_no_return_borrow(example_library, n_borrowed):
     """
     Test that borrowing and not returning models results in an
     error noting the number of un-returned models.
