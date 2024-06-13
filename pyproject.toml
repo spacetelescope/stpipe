@@ -116,6 +116,7 @@ extend-select = [
 ]
 ignore = [
     "ISC001",  # conflicts with ruff formatter
+    "UP038",  # results in slower code
 ]
 
 [tool.ruff.lint.extend-per-file-ignores]
