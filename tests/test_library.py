@@ -181,6 +181,10 @@ def test_asn_n_members(example_asn_path, init_type, asn_n_members):
     includes only the first N members
     """
     init = _asn_path_to_init(example_asn_path, init_type)
+    # for asn input the filenames are relative to the current directory
+    if init_type == "asn":
+        os.chdir(example_asn_path.parent)
+
     library = ModelLibrary(init, asn_n_members=asn_n_members)
     assert len(library) == asn_n_members
 
@@ -197,6 +201,9 @@ def test_asn_exptypes(example_asn_path, init_type, exptype, n_models):
     _set_custom_member_attr(example_asn_path, 0, "exptype", "background")
 
     init = _asn_path_to_init(example_asn_path, init_type)
+    # for asn input the filenames are relative to the current directory
+    if init_type == "asn":
+        os.chdir(example_asn_path.parent)
 
     library = ModelLibrary(init, asn_exptypes=exptype)
     assert len(library) == n_models
