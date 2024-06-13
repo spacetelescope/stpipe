@@ -148,9 +148,11 @@ class AbstractModelLibrary(abc.ABC):
             # we will modify the asn below so do a deep copy
             asn_data = copy.deepcopy(init)
             self._asn_dir = os.path.abspath(".")
+        elif isinstance(init, self.__class__):
+            raise ValueError(f"Invalid init {init}")
         elif isinstance(init, Iterable):  # assume a list of models
             if on_disk:
-                raise NotImplementedError("on_disk cannot be used for lists of models")
+                raise ValueError("on_disk cannot be used for a list of models")
 
             # init is a list of models
             # make a fake asn from the models
@@ -159,7 +161,7 @@ class AbstractModelLibrary(abc.ABC):
             for index, model_or_filename in enumerate(init):
                 if asn_n_members is not None and len(members) == asn_n_members:
                     break
-                if isinstance(model_or_filename, str):
+                if isinstance(model_or_filename, (str, Path)):
                     # TODO supporting a list of filenames by opening them as models
                     # has issues, if this is a widely supported mode (vs providing
                     # an association) it might make the most sense to make a fake
@@ -207,11 +209,8 @@ class AbstractModelLibrary(abc.ABC):
                 ],
             }
             self._asn_dir = None
-        elif isinstance(init, self.__class__):
-            # TODO clone/copy?
-            raise NotImplementedError
         else:
-            raise NotImplementedError
+            raise ValueError(f"Invalid init {init}")
 
         if asn_exptypes is not None:
             asn_data["products"][0]["members"] = [

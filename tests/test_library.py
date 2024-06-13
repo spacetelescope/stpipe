@@ -173,6 +173,32 @@ def test_init_from_models(example_models):
     assert len(lib) == _N_MODELS
 
 
+def test_init_from_model_filenames(example_asn_path):
+    asn_data = _load_asn(example_asn_path)
+    member_filenames = [m["expname"] for m in asn_data["products"][0]["members"]]
+    lib = ModelLibrary([example_asn_path.parent / fn for fn in member_filenames])
+    assert len(lib) == _N_MODELS
+
+
+def test_init_no_duplicate_filenames(example_models):
+    example_models[1].meta.filename = example_models[0].meta.filename
+    with pytest.raises(
+        ValueError, match="Models in library cannot use the same filename"
+    ):
+        ModelLibrary(example_models)
+
+
+def test_init_from_models_no_ondisk(example_models):
+    with pytest.raises(ValueError, match="on_disk cannot be used for a list of models"):
+        ModelLibrary(example_models, on_disk=True)
+
+
+@pytest.mark.parametrize("invalid", (None, ModelLibrary([]), DataModel()))
+def test_invalid_init(invalid):
+    with pytest.raises(ValueError, match="Invalid init"):
+        ModelLibrary(invalid)
+
+
 @pytest.mark.parametrize("init_type", _INIT_TYPES)
 @pytest.mark.parametrize("asn_n_members", range(_N_MODELS))
 def test_asn_n_members(example_asn_path, init_type, asn_n_members):
