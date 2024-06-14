@@ -303,7 +303,8 @@ class AbstractModelLibrary(abc.ABC):
     def _temp_path_for_model(self, model, index):
         model_filename = self._model_to_filename(model)
         subpath = self._temp_path / f"{index}"
-        os.makedirs(subpath)
+        if not os.path.exists(subpath):
+            os.makedirs(subpath)
         return subpath / model_filename
 
     def shelve(self, model, index=None, modify=True):
@@ -318,12 +319,18 @@ class AbstractModelLibrary(abc.ABC):
 
         if modify:
             if self._on_disk:
-                if index in self._temp_filenames:
-                    temp_filename = self._temp_filenames[index]
-                else:
-                    temp_filename = self._temp_path_for_model(model, index)
-                    self._temp_filenames[index] = temp_filename
+                temp_filename = self._temp_path_for_model(model, index)
                 model.save(temp_filename)
+
+                # if we have an old model for this index that was saved
+                # in the temporary directory and this model has a different
+                # filename, remove the old file.
+                if index in self._temp_filenames:
+                    old_filename = self._temp_filenames[index]
+                    if old_filename != temp_filename:
+                        os.remove(old_filename)
+
+                self._temp_filenames[index] = temp_filename
             else:
                 self._loaded_models[index] = model
 
