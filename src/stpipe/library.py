@@ -117,6 +117,44 @@ class AbstractModelLibrary(abc.ABC):
         temp_directory=None,
         **datamodels_open_kwargs,
     ):
+        """
+        Create a new ModelLibrary based on the provided "init".
+
+        Parameters
+        ----------
+        init : str or Path or list (of DataModels)
+            If a string or Path this should point to a valid
+            association file. If a list of models consider continuing
+            to use the list instead of making a library (the list will
+            be more efficient and easier to use).
+
+        asn_exptypes : list of str, optional
+            List of "exptypes" to load from the "init" value. Any
+            association member with a "exptype" that matches (case
+            insensitive) a value in this list will be available
+            through the library.
+
+        asn_n_members : int, optional
+            Number of association members to include in the library.
+            This filtering will occur after "asn_exptypes" is applied.
+            By default all members will be included.
+
+        on_disk : bool, optional, default=False
+            When enabled, keep the models in the library "on disk",
+            writing out temporary files when the models are "shelved".
+            This option is only compatible with models loaded from
+            an association (not a list of models).
+
+        temp_directory : str or Path, optional
+            The temporary directory in which to store models when
+            "on_disk" is enabled. By default a
+            ``tempfile.TemporaryDirectory`` will be created in the
+            working directory.
+
+        **datamodels_open_kwargs : dict
+            Keyword arguments that will provided to ``_datamodels_open``
+            when models are opened.
+        """
         self._on_disk = on_disk
         self._open = False
         self._ledger = _Ledger()
@@ -355,6 +393,10 @@ class AbstractModelLibrary(abc.ABC):
         return model
 
     def _temp_path_for_model(self, model, index):
+        """
+        Determine the temporary path to use to save a model
+        at the provided index in the library.
+        """
         model_filename = self._model_to_filename(model)
         subpath = self._temp_path / f"{index}"
         if not os.path.exists(subpath):
@@ -424,10 +466,53 @@ class AbstractModelLibrary(abc.ABC):
         del self._ledger[index]
 
     def __iter__(self):
+        """
+        Iterate through the models in an (open) library by "borrowing"
+        each one, one at a time.
+
+        Returns
+        -------
+        model_iter : generator
+            Generator that returns "borrowed" models. Failing to "shelve"
+            the models produced by this generator will result in a
+            `BorrowError`.
+        """
         for i in range(len(self)):
             yield self.borrow(i)
 
     def _assign_member_to_model(self, model, member):
+        """
+        Assign association member information to an opened model.
+
+        This will be called:
+
+            - when a model is loaded (for the first time) in ``_load_member``
+            - when the library is created (if the library was provided a
+              list of open models)
+
+        This will assign the following metadata attributes (setting
+        for example ``model.meta.group_id`` to the value of
+        ``member["group_id"]``):
+
+            - group_id
+            - exptype
+            - tweakreg_catalog
+
+        and (when available from the association) assign the following
+        metadata attributes based on the association information:
+
+            - set ``meta.asn.table_name`` to ``asn["table_name"]``
+            - set ``meta.asn.pool_name`` to ``asn["pool_name"]``
+
+        Parameters
+        ----------
+        model : DataModel
+            Model to be updated (in place).
+
+        member : dict
+            Dictionary containing contents of the "member" entry
+            (include "exptype", "expname", "group_id", etc...)
+        """
         for attr in ("group_id", "tweakreg_catalog", "exptype"):
             if attr in member:
                 setattr(model.meta, attr, member[attr])
@@ -439,6 +524,21 @@ class AbstractModelLibrary(abc.ABC):
         model.meta.asn["pool_name"] = self.asn.get("asn_pool", "")
 
     def _load_member(self, index):
+        """
+        Load a model for the association member at the provided index.
+
+        This will be called when the model at the provided index:
+            - is not already loaded
+            - does not have a temporary file
+
+        Parameters
+        ----------
+        index : int
+
+        Returns
+        -------
+        model : DataModel
+        """
         member = self._members[index]
         filename = os.path.join(self._asn_dir, member["expname"])
 
@@ -647,12 +747,25 @@ class AbstractModelLibrary(abc.ABC):
     def crds_observatory(self):
         """
         Return the name of the observatory as a string
+
+        Returns
+        -------
+        observatory : str
         """
 
     @abc.abstractmethod
     def _datamodels_open(self, filename, **kwargs):
         """
         Open a model from a filename
+
+        Parameters
+        ----------
+        filename : str or Path
+            Filename from which to load a model.
+
+        **kwargs : dict, optional
+            Arguments to be passed to any lower-level function that
+            opens a model.
         """
 
     @classmethod
@@ -660,20 +773,54 @@ class AbstractModelLibrary(abc.ABC):
     def _load_asn(cls, filename):
         """
         Load an association from a filename
+
+        Parameters
+        ----------
+        filename : str or Path
+            Filename from which to load an association
         """
 
     @abc.abstractmethod
     def _filename_to_group_id(self, filename):
         """
-        Compute a "group_id" without loading the file as a DataModel
+        Compute a "group_id" for a DataModel in filename.
 
-        This function will return the meta.group_id stored in the ASDF
-        extension (if it exists) or a group_id calculated from the
-        FITS headers.
+        This will be called for every member in the association
+        when the library is created if the member entry does not
+        contain a "group_id" (this is the most efficient mode).
+        Ideally this method should avoid opening the filename as
+        a DataModel and instead take "short-cuts" to read only
+        the "group_id" (from FITS or ASDF headers).
+
+        Parameters
+        ----------
+        filename : str or Path
+            Filename containing a DataModel
+
+        Returns
+        -------
+        group_id : str
+            "group_id" (used for ``group_names`` and ``group_indices``)
+            for the model in the provided filename.
         """
 
     @abc.abstractmethod
     def _model_to_group_id(self, model):
         """
-        Compute a "group_id" from a model using the DataModel interface
+        Compute a "group_id" from a model using the DataModel interface.
+
+        This will be called for every model in the library ONLY when
+        the library is created from a list of models. In this case the
+        models are all in memory and this method can use the in memory
+        DataModel to determine the "group_id" (likely `model.meta.group_id`).
+
+        Parameters
+        ----------
+        model : DataModel
+
+        Returns
+        -------
+        group_id : str
+            "group_id" (used for ``group_names`` and ``group_indices``)
+            for the model in the provided filename.
         """

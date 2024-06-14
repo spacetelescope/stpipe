@@ -177,6 +177,9 @@ def test_load_asn(example_library):
 
 
 def test_init_from_asn(example_asn_path):
+    """
+    Test creating a library from an association dictionary.
+    """
     asn = _load_asn(example_asn_path)
     # as association filenames are local we must be in the same directory
     os.chdir(example_asn_path.parent)
@@ -185,11 +188,17 @@ def test_init_from_asn(example_asn_path):
 
 
 def test_init_from_models(example_models):
+    """
+    Test creating a library from a list of models.
+    """
     lib = ModelLibrary(example_models)
     assert len(lib) == _N_MODELS
 
 
 def test_init_from_model_filenames(example_asn_path):
+    """
+    Test creating a library from a list of model filenames.
+    """
     asn_data = _load_asn(example_asn_path)
     member_filenames = [m["expname"] for m in asn_data["products"][0]["members"]]
     lib = ModelLibrary([example_asn_path.parent / fn for fn in member_filenames])
@@ -197,6 +206,10 @@ def test_init_from_model_filenames(example_asn_path):
 
 
 def test_init_no_duplicate_filenames(example_models):
+    """
+    Test that creating a library from a list of models fails
+    if models contain duplicate "meta.filename" attributes.
+    """
     example_models[1].meta.filename = example_models[0].meta.filename
     with pytest.raises(
         ValueError, match="Models in library cannot use the same filename"
@@ -205,12 +218,19 @@ def test_init_no_duplicate_filenames(example_models):
 
 
 def test_init_from_models_no_ondisk(example_models):
+    """
+    Test that attempting to create a library from a list of models
+    and using the on_disk option results in an error.
+    """
     with pytest.raises(ValueError, match="on_disk cannot be used for a list of models"):
         ModelLibrary(example_models, on_disk=True)
 
 
 @pytest.mark.parametrize("invalid", (None, ModelLibrary([]), DataModel()))
 def test_invalid_init(invalid):
+    """
+    Test that some unsupported init values produce errors.
+    """
     with pytest.raises(ValueError, match="Invalid init"):
         ModelLibrary(invalid)
 
@@ -257,6 +277,12 @@ def test_asn_exptypes(example_asn_path, init_type, exptype, n_models):
 
 @pytest.mark.parametrize("science", ("all", "not_first", "none"))
 def test_get_crds_parameters(example_asn_path, science):
+    """
+    Test that get_crds_parameters returns:
+        - the parameters for the 0th model if all models are "science"
+        - params for the first science model if the 0th is not "science"
+        - params for the first model (and a warning) if no "science" members
+    """
     if science == "not_first":
         _set_custom_member_attr(example_asn_path, 0, "exptype", "background")
         index = 1
@@ -331,7 +357,7 @@ def test_group_with_no_datamodels_open(example_asn_path, attr):
 def test_model_iteration(example_library, modify):
     """
     Test that iteration through models and shelving models
-    returns the appropriate models
+    returns the appropriate models.
     """
     with example_library:
         for i, model in enumerate(example_library):
@@ -343,7 +369,7 @@ def test_model_iteration(example_library, modify):
 def test_model_indexing(example_library, modify):
     """
     Test that borrowing models and shelving
-    models returns the appropriate models
+    models returns the appropriate models.
     """
     with example_library:
         for i in range(_N_MODELS):
@@ -354,13 +380,17 @@ def test_model_indexing(example_library, modify):
 
 def test_closed_library_model_borrow(example_library):
     """
-    Test that indexing a library when it is not open triggers an error
+    Test that indexing a library when it is not open triggers an error.
     """
     with pytest.raises(ClosedLibraryError, match="ModelLibrary is not open"):
         example_library.borrow(0)
 
 
 def test_closed_library_model_shelve(example_library):
+    """
+    Test that attempting to shelve a model with a closed library triggers
+    an error.
+    """
     with pytest.raises(ClosedLibraryError, match="ModelLibrary is not open"):
         example_library.shelve(DataModel(), 0)
 
@@ -475,8 +505,9 @@ def test_asn_members_tuple(example_library):
     assert isinstance(example_library.asn["products"][0]["members"], tuple)
 
 
+@pytest.mark.parametrize("use_index", [True, False])
 @pytest.mark.parametrize("modify", [True, False])
-def test_on_disk_model_modification(example_asn_path, modify):
+def test_on_disk_model_modification(example_asn_path, modify, use_index):
     """
     Test that modifying a model in a library that is on_disk
     does not persist if the model is shelved with modify=False
@@ -485,7 +516,8 @@ def test_on_disk_model_modification(example_asn_path, modify):
     with library:
         model = library.borrow(0)
         model.meta.foo = "bar"
-        library.shelve(model, 0, modify=modify)
+        index = 0 if use_index else None
+        library.shelve(model, index, modify=modify)
         model = library.borrow(0)
         if modify:
             assert model.meta.foo == "bar"
@@ -493,21 +525,14 @@ def test_on_disk_model_modification(example_asn_path, modify):
             assert getattr(model.meta, "foo", None) is None
         # shelve the model so the test doesn't fail because of an un-returned
         # model
-        library.shelve(0, model, modify=False)
-
-
-def test_shelve(example_asn_path):
-    library = ModelLibrary(example_asn_path, on_disk=True)
-    with library:
-        model = library.borrow(0)
-        model.meta.foo = "bar"
-        library.shelve(model, modify=True)
-        model = library.borrow(0)
-        assert model.meta.foo == "bar"
-        library.shelve(model)
+        library.shelve(model, index, modify=False)
 
 
 def test_shelve_wrong_index(example_library):
+    """
+    Test that an error occurs if a model is shelved
+    in the incorrect index.
+    """
     with pytest.raises(BorrowError, match="1 un-returned models"):
         with example_library:
             model = example_library.borrow(0)
@@ -517,17 +542,37 @@ def test_shelve_wrong_index(example_library):
                 example_library.shelve(model, 1)
 
 
-def test_shelve_unknown_model(example_library):
-    with example_library:
-        example_library.borrow(0)
-        new_model = DataModel()
+@pytest.mark.parametrize("use_index", (True, False))
+def test_shelve_unknown_model(example_library, use_index):
+    """
+    Test that an error occurs if a model that was not borrowed
+    from the library is shelved without an index but doesn't
+    produce an error if an index is provided.
+    """
+    # When an index is not used, the test below should produce an
+    # error during shelve. This will be caught by pytest which will
+    # then allow the library to throw another error because of the
+    # un-returned model (from the failed shelve). So we make another
+    # context here to catch that error.
+    if use_index:
+        lib_ctx = contextlib.nullcontext()
+    else:
+        lib_ctx = pytest.raises(BorrowError, match="1 un-returned models")
+    with lib_ctx:  # to catch the error for the un-returned model
+        with example_library:
+            example_library.borrow(0)
+            new_model = DataModel()
 
-        # attempting to shelve an unknown model without an index is an error
-        with pytest.raises(BorrowError, match="Attempt to shelve an unknown model"):
-            example_library.shelve(new_model)
-
-        # using an index (of a borrowed model) replaces the model in the library
-        example_library.shelve(new_model, 0)
+            if use_index:
+                ctx = contextlib.nullcontext()
+                index = 0
+            else:
+                ctx = pytest.raises(
+                    BorrowError, match="Attempt to shelve an unknown model"
+                )
+                index = None
+            with ctx:
+                example_library.shelve(new_model, index)
 
 
 @pytest.mark.parametrize("on_disk", [True, False])
@@ -550,6 +595,10 @@ def test_on_disk_no_overwrite(example_asn_path, on_disk):
 
 
 def test_on_disk_directory(example_asn_path, tmp_path):
+    """
+    Test that providing a "temp_directory" writes temp files
+    to that directory.
+    """
     # since example_asn_path already uses the tmp_path fixture make a sub directory
     tmp = tmp_path / "tmp"
     os.makedirs(tmp)
@@ -588,12 +637,20 @@ def test_on_disk_filename_cleanup(example_asn_path):
 
 
 def test_map_function(example_library):
+    """
+    Test that map_function returns the result of the function
+    applied to each model.
+    """
     assert (
         list(example_library.map_function(lambda m, i: m.meta.group_id)) == _GROUP_IDS
     )
 
 
 def test_map_function_partial_iteration(example_library):
+    """
+    Test that leaving the generator produced by map_function
+    partially consumed does not result in an error.
+    """
     gen = example_library.map_function(lambda m, i: i)
     assert inspect.isgenerator(gen)
     assert next(gen) == 0
@@ -605,6 +662,9 @@ def test_map_function_partial_iteration(example_library):
 
 @pytest.mark.parametrize("modify", (True, False))
 def test_map_function_modify(example_asn_path, modify):
+    """
+    Test that map_function only modifies models when enabled.
+    """
     library = ModelLibrary(example_asn_path, on_disk=True)
 
     def modify_model(model, index):
@@ -624,8 +684,12 @@ def test_map_function_modify(example_asn_path, modify):
 
 
 def test_finalize_result(example_library):
-    # This is a bit of a contrived test. Integration with
-    # a real Step/Pipeline will be the true test of finalize_result.
+    """
+    Basic test for finalize_result.
+
+    This is a bit of a contrived test. Integration with
+    a real Step/Pipeline will be the true test of finalize_result.
+    """
     refs = ["foo.asdf", "bar.asdf"]
 
     class FakeStep:
@@ -644,6 +708,12 @@ def test_finalize_result(example_library):
 
 @pytest.mark.parametrize("as_str", (True, False))
 def test_save(example_library, tmp_path, as_str):
+    """
+    Test that the basic "save" produces a file for
+    each model and a basic association that when
+    read back in produces a library.
+    """
+
     def assign_code(model, i):
         model.meta.code = f"code_{i}"
         return model.meta.code
@@ -667,6 +737,10 @@ def test_save(example_library, tmp_path, as_str):
 
 
 def test_ledger():
+    """
+    Test the _Ledger works to both look up models
+    based on index and index based on models.
+    """
     ledger = _Ledger()
     model = DataModel()
     ledger[0] = model
@@ -681,8 +755,17 @@ def test_ledger():
 
 
 def test_library_is_not_a_datamodel():
+    """
+    Smoke test to make sure the relationship between
+    AbstractModelLibrary and AbstractDataModel doesn't
+    change.
+    """
     assert issubclass(AbstractModelLibrary, AbstractDataModel)
 
 
 def test_library_is_not_sequence():
+    """
+    Smoke test to make sure AbstractModelLibrary is not
+    a Sequence (like is ModelContainer).
+    """
     assert not issubclass(AbstractModelLibrary, Sequence)
