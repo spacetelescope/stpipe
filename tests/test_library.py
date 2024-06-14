@@ -9,7 +9,12 @@ import asdf
 import pytest
 
 from stpipe.datamodel import AbstractDataModel
-from stpipe.library import AbstractModelLibrary, BorrowError, ClosedLibraryError
+from stpipe.library import (
+    AbstractModelLibrary,
+    BorrowError,
+    ClosedLibraryError,
+    _Ledger,
+)
 
 _GROUP_IDS = ["1", "1", "2"]
 _N_MODELS = len(_GROUP_IDS)
@@ -398,7 +403,9 @@ def test_non_borrowed(example_library, modify):
     Test that attempting to shelve a non-borrowed item results in an error
     """
     with example_library:
-        with pytest.raises(BorrowError, match="Attempt to shelve non-borrowed model"):
+        with pytest.raises(
+            BorrowError, match="Attempt to shelve model at a non-borrowed index"
+        ):
             example_library.shelve(None, 0, modify=modify)
 
 
@@ -487,6 +494,40 @@ def test_on_disk_model_modification(example_asn_path, modify):
         # shelve the model so the test doesn't fail because of an un-returned
         # model
         library.shelve(0, model, modify=False)
+
+
+def test_shelve(example_asn_path):
+    library = ModelLibrary(example_asn_path, on_disk=True)
+    with library:
+        model = library.borrow(0)
+        model.meta.foo = "bar"
+        library.shelve(model, modify=True)
+        model = library.borrow(0)
+        assert model.meta.foo == "bar"
+        library.shelve(model)
+
+
+def test_shelve_wrong_index(example_library):
+    with pytest.raises(BorrowError, match="1 un-returned models"):
+        with example_library:
+            model = example_library.borrow(0)
+            with pytest.raises(
+                BorrowError, match="Attempt to shelve model at a non-borrowed index"
+            ):
+                example_library.shelve(model, 1)
+
+
+def test_shelve_unknown_model(example_library):
+    with example_library:
+        example_library.borrow(0)
+        new_model = DataModel()
+
+        # attempting to shelve an unknown model without an index is an error
+        with pytest.raises(BorrowError, match="Attempt to shelve an unknown model"):
+            example_library.shelve(new_model)
+
+        # using an index (of a borrowed model) replaces the model in the library
+        example_library.shelve(new_model, 0)
 
 
 @pytest.mark.parametrize("on_disk", [True, False])
@@ -601,7 +642,8 @@ def test_finalize_result(example_library):
     assert step._seen_indices == list(range(_N_MODELS))
 
 
-def test_save(example_library, tmp_path):
+@pytest.mark.parametrize("as_str", (True, False))
+def test_save(example_library, tmp_path, as_str):
     def assign_code(model, i):
         model.meta.code = f"code_{i}"
         return model.meta.code
@@ -611,13 +653,31 @@ def test_save(example_library, tmp_path):
     output_path = tmp_path / "tmp_output"
     asn_path = example_library.save(output_path)
 
-    library = ModelLibrary(asn_path)
+    if as_str:
+        dst = str(asn_path)
+    else:
+        dst = asn_path
+    library = ModelLibrary(dst)
 
     assert len(example_library) == len(library)
     with library:
         for i, m in enumerate(library):
             assert m.meta.code == codes[i]
             library.shelve(m, i, modify=False)
+
+
+def test_ledger():
+    ledger = _Ledger()
+    model = DataModel()
+    ledger[0] = model
+    assert ledger[0] == model
+    assert ledger[model] == 0
+    assert list(ledger) == [0]
+    del ledger[0]
+    assert len(ledger) == 0
+    ledger[0] = model
+    del ledger[model]
+    assert len(ledger) == 0
 
 
 def test_library_is_not_a_datamodel():

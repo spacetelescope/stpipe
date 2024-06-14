@@ -34,11 +34,13 @@ class ClosedLibraryError(LibraryError):
 
 class _Ledger(MutableMapping):
     """
-    A "ledger" used for tracking checked out models.
+    A "ledger" used for tracking borrowed out models.
 
-    Each model has a unique "index" in the library which
-    can be used to track the model. For ease-of-use this
-    ledger maintains 2 mappings:
+    Each model has a unique "index" in the library because
+    the order of the models in the library never changes.
+    This "index" can be used to track the model.
+
+    For ease-of-use this ledger maintains 2 mappings:
 
         - id (the id(model) result) to model index
         - index to model
@@ -56,11 +58,9 @@ class _Ledger(MutableMapping):
         self._index_to_model = {}
 
     def __getitem__(self, model_or_index):
-        if not isinstance(model_or_index, int):
-            index = self._id_to_index[id(model_or_index)]
-        else:
-            index = model_or_index
-        return self._index_to_model[index]
+        if isinstance(model_or_index, int):
+            return self._index_to_model[model_or_index]
+        return self._id_to_index[id(model_or_index)]
 
     def __setitem__(self, index, model):
         self._index_to_model[index] = model
@@ -314,10 +314,13 @@ class AbstractModelLibrary(abc.ABC):
             raise ClosedLibraryError("ModelLibrary is not open")
 
         if index is None:
-            index = self._ledger[model]
+            try:
+                index = self._ledger[model]
+            except KeyError:
+                raise BorrowError("Attempt to shelve an unknown model")
 
         if index not in self._ledger:
-            raise BorrowError("Attempt to shelve non-borrowed model")
+            raise BorrowError("Attempt to shelve model at a non-borrowed index")
 
         if modify:
             if self._on_disk:
