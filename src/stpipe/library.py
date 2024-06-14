@@ -2,6 +2,7 @@ import abc
 import copy
 import os.path
 import tempfile
+import warnings
 from collections.abc import Iterable, MutableMapping
 from pathlib import Path
 from types import MappingProxyType
@@ -440,12 +441,16 @@ class AbstractModelLibrary(abc.ABC):
         """
         with self:
             science_index = None
-            for i, member in self.members:
+            for i, member in enumerate(self._members):
                 if member["exptype"].lower() == "science":
                     science_index = i
                     break
             if science_index is None:
-                # TODO warn if we did not find a science member
+                warnings.warn(
+                    "get_crds_parameters failed to find any science members. "
+                    "The first model was used to determine the parameters",
+                    UserWarning,
+                )
                 science_index = 0
             model = self.borrow(science_index)
             parameters = model.get_crds_parameters()
@@ -487,7 +492,6 @@ class AbstractModelLibrary(abc.ABC):
 
     def _model_to_filename(self, model):
         model_filename = model.meta.filename
-        # TODO patched by sub-class?
         if model_filename is None:
             model_filename = "model.asdf"
         return model_filename
@@ -521,16 +525,9 @@ class AbstractModelLibrary(abc.ABC):
         extension (if it exists) or a group_id calculated from the
         FITS headers.
         """
-        # asdf_yaml = asdf.util.load_yaml(filename)
-        # if group_id := asdf_yaml["roman"]["meta"].get("group_id"):
-        #     return group_id
-        # return _mapping_to_group_id(asdf_yaml["roman"]["meta"]["observation"])
 
     @abc.abstractmethod
     def _model_to_group_id(self, model):
         """
         Compute a "group_id" from a model using the DataModel interface
         """
-        # if (group_id := getattr(model.meta, "group_id", None)) is not None:
-        #     return group_id
-        # return _mapping_to_group_id(model.meta.observation)

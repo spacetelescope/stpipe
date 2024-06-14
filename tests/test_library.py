@@ -1,3 +1,5 @@
+import collections
+import contextlib
 import json
 import os
 from collections.abc import Sequence
@@ -39,7 +41,7 @@ class DataModel:
         return "test"
 
     def get_crds_parameters(self):
-        return {"crds": "parameters"}
+        return {"crds": "parameters"} | self.meta.__dict__
 
     def save(self, path, **kwargs):
         data = self.meta.__dict__
@@ -146,9 +148,17 @@ def _set_custom_member_attr(example_asn_path, member_index, attr, value):
     by adding an attribute `attr` to the member list (at index
     `member_index`) with value `value`. This is used to modify
     the `group_id` or `exptype` of a certain member for some tests.
+
+    If member_index is iterable each returned value will be used as an
+    index
     """
     asn_data = _load_asn(example_asn_path)
-    asn_data["products"][0]["members"][member_index][attr] = value
+    if isinstance(member_index, collections.abc.Iterable):
+        indices = member_index
+    else:
+        indices = [member_index]
+    for index in indices:
+        asn_data["products"][0]["members"][index][attr] = value
     _write_asn(asn_data, example_asn_path)
 
 
@@ -237,6 +247,28 @@ def test_asn_exptypes(example_asn_path, init_type, exptype, n_models):
         for i, model in enumerate(library):
             assert model.meta.exptype == exptype
             library.shelve(model, i, modify=False)
+
+
+@pytest.mark.parametrize("science", ("all", "not_first", "none"))
+def test_get_crds_parameters(example_asn_path, science):
+    if science == "not_first":
+        _set_custom_member_attr(example_asn_path, 0, "exptype", "background")
+        index = 1
+    else:
+        index = 0
+    if science == "none":
+        _set_custom_member_attr(
+            example_asn_path, range(_N_MODELS), "exptype", "background"
+        )
+        ctx = pytest.warns(
+            UserWarning, match="get_crds_parameters failed to find any science members"
+        )
+    else:
+        ctx = contextlib.nullcontext()
+    library = ModelLibrary(example_asn_path)
+    with ctx:
+        pars = library.get_crds_parameters()
+    assert pars["index"] == index
 
 
 def test_group_names(example_library):
