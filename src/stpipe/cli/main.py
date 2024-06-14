@@ -1,6 +1,7 @@
 """
 Main function and argument parser for stpipe.
 """
+
 import argparse
 import sys
 import traceback

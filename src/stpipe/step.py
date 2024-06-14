@@ -1,6 +1,7 @@
 """
 Step
 """
+
 import gc
 import os
 import sys
@@ -103,9 +104,9 @@ class Step:
         for reference_file_type in cls.reference_file_types:
             override_name = crds_client.get_override_name(reference_file_type)
             spec[override_name] = "is_string_or_datamodel(default=None)"
-            spec.inline_comments[
-                override_name
-            ] = f"# Override the {reference_file_type} reference file"
+            spec.inline_comments[override_name] = (
+                f"# Override the {reference_file_type} reference file"
+            )
         return spec
 
     @classmethod
@@ -481,9 +482,9 @@ class Step:
                             if isinstance(args[0], Sequence):
                                 for model in args[0]:
                                     try:
-                                        model[
-                                            f"meta.cal_step.{self.class_alias}"
-                                        ] = "SKIPPED"
+                                        model[f"meta.cal_step.{self.class_alias}"] = (
+                                            "SKIPPED"
+                                        )
                                     except AttributeError as e:  # noqa: PERF203
                                         self.log.info(
                                             "Could not record skip into DataModel "

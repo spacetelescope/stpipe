@@ -1,6 +1,7 @@
 """
 Pipeline
 """
+
 from collections.abc import Sequence
 from os.path import dirname, join
 from typing import ClassVar
