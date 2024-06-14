@@ -998,7 +998,26 @@ class Step:
         # FIXME this again has special handling of ModelContainer/Sequence
         # where when called during results saving will create a partial
         # and pass it to ModelContainer.save
-        if isinstance(model, (Sequence | AbstractModelLibrary)):
+        if isinstance(model, AbstractModelLibrary):
+            # FIXME ModelContainer...
+            # - ignored idx
+            # - provided a save_model_func so output_file is ignored
+            # - it's use from save_results provides
+            #   - name_format (ignored)
+            #   - idx (ignored)
+            with model:
+                for i, m in enumerate(model):
+                    self.save_model(
+                        model,
+                        idx=i,
+                        suffix=suffix,
+                        force=force,
+                        format=format,
+                        **components,
+                    )
+                    # leaving modify=True in case saving modify the file
+                    model.shelve(m, i)
+        elif isinstance(model, Sequence):
             save_model_func = partial(
                 self.save_model,
                 suffix=suffix,

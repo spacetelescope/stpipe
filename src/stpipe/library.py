@@ -1,5 +1,6 @@
 import abc
 import copy
+import json
 import os.path
 import tempfile
 import warnings
@@ -380,58 +381,37 @@ class AbstractModelLibrary(abc.ABC):
     def copy(self, memo=None):
         return copy.deepcopy(self, memo=memo)
 
-    def save(self, path=None, dir_path=None, save_model_func=None, overwrite=True):
-        # FIXME: the signature for this function can lead to many possible outcomes
-        # stpipe may call this with save_model_func and path defined
-        # skymatch tests call with just dir_path
-        # stpipe sometimes provides overwrite=True
+    def save(self, path, **kwargs):
+        """
+        This save is NOT used by Step/Pipeline. This is
+        intentional as the Step/Pipeline has special requirements.
 
-        if path is None:
-
-            def path(file_path, index):
-                return file_path
-
-        elif not callable(path):
-
-            def path(file_path, index):
-                path_head, path_tail = os.path.split(file_path)
-                base, ext = os.path.splitext(path_tail)
-                if index is not None:
-                    base = base + str(index)
-                return os.path.join(path_head, base + ext)
-
-        # FIXME: since path is the first argument this means that calling
-        # ModelLibrary.save("my_directory") will result in saving all models
-        # to the current directory, ignoring "my_directory" this matches
-        # what was done for ModelContainer
-        dir_path = dir_path if dir_path is not None else os.getcwd()
-
-        output_paths = []
+        For now this is a very basic "save". It does not:
+            - check that the library contains no duplicate filenames
+            - propagate asn_pool and other non-member asn information
+        """
+        if isinstance(path, str):
+            path = Path(path)
+        if not path.exists():
+            path.mkdir()
+        members = []
         with self:
             for i, model in enumerate(self):
-                if len(self) == 1:
-                    index = None
-                else:
-                    index = i
-                if save_model_func is None:
-                    filename = model.meta.filename
-                    output_path, output_filename = os.path.split(path(filename, index))
-
-                    # use dir_path when provided
-                    output_path = output_path if dir_path is None else dir_path
-
-                    # create final destination (path + filename)
-                    save_path = os.path.join(output_path, output_filename)
-
-                    model.save(save_path)  # TODO save args?
-
-                    output_paths.append(save_path)
-                else:
-                    output_paths.append(save_model_func(model, idx=index))
-
+                mfn = Path(self._model_to_filename(model))
+                model.save(path / mfn, **kwargs)
+                members.append(
+                    {
+                        "expname": str(mfn),
+                        "exptype": model.meta.exptype,
+                        "group_id": model.meta.group_id,
+                    }
+                )
                 self.shelve(model, i, modify=False)
-
-        return output_paths
+        asn_data = {"products": [{"members": members}]}
+        asn_path = path / "asn.json"
+        with open(asn_path, "w") as f:
+            json.dump(asn_data, f)
+        return asn_path
 
     def get_crds_parameters(self):
         """
@@ -480,7 +460,7 @@ class AbstractModelLibrary(abc.ABC):
                 f"ModelLibrary has {len(self._ledger)} un-returned models"
             )
 
-    def map_function(self, function, modify=True):
+    def iter_function(self, function, modify=True):
         with self:
             for index, model in enumerate(self):
                 try:
