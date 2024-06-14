@@ -363,24 +363,6 @@ class AbstractModelLibrary(abc.ABC):
 
         return model
 
-    def __copy__(self):
-        # TODO make copy and deepcopy distinct and not require loading
-        # all models into memory
-        if self._on_disk:
-            raise Exception()
-        with self:
-            model_copies = []
-            for i, model in enumerate(self):
-                model_copies.append(model.copy())
-                self.shelve(model, i, modify=False)
-        return self.__class__(model_copies)
-
-    def __deepcopy__(self, memo):
-        return self.__copy__()
-
-    def copy(self, memo=None):
-        return copy.deepcopy(self, memo=memo)
-
     def save(self, path, **kwargs):
         """
         This save is NOT used by Step/Pipeline. This is
