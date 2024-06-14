@@ -67,7 +67,7 @@ class ModelLibrary(AbstractModelLibrary):
             return af["group_id"]
 
     def _model_to_group_id(self, model):
-        return model.meta.group_id
+        return getattr(model.meta, "filename", model.meta.group_id)
 
 
 def _library_to_models(library):
@@ -518,6 +518,30 @@ def test_on_disk_directory(example_asn_path, tmp_path):
     fn = tmp / "0" / "0.asdf"
     m = _load_model(fn)
     assert m.meta.foo == "bar"
+
+
+def test_on_disk_filename_cleanup(example_asn_path):
+    """
+    Test that re-saving a model after it's "filename" has changed
+    results in a saved file with the new "filename" and that
+    the library removes the old temporary file.
+    """
+    library = ModelLibrary(example_asn_path, on_disk=True)
+    with library:
+        model = library.borrow(0)
+        model.meta.foo = "bar"
+        library.shelve(model, 0)
+
+        old_fn = library._temp_path / "0" / "0.asdf"
+        assert os.path.isfile(old_fn)
+
+        model = library.borrow(0)
+        model.meta.filename = "bar.asdf"
+        library.shelve(model, 0)
+
+        new_fn = library._temp_path / "0" / "bar.asdf"
+        assert os.path.isfile(new_fn)
+        assert not os.path.isfile(old_fn)
 
 
 def test_library_is_not_a_datamodel():
