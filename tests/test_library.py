@@ -1,5 +1,6 @@
 import collections
 import contextlib
+import inspect
 import json
 import os
 from collections.abc import Sequence
@@ -321,37 +322,6 @@ def test_group_with_no_datamodels_open(example_asn_path, attr):
     getattr(library, attr)
 
 
-# @pytest.mark.parametrize(
-#     "asn_group_id, meta_group_id, expected_group_id", [
-#         ('42', None, '42'),
-#         (None, '42', '42'),
-#         ('42', '26', '42'),
-#     ])
-# def test_group_id_override(
-#          example_asn_path, asn_group_id, meta_group_id, expected_group_id):
-#     """
-#     Test that overriding a models group_id via:
-#         - the association member entry
-#         - the model.meta.group_id
-#     overwrites the automatically calculated group_id (with the asn taking precedence)
-#     """
-#     if asn_group_id:
-#         _set_custom_member_attr(example_asn_path, 0, 'group_id', asn_group_id)
-#     if meta_group_id:
-#         model_filename = example_asn_path.parent / '0.fits'
-#         with dm.open(model_filename) as model:
-#             model.meta.group_id = meta_group_id
-#             model.save(model_filename)
-#     library = ModelLibrary(example_asn_path)
-#     group_names = library.group_names
-#     assert len(group_names) == 3
-#     assert expected_group_id in group_names
-#     with library:
-#         model = library[0]
-#         assert model.meta.group_id == expected_group_id
-#         library.discard(0, model)
-
-
 @pytest.mark.parametrize("modify", (True, False))
 def test_model_iteration(example_library, modify):
     """
@@ -574,6 +544,42 @@ def test_on_disk_filename_cleanup(example_asn_path):
         new_fn = library._temp_path / "0" / "bar.asdf"
         assert os.path.isfile(new_fn)
         assert not os.path.isfile(old_fn)
+
+
+def test_map_function(example_library):
+    assert (
+        list(example_library.map_function(lambda m, i: m.meta.group_id)) == _GROUP_IDS
+    )
+
+
+def test_map_function_partial_iteration(example_library):
+    gen = example_library.map_function(lambda m, i: i)
+    assert inspect.isgenerator(gen)
+    assert next(gen) == 0
+
+    # delete the generator here to make sure it's cleaned up without errors
+    # if it's not fully consumed
+    del gen
+
+
+@pytest.mark.parametrize("modify", (True, False))
+def test_map_function_modify(example_asn_path, modify):
+    library = ModelLibrary(example_asn_path, on_disk=True)
+
+    def modify_model(model, index):
+        model.meta.foo = index
+        return index
+
+    assert list(library.map_function(modify_model, modify=modify)) == list(
+        range(_N_MODELS)
+    )
+
+    foos = list(library.map_function(lambda m, i: getattr(m.meta, "foo", None)))
+
+    if modify:
+        assert foos == list(range(_N_MODELS))
+    else:
+        assert foos == [None] * _N_MODELS
 
 
 def test_library_is_not_a_datamodel():
