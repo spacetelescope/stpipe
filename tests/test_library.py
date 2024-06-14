@@ -506,6 +506,20 @@ def test_on_disk_no_overwrite(example_asn_path, on_disk):
         library2.shelve(model, 0)
 
 
+def test_on_disk_directory(example_asn_path, tmp_path):
+    # since example_asn_path already uses the tmp_path fixture make a sub directory
+    tmp = tmp_path / "tmp"
+    os.makedirs(tmp)
+    library = ModelLibrary(example_asn_path, on_disk=True, temp_directory=tmp)
+    with library:
+        model = library.borrow(0)
+        model.meta.foo = "bar"
+        library.shelve(model, 0)
+    fn = tmp / "0" / "0.asdf"
+    m = _load_model(fn)
+    assert m.meta.foo == "bar"
+
+
 def test_library_is_not_a_datamodel():
     assert issubclass(AbstractModelLibrary, AbstractDataModel)
 
