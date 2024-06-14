@@ -546,14 +546,14 @@ def test_on_disk_filename_cleanup(example_asn_path):
         assert not os.path.isfile(old_fn)
 
 
-def test_iter_function(example_library):
+def test_map_function(example_library):
     assert (
-        list(example_library.iter_function(lambda m, i: m.meta.group_id)) == _GROUP_IDS
+        list(example_library.map_function(lambda m, i: m.meta.group_id)) == _GROUP_IDS
     )
 
 
-def test_iter_function_partial_iteration(example_library):
-    gen = example_library.iter_function(lambda m, i: i)
+def test_map_function_partial_iteration(example_library):
+    gen = example_library.map_function(lambda m, i: i)
     assert inspect.isgenerator(gen)
     assert next(gen) == 0
 
@@ -563,18 +563,18 @@ def test_iter_function_partial_iteration(example_library):
 
 
 @pytest.mark.parametrize("modify", (True, False))
-def test_iter_function_modify(example_asn_path, modify):
+def test_map_function_modify(example_asn_path, modify):
     library = ModelLibrary(example_asn_path, on_disk=True)
 
     def modify_model(model, index):
         model.meta.foo = index
         return index
 
-    assert list(library.iter_function(modify_model, modify=modify)) == list(
+    assert list(library.map_function(modify_model, modify=modify)) == list(
         range(_N_MODELS)
     )
 
-    foos = list(library.iter_function(lambda m, i: getattr(m.meta, "foo", None)))
+    foos = list(library.map_function(lambda m, i: getattr(m.meta, "foo", None)))
 
     if modify:
         assert foos == list(range(_N_MODELS))
@@ -606,7 +606,7 @@ def test_save(example_library, tmp_path):
         model.meta.code = f"code_{i}"
         return model.meta.code
 
-    codes = list(example_library.iter_function(assign_code))
+    codes = list(example_library.map_function(assign_code))
 
     output_path = tmp_path / "tmp_output"
     asn_path = example_library.save(output_path)

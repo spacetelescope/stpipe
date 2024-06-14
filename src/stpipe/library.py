@@ -460,7 +460,7 @@ class AbstractModelLibrary(abc.ABC):
                 f"ModelLibrary has {len(self._ledger)} un-returned models"
             )
 
-    def iter_function(self, function, modify=True):
+    def map_function(self, function, modify=True):
         with self:
             for index, model in enumerate(self):
                 try:
