@@ -246,6 +246,20 @@ class AbstractModelLibrary(abc.ABC):
 
     @property
     def asn(self):
+        """
+        Association dictionary used to create the library.
+
+        Note that changes to the models may cause this information
+        to fall "out-of-sync" with the models. For example, borrowing
+        and changing a models "group_id" metadata will not change
+        the "group_id" entry for the member at the same index in the
+        association dictionary returned for this property.
+
+        This is "read-only" to reduce the chances that the
+        information in this dictionary will conflict with
+        the model metadata.
+        """
+
         # return a "read only" association
         def _to_read_only(obj):
             if isinstance(obj, dict):
@@ -258,6 +272,13 @@ class AbstractModelLibrary(abc.ABC):
 
     @property
     def group_names(self):
+        """
+        A ``set`` of association member "group_id" values
+
+        This property (similar to ``asn``) can fall "out-of-sync"
+        with the model metadata. The names returned here will
+        only reflect the "group_id" at the time of library creation.
+        """
         names = set()
         for member in self._members:
             names.add(member["group_id"])
@@ -265,6 +286,15 @@ class AbstractModelLibrary(abc.ABC):
 
     @property
     def group_indices(self):
+        """
+        A ``dict`` with "group_id" as keys. Each value contains
+        a ``list`` of indices of members that shared that "group_id".
+
+        Note that this is based on the member entries in the association
+        used to create the ModelLibrary. Updating the "group_id" of a model
+        in the library will NOT change the values returned by this property
+        (and will not change the association data available at ``asn``).
+        """
         group_dict = {}
         for i, member in enumerate(self._members):
             group_id = member["group_id"]
@@ -277,6 +307,28 @@ class AbstractModelLibrary(abc.ABC):
         return len(self._members)
 
     def borrow(self, index):
+        """
+        "borrow" a model from the library.
+
+        Parameters
+        ----------
+        index : int
+            The index of the model within the library. As the library
+            size does not change this is unique to this model for this
+            library.
+
+        Returns
+        -------
+        model : DataModel
+
+        Raises
+        ------
+        ClosedLibraryError
+            If the library is not "open" (used in a ``with`` context).
+
+        BorrowError
+            If the model at this index is already "borrowed".
+        """
         if not self._open:
             raise ClosedLibraryError("ModelLibrary is not open")
 
@@ -310,6 +362,36 @@ class AbstractModelLibrary(abc.ABC):
         return subpath / model_filename
 
     def shelve(self, model, index=None, modify=True):
+        """
+        "shelve" a model, returning it to the library.
+
+        Parameters
+        ----------
+        model : DataModel
+            DataModel to return to the library at the provided index.
+
+        index : int, optional
+            The index within the library where the model will be stored.
+            If the same model (checked by ``id(model)``) was previously
+            borrowed and the index is not provided, the borrowed index
+            will be used. If providing a new DataModel (one not borrowed
+            from the library) the index must be provided.
+
+        modify : bool, optional, default=True
+            For an "on_disk" library, temporary files will only be written
+            when modify is True. For a library that is not "on_disk"
+            this option has no effect and any modifications made to the model
+            while it was borrowed will persist.
+
+        Raises
+        ------
+        ClosedLibraryError
+            If the library is not "open" (used in a ``with`` context).
+
+        BorrowError
+            If an unknown model is provided (without an index) or
+            if the model at the provided index has not been "borrowed"
+        """
         if not self._open:
             raise ClosedLibraryError("ModelLibrary is not open")
 
@@ -368,12 +450,30 @@ class AbstractModelLibrary(abc.ABC):
 
     def save(self, path, **kwargs):
         """
-        This save is NOT used by Step/Pipeline. This is
-        intentional as the Step/Pipeline has special requirements.
+        .. warning:: This save is NOT used by Step/Pipeline. This is
+                     intentional as the Step/Pipeline has special requirements.
 
         For now this is a very basic "save". It does not:
+
             - check that the library contains no duplicate filenames
             - propagate asn_pool and other non-member asn information
+
+        It will save:
+            - models with filenames determined by ``_model_to_filename``
+            - a very simple association that contains only 1 product that
+              lists ``expname`` ``exptype`` and ``group_id``  for each model
+              in a file named "asn.json".
+
+        Parameters
+        ----------
+        path : Path or str
+            Directory in which to store the models and generated
+            association for this library.
+
+        Returns
+        -------
+        association_path : Path
+            The path to the saved association file.
         """
         if isinstance(path, str):
             path = Path(path)
@@ -403,6 +503,15 @@ class AbstractModelLibrary(abc.ABC):
         Get the "crds_parameters" from either:
             - the first "science" member (based on model.meta.exptype)
             - the first model (if no "science" member is found)
+
+        If no "science" members are found in the library a ``UserWarning``
+        will be issued.
+
+        Returns
+        -------
+        crds_parameters : dict
+            The result of ``get_crds_parameters`` called on the selected
+            model.
         """
         with self:
             science_index = None
@@ -423,16 +532,45 @@ class AbstractModelLibrary(abc.ABC):
         return parameters
 
     def finalize_result(self, step, reference_files_used):
+        """
+        Called from `stpipe.Step.run` after `stpipe.Step.process` has
+        completed. This method will call `stpipe.Step.finalize_result`
+        for each model in the library.
+
+        Parameters
+        ----------
+        step : Step
+            The step calling this method.
+
+        reference_files_used : list
+            List of reference files used during the execution of this
+            step.
+        """
         with self:
             for i, model in enumerate(self):
                 step.finalize_result(model, reference_files_used)
                 self.shelve(model, i)
 
     def __enter__(self):
+        """
+        "open" the library. This is required for any "borrow" and "shelve"
+        calls. While the library is "open" it will track which models are
+        borrowed and raise a `BorrowError` if an attempt is made to close
+        the library before all borrowed models are returned.
+        """
         self._open = True
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        """
+        "close" the library.
+
+        Raises
+        ------
+        BorrowError
+            If the library "closes" and one or more models have not been
+            "shelved" (returned) this exception will be raised.
+        """
         self._open = False
         if exc_value:
             # if there is already an exception, don't worry about checking the ledger
@@ -446,6 +584,32 @@ class AbstractModelLibrary(abc.ABC):
             )
 
     def map_function(self, function, modify=True):
+        """
+        Call a function once for each model in the library.
+
+        Similar to the built-in ``map`` function this applies the
+        function "function" to each model in the library by iterating
+        through the models (yielding on each function call).
+
+        Parameters
+        ----------
+        function : callable
+            A function that accepts 2 arguments, ``model`` and ``index``
+
+        modify : bool, optional, default=True
+            For an "on_disk" library, temporary files will only be written
+            when modify is True. For a library that is not "on_disk"
+            this option has no effect and any modifications made to the model
+            while it was borrowed will persist.
+
+        Returns
+        -------
+        result_iter : generator
+            A generator that will return function results. This can be
+            converted to a list ``list(result_iter)`` to get the results
+            of all the function calls (ordered the same as the models in
+            the library).
+        """
         with self:
             for index, model in enumerate(self):
                 try:
@@ -456,6 +620,23 @@ class AbstractModelLibrary(abc.ABC):
                     self.shelve(model, index, modify)
 
     def _model_to_filename(self, model):
+        """
+        Determine the "filename" for a model. This will be used
+        when writing temporary files (if the library is "on_disk")
+        and for the ``save`` method (see the method for a note about
+        how this is not used for the pipeline code).
+
+        By default this method will return ``model.meta.filename``
+        or "model.asdf" (if ``model.meta.filename`` is None).
+
+        Parameters
+        ----------
+        model : DataModel
+
+        Returns
+        -------
+        filename : str
+        """
         model_filename = model.meta.filename
         if model_filename is None:
             model_filename = "model.asdf"
