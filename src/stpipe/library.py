@@ -480,15 +480,15 @@ class AbstractModelLibrary(abc.ABC):
                 f"ModelLibrary has {len(self._ledger)} un-returned models"
             )
 
-    def map_function(self, function, modify=False):
+    def map_function(self, function, modify=True):
         with self:
-            for i, model in enumerate(self):
+            for index, model in enumerate(self):
                 try:
-                    yield function(model)
+                    yield function(model, index)
                 finally:
                     # this is in a finally to allow cleanup if the generator is
                     # deleted after it finishes (when it's not fully consumed)
-                    self.shelve(model, i, modify)
+                    self.shelve(model, index, modify)
 
     def _model_to_filename(self, model):
         model_filename = model.meta.filename
