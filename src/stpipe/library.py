@@ -196,7 +196,6 @@ class AbstractModelLibrary(abc.ABC):
 
             # init is a list of models
             # make a fake asn from the models
-            filenames = set()
             members = []
             for index, model_or_filename in enumerate(init):
                 if asn_n_members is not None and len(members) == asn_n_members:
@@ -211,25 +210,17 @@ class AbstractModelLibrary(abc.ABC):
                     )
                 else:
                     model = model_or_filename
+
                 exptype = getattr(model.meta, "exptype", "SCIENCE")
 
                 if asn_exptypes is not None and exptype.lower() not in asn_exptypes:
                     continue
 
-                filename = model.meta.filename
-                if filename in filenames:
-                    raise ValueError(
-                        f"Models in library cannot use the same filename: {filename}"
-                    )
-                filenames.add(filename)
-
-                group_id = self._model_to_group_id(model)
-
                 members.append(
                     {
-                        "expname": filename,
+                        "expname": self._model_to_filename(model),
                         "exptype": exptype,
-                        "group_id": group_id,
+                        "group_id": self._model_to_group_id(model),
                     }
                 )
 
