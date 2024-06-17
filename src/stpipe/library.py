@@ -10,7 +10,15 @@ from types import MappingProxyType
 
 import asdf
 
-__all__ = ["LibraryError", "BorrowError", "ClosedLibraryError", "AbstractModelLibrary"]
+from .datamodel import AbstractDataModel
+
+__all__ = [
+    "LibraryError",
+    "BorrowError",
+    "ClosedLibraryError",
+    "NoGroupID",
+    "AbstractModelLibrary",
+]
 
 
 class LibraryError(Exception):
@@ -29,6 +37,12 @@ class ClosedLibraryError(LibraryError):
     """
     Exception indicating a library method was used outside of a
     ``with`` context (that "opens" the library).
+    """
+
+
+class NoGroupID(LibraryError):
+    """
+    Exception to use when a model has no "group_id".
     """
 
 
@@ -103,9 +117,9 @@ class AbstractModelLibrary(abc.ABC):
             # do stuff with the model
             library.shelve(model, 0)  # return the model
 
-    Failing to "open" the library will result in a ClosedLibraryError.
+    Failing to "open" the library will result in a `ClosedLibraryError`.
 
-    Failing to "return" a borrowed model will result in a BorrowError.
+    Failing to "return" a borrowed model will result in a `BorrowError`.
     """
 
     def __init__(
@@ -220,7 +234,7 @@ class AbstractModelLibrary(abc.ABC):
                     {
                         "expname": self._model_to_filename(model),
                         "exptype": exptype,
-                        "group_id": self._model_to_group_id(model),
+                        "group_id": self._to_group_id(model, len(members)),
                     }
                 )
 
@@ -258,10 +272,10 @@ class AbstractModelLibrary(abc.ABC):
         self._asn = asn_data
         self._members = self._asn["products"][0]["members"]
 
-        for member in self._members:
+        for index, member in enumerate(self._members):
             if "group_id" not in member:
                 filename = os.path.join(self._asn_dir, member["expname"])
-                member["group_id"] = self._filename_to_group_id(filename)
+                member["group_id"] = self._to_group_id(filename, index)
 
         if not on_disk:
             # if models were provided as input, assign the members here
@@ -352,10 +366,10 @@ class AbstractModelLibrary(abc.ABC):
 
         Raises
         ------
-        ClosedLibraryError
+        `ClosedLibraryError`
             If the library is not "open" (used in a ``with`` context).
 
-        BorrowError
+        `BorrowError`
             If the model at this index is already "borrowed".
         """
         if not self._open:
@@ -418,10 +432,10 @@ class AbstractModelLibrary(abc.ABC):
 
         Raises
         ------
-        ClosedLibraryError
+        `ClosedLibraryError`
             If the library is not "open" (used in a ``with`` context).
 
-        BorrowError
+        `BorrowError`
             If an unknown model is provided (without an index) or
             if the model at the provided index has not been "borrowed"
         """
@@ -658,7 +672,7 @@ class AbstractModelLibrary(abc.ABC):
 
         Raises
         ------
-        BorrowError
+        `BorrowError`
             If the library "closes" and one or more models have not been
             "shelved" (returned) this exception will be raised.
         """
@@ -733,6 +747,17 @@ class AbstractModelLibrary(abc.ABC):
             model_filename = "model.asdf"
         return model_filename
 
+    def _to_group_id(self, model_or_filename, index):
+        if isinstance(model_or_filename, AbstractDataModel):
+            getter = self._model_to_group_id
+        else:
+            getter = self._filename_to_group_id
+
+        try:
+            return getter(model_or_filename)
+        except NoGroupID:
+            return f"exposure{index + 1:04d}"
+
     @property
     @abc.abstractmethod
     def crds_observatory(self):
@@ -783,6 +808,9 @@ class AbstractModelLibrary(abc.ABC):
         a DataModel and instead take "short-cuts" to read only
         the "group_id" (from FITS or ASDF headers).
 
+        If no "group_id" can be determined `NoGroupID` should be
+        raised (to allow the library to assign a unique "group_id").
+
         Parameters
         ----------
         filename : str or Path
@@ -804,6 +832,9 @@ class AbstractModelLibrary(abc.ABC):
         the library is created from a list of models. In this case the
         models are all in memory and this method can use the in memory
         DataModel to determine the "group_id" (likely `model.meta.group_id`).
+
+        If no "group_id" can be determined `NoGroupID` should be
+        raised (to allow the library to assign a unique "group_id").
 
         Parameters
         ----------
