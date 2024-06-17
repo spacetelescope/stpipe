@@ -13,6 +13,7 @@ from stpipe.library import (
     AbstractModelLibrary,
     BorrowError,
     ClosedLibraryError,
+    NoGroupID,
     _Ledger,
 )
 
@@ -72,10 +73,14 @@ class ModelLibrary(AbstractModelLibrary):
 
     def _filename_to_group_id(self, filename):
         with asdf.open(filename) as af:
-            return af["group_id"]
+            if "group_id" in af:
+                return af["group_id"]
+            raise NoGroupID(f"{filename} missing group_id")
 
     def _model_to_group_id(self, model):
-        return getattr(model.meta, "filename", model.meta.group_id)
+        if hasattr(model.meta, "group_id"):
+            return model.meta.group_id
+        raise NoGroupID(f"{model} missing group_id")
 
 
 def _library_to_models(library):
@@ -322,7 +327,30 @@ def test_group_indices(example_library):
                 example_library.shelve(model, index, modify=False)
 
 
-@pytest.mark.parametrize("attr", ["group_names", "group_indices"])
+@pytest.mark.parametrize("from_file", (True, False))
+def test_group_id_fallback(example_asn_path, from_file):
+    """
+    Test that a _model_to_group_id and _filename_to_group_id
+    can raise NoGroupID to trigger the library to assign
+    a default (unique) group id.
+    """
+    asn_data = _load_asn(example_asn_path)
+    bfn = asn_data["products"][0]["members"][0]["expname"]
+    mfn = example_asn_path.parent / bfn
+    m = _load_model(mfn)
+    delattr(m.meta, "group_id")
+    if from_file:
+        m.save(mfn)
+        library = ModelLibrary(example_asn_path)
+    else:
+        library = ModelLibrary([m])
+    with library:
+        m = library.borrow(0)
+        assert m.meta.group_id == "exposure0001"
+        library.shelve(m, 0, modify=False)
+
+
+@pytest.mark.parametrize("attr", ("group_names", "group_indices"))
 def test_group_with_no_datamodels_open(example_asn_path, attr):
     """
     Test that the "grouping" methods do not call datamodels.open
