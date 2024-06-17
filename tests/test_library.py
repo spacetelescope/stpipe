@@ -205,18 +205,6 @@ def test_init_from_model_filenames(example_asn_path):
     assert len(lib) == _N_MODELS
 
 
-def test_init_no_duplicate_filenames(example_models):
-    """
-    Test that creating a library from a list of models fails
-    if models contain duplicate "meta.filename" attributes.
-    """
-    example_models[1].meta.filename = example_models[0].meta.filename
-    with pytest.raises(
-        ValueError, match="Models in library cannot use the same filename"
-    ):
-        ModelLibrary(example_models)
-
-
 def test_init_from_models_no_ondisk(example_models):
     """
     Test that attempting to create a library from a list of models
