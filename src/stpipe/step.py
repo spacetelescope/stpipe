@@ -1008,14 +1008,16 @@ class Step:
             output_paths = []
             with model:
                 for i, m in enumerate(model):
-                    output_paths.append(self.save_model(
-                        m,
-                        idx=i,
-                        suffix=suffix,
-                        force=force,
-                        format=format,
-                        **components,
-                    ))
+                    output_paths.append(
+                        self.save_model(
+                            m,
+                            idx=i,
+                            suffix=suffix,
+                            force=force,
+                            format=format,
+                            **components,
+                        )
+                    )
                     # leaving modify=True in case saving modify the file
                     model.shelve(m, i)
             return output_paths
