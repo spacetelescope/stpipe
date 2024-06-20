@@ -1005,18 +1005,20 @@ class Step:
             # - it's use from save_results provides
             #   - name_format (ignored)
             #   - idx (ignored)
+            output_paths = []
             with model:
                 for i, m in enumerate(model):
-                    self.save_model(
-                        model,
+                    output_paths.append(self.save_model(
+                        m,
                         idx=i,
                         suffix=suffix,
                         force=force,
                         format=format,
                         **components,
-                    )
+                    ))
                     # leaving modify=True in case saving modify the file
                     model.shelve(m, i)
+            return output_paths
         elif isinstance(model, Sequence):
             save_model_func = partial(
                 self.save_model,
