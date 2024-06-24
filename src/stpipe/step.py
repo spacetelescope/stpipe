@@ -60,12 +60,6 @@ class Step:
     # name.  Must be globally unique!
     class_alias = None
 
-    # String defining the format of the output name, which defines how
-    # **components are inserted into the output file name. If None, use the
-    # default formatting, which is to append Step.suffix to the name. If False,
-    # use basepath as its own format string, containing {suffix}.
-    name_format = None
-
     # Correction parameters. These store and use whatever information a Step
     # may need to perform its operations without re-calculating, or to use
     # from a previous run of the Step.  The structure is up to each Step.
@@ -550,12 +544,10 @@ class Step:
                         if len(results_to_save) <= 1:
                             idx = None
                         if isinstance(result, AbstractDataModel):
-                            self.save_model(result, idx=idx, format=self.name_format)
+                            self.save_model(result, idx=idx)
                         elif hasattr(result, "save"):
                             try:
-                                output_path = self.make_output_path(
-                                    idx=idx, name_format=self.name_format
-                                )
+                                output_path = self.make_output_path(idx=idx)
                             except AttributeError:
                                 self.log.warning(
                                     "`save_results` has been requested, but cannot"
@@ -630,13 +622,6 @@ class Step:
         NotImplementedError exception.
         """
         raise NotImplementedError("Steps have to override process().")
-
-    def resolve_file_name(self, file_name):
-        """
-        Resolve a file name expressed relative to this Step's
-        configuration file.
-        """
-        return join(dirname(self.config_file or ""), file_name)
 
     @classmethod
     def call(cls, *args, **kwargs):
@@ -906,20 +891,6 @@ class Step:
         logger.debug("No %s reference files found.", reftype.upper())
         return config_parser.ConfigObj()
 
-    @classmethod
-    def reference_uri_to_cache_path(cls, reference_uri, observatory):
-        """Convert an abstract CRDS reference URI to an absolute file path in the CRDS
-        cache.  Reference URI's are typically output to dataset headers to record the
-        reference files used.
-
-        e.g. 'crds://jwst_miri_flat_0177.fits'  -->
-            '/grp/crds/cache/references/jwst/jwst_miri_flat_0177.fits'
-
-        The CRDS cache is typically located relative to env var CRDS_PATH
-        with default value /grp/crds/cache.   See also https://jwst-crds.stsci.edu
-        """
-        return crds_client.reference_uri_to_cache_path(reference_uri, observatory)
-
     def set_primary_input(self, obj, exclusive=True):
         """
         Sets the name of the master input file and input directory.
@@ -957,7 +928,6 @@ class Step:
         idx=None,
         output_file=None,
         force=False,
-        format=None,  # noqa: A002
         **components,
     ):
         """
@@ -982,13 +952,6 @@ class Step:
             Regardless of whether `save_results` is `False`
             and no `output_file` is specified, try saving.
 
-        format : str
-            The format of the file name.  This is a format
-            string that defines where `suffix` and the other
-            components go in the file name. If False,
-            it will be presumed `output_file` will have
-            all the necessary formatting.
-
         components : dict
             Other components to add to the file name.
 
@@ -1009,7 +972,6 @@ class Step:
                 self.save_model,
                 suffix=suffix,
                 force=force,
-                format=format,
                 **components,
             )
             output_path = model.save(
@@ -1028,7 +990,6 @@ class Step:
                     basepath=output_file,
                     suffix=suffix,
                     idx=idx,
-                    name_format=format,
                     **components,
                 )
             )
@@ -1048,9 +1009,6 @@ class Step:
         basepath=None,
         ext=None,
         suffix=None,
-        name_format=None,
-        component_format="",
-        separator="_",
         **components,
     ):
         """Create the output path
@@ -1074,17 +1032,6 @@ class Step:
             If None, the `Step` default will be used.
             If False, no suffix replacement will be done.
 
-        name_format : str or None
-            The format string to use to form the base name.
-            If False, it will be presumed that `basepath`
-            has all the necessary formatting.
-
-        component_format : str
-            Format to use for the components
-
-        separator : str
-            Separator to use between replacement components
-
         components : dict
             dict of string replacements.
 
@@ -1095,10 +1042,10 @@ class Step:
         Notes
         -----
         The values found in the `components` dict are placed in the string
-        where the "{components}" replacement field is specified. If there are
-        more than one component, the components are separated by the `separator`
-        string.
+        where the "{components}" replacement field is specified separated by
+        underscores.
         """
+        separator = "_"
         if basepath is None and step.search_output_file:
             basepath = step.search_attr("output_file")
         if basepath is None:
@@ -1128,25 +1075,18 @@ class Step:
             suffix_sep = None
 
         # Setup formatting
-        if name_format is None:
-            name_format = default_name_format
-        elif not name_format:
-            name_format = basename + ".{ext}"
-            basename = ""
-            suffix_sep = ""
-            separator = ""
         formatter = FormatTemplate(
             separator=separator,
             remove_unused=True,
         )
 
         if len(components):
-            component_str = formatter(component_format, **components)
+            component_str = formatter("", **components)
         else:
             component_str = ""
 
         basename = formatter(
-            name_format,
+            default_name_format,
             basename=basename,
             suffix=suffix,
             suffix_sep=suffix_sep,
