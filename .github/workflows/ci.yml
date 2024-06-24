@@ -19,17 +19,17 @@ concurrency:
 
 jobs:
   test:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
+    uses: zacharyburnett/github-actions-workflows/.github/workflows/tox.yml@tox/coverage_github_actions
     with:
       envs: |
         - linux: py310-oldestdeps-cov-xdist
         - linux: py310-xdist
         - macos: py311-xdist
         - linux: py311-cov-xdist
-          coverage: 'codecov'
         - linux: py311-downstreamdeps-cov-xdist
-          coverage: 'codecov'
-        - linux: py312-xdist-nolegacypath
+          coverage: github
+        - linux: py312-nolegacypath-cov-xdist
+          coverage: github
   test_downstream:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
     with:
