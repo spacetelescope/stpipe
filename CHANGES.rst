@@ -1,4 +1,9 @@
-0.6.0 (unreleased)
+0.6.1 (unreleased)
+==================
+
+-
+
+0.6.0 (2024-01-24)
 ==================
 
 - Remove unused ``Step.closeout`` [#152]
