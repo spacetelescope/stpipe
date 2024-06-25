@@ -40,3 +40,20 @@ jobs:
       envs: |
         - linux: py311-jwst-xdist
         - linux: py311-romancal-xdist
+  report_diff_coverage:
+    needs: [ test ]
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+      - run: pip install diff-cover coverage
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: pip install .
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ".coverage*"
+          merge-multiple: true
+      - run: coverage xml
+      - run: diff-cover coverage.xml --compare-branch origin/${{ github.base_ref }} --markdown-report $GITHUB_STEP_SUMMARY
