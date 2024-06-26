@@ -6,7 +6,7 @@ on:
       - main
     tags:
       - "*"
-  pull_request:
+  pull_request_target:
   schedule:
     # Weekly Monday 9AM build
     # * is a special character in YAML so you have to quote this string
@@ -44,7 +44,7 @@ jobs:
         - linux: py311-romancal-xdist
   report_diff_coverage:
     needs: [ test ]
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request_target'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-python@v5
