@@ -59,3 +59,10 @@ jobs:
           merge-multiple: true
       - run: coverage xml
       - run: diff-cover coverage.xml --compare-branch origin/${{ github.base_ref }} --markdown-report $GITHUB_STEP_SUMMARY
+      - run: echo "report=$(cat $GITHUB_STEP_SUMMARY)" >> $GITHUB_OUTPUT
+        id: diff-coverage-report
+      - uses: thollander/actions-comment-pull-request@v2.5.0
+        with:
+          message: ${{ steps.diff-coverage-report.outputs.report }}
+          pr_number: ${{ github.event.number }}
+          comment_tag: diff-coverage
