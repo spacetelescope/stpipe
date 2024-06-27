@@ -25,6 +25,5 @@ jobs:
     with:
       envs: |
         - macos: py310-xdist
-        - windows: py311-xdist
         - linux: py3-devdeps-xdist
         - macos: py3-devdeps-xdist

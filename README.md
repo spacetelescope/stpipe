@@ -4,3 +4,6 @@
 [![codecov](https://codecov.io/gh/spacetelescope/stpipe/branch/main/graph/badge.svg?token=Mm9I0X1o4X)](https://codecov.io/gh/spacetelescope/stpipe)
 
 Provides base classes and command-line tools for implementing calibration pipeline software.
+
+> [!NOTE]
+> Linux and MacOS platforms are tested and supported.  Windows is not currently supported.
