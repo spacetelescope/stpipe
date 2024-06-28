@@ -543,7 +543,9 @@ class Step:
                             self.save_model(result, idx=idx)
                         else:
                             if hasattr(result, "save"):
-                                raise Exception(f"non-datamodel result with a save: {result}")
+                                raise Exception(
+                                    f"non-datamodel result with a save: {result}"
+                                )
                                 # what has "save"? Does anything ever reach this code
                 if not self.skip:
                     self.log.info("Step %s done", self.name)
