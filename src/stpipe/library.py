@@ -208,14 +208,16 @@ class AbstractModelLibrary(abc.ABC):
             if on_disk:
                 raise ValueError("on_disk cannot be used for a list of models")
 
-            # init is a list of models
+            # init is a list of models, this type of input ignores much of
+            # the benefits of this class but is common in test code.
+
             # make a fake asn from the models
             members = []
             for index, model_or_filename in enumerate(init):
                 if asn_n_members is not None and len(members) == asn_n_members:
                     break
                 if isinstance(model_or_filename, (str, Path)):
-                    # TODO supporting a list of filenames by opening them as models
+                    # Supporting a list of filenames by opening them as models
                     # has issues, if this is a widely supported mode (vs providing
                     # an association) it might make the most sense to make a fake
                     # association with the filenames at load time.
@@ -244,9 +246,8 @@ class AbstractModelLibrary(abc.ABC):
             asn_exptypes = None
             asn_n_members = None
 
-            # make a fake association
+            # make a very limited fake association
             asn_data = {
-                # TODO other asn information?
                 "products": [
                     {
                         "members": members,

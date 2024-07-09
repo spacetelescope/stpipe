@@ -536,7 +536,6 @@ class Step:
 
                 # Update meta information
                 if isinstance(step_result, AbstractModelLibrary):
-                    # TODO: can this be combined with the below "save_results"?
                     step_result.finalize_result(self, self._reference_files_used)
                 else:
                     if not isinstance(step_result, Sequence):
@@ -568,7 +567,6 @@ class Step:
                         ):
                             self.save_model(result, idx=idx)
                         elif hasattr(result, "save"):
-                            # TODO: is this ever used?
                             try:
                                 output_path = self.make_output_path(idx=idx)
                             except AttributeError:
@@ -771,7 +769,6 @@ class Step:
         """
         override_name = crds_client.get_override_name(reference_file_type)
         path = getattr(self, override_name, None)
-        # TODO: not sure if this needs updating for ModelLibrary...
         if isinstance(path, AbstractDataModel):
             return path
 
@@ -801,7 +798,6 @@ class Step:
         reference_file : path of reference file,  a string
         """
         override = self.get_ref_override(reference_file_type)
-        # TODO: not sure if this needs updating for ModelLibrary...
         if override is not None:
             if isinstance(override, AbstractDataModel):
                 self._reference_files_used.append(
@@ -940,9 +936,6 @@ class Step:
                 self._input_filename = str(obj)
             elif isinstance(obj, AbstractDataModel):
                 try:
-                    # TODO: I believe (but haven't confirmed) that this fails
-                    # for ModelContainer. Check this and figure out if there
-                    # is anything that could be done for ModelLibrary
                     self._input_filename = obj.meta.filename
                 except AttributeError:
                     self.log.debug(err_message)
@@ -995,16 +988,7 @@ class Step:
         if not force and not self.save_results and not output_file:
             return None
 
-        # FIXME this again has special handling of ModelContainer/Sequence
-        # where when called during results saving will create a partial
-        # and pass it to ModelContainer.save
         if isinstance(model, AbstractModelLibrary):
-            # FIXME ModelContainer...
-            # - ignored idx
-            # - provided a save_model_func so output_file is ignored
-            # - it's use from save_results provides
-            #   - name_format (ignored)
-            #   - idx (ignored)
             output_paths = []
             with model:
                 for i, m in enumerate(model):
