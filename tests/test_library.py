@@ -737,7 +737,7 @@ def test_save(example_library, tmp_path, as_str):
     codes = list(example_library.map_function(assign_code))
 
     output_path = tmp_path / "tmp_output"
-    asn_path = example_library.save(output_path)
+    asn_path = example_library._save(output_path)
 
     if as_str:
         dst = str(asn_path)
@@ -770,13 +770,13 @@ def test_ledger():
     assert len(ledger) == 0
 
 
-def test_library_is_not_a_datamodel():
+def test_library_datamodel_relationship():
     """
     Smoke test to make sure the relationship between
     AbstractModelLibrary and AbstractDataModel doesn't
     change.
     """
-    assert issubclass(AbstractModelLibrary, AbstractDataModel)
+    assert not issubclass(AbstractModelLibrary, AbstractDataModel)
 
 
 def test_library_is_not_sequence():

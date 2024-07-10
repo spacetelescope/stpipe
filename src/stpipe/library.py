@@ -568,7 +568,7 @@ class AbstractModelLibrary(abc.ABC):
 
         return model
 
-    def save(self, path, **kwargs):
+    def _save(self, path, **kwargs):
         """
         .. warning:: This save is NOT used by Step/Pipeline. This is
                      intentional as the Step/Pipeline has special requirements.
