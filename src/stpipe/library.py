@@ -199,6 +199,7 @@ class AbstractModelLibrary(abc.ABC):
             # load association
             asn_data = self._load_asn(asn_path)
         elif isinstance(init, MutableMapping):
+            # init is an association "dictionary"
             # we will modify the asn below so do a deep copy
             asn_data = copy.deepcopy(init)
             self._asn_dir = os.path.abspath(".")
@@ -354,6 +355,12 @@ class AbstractModelLibrary(abc.ABC):
         """
         "borrow" a model from the library.
 
+        Every model "borrowed" from the library must be returned before
+        the library is closed (see the exceptions described below).
+
+        For an "on_disk" library a calling this function will cause
+        the corresponding model to be loaded from disk.
+
         Parameters
         ----------
         index : int
@@ -380,7 +387,6 @@ class AbstractModelLibrary(abc.ABC):
         if index in self._ledger:
             raise BorrowError("Attempt to double-borrow model")
 
-        # if this model is in memory, return it
         if self._on_disk:
             if index in self._temp_filenames:
                 model = self._datamodels_open(
@@ -390,6 +396,7 @@ class AbstractModelLibrary(abc.ABC):
                 model = self._load_member(index)
         else:
             if index in self._loaded_models:
+                # if this model is in memory, return it
                 model = self._loaded_models[index]
             else:
                 model = self._load_member(index)
@@ -412,6 +419,12 @@ class AbstractModelLibrary(abc.ABC):
     def shelve(self, model, index=None, modify=True):
         """
         "shelve" a model, returning it to the library.
+
+        All borrowed models must be "shelved" before the library is
+        closed (see notes about exceptions below).
+
+        For an "on_disk" model shelving a model may cause
+        a temporary file to be written (see "modify" below).
 
         Parameters
         ----------
