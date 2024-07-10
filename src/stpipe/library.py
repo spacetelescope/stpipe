@@ -423,7 +423,8 @@ class AbstractModelLibrary(abc.ABC):
             If the same model (checked by ``id(model)``) was previously
             borrowed and the index is not provided, the borrowed index
             will be used. If providing a new DataModel (one not borrowed
-            from the library) the index must be provided.
+            from the library) the index must be provided, and the new
+            model replaces the prior model at that index.
 
         modify : bool, optional, default=True
             For an "on_disk" library, temporary files will only be written
