@@ -7,8 +7,7 @@ class Command(abc.ABC):
     be added to the _COMMAND_CLASSES list in core.py.
     """
 
-    @abc.classmethod
-    @abc.abstractmethod
+    @classmethod
     def get_name(cls):
         """
         Get this command's name (the first argument to stpipe).
@@ -18,8 +17,7 @@ class Command(abc.ABC):
         str
         """
 
-    @abc.classmethod
-    @abc.abstractmethod
+    @classmethod
     def add_subparser(cls, subparsers):
         """
         Add this command's parser to the stpipe subparsers.
@@ -29,8 +27,7 @@ class Command(abc.ABC):
         subparsers : argparse._SubParsersAction
         """
 
-    @abc.classmethod
-    @abc.abstractmethod
+    @classmethod
     def run(cls, args):
         """
         Run the command with the specified arguments.
