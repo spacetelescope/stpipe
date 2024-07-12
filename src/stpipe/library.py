@@ -198,6 +198,9 @@ class AbstractModelLibrary(abc.ABC):
 
             # load association
             asn_data = self._load_asn(asn_path)
+
+            # store the basename of the input file as the table_name
+            asn_data["table_name"] = os.path.basename(asn_path)
         elif isinstance(init, MutableMapping):
             # init is an association "dictionary"
             # we will modify the asn below so do a deep copy
@@ -540,8 +543,10 @@ class AbstractModelLibrary(abc.ABC):
         if not hasattr(model.meta, "asn"):
             model.meta.asn = {}
 
-        model.meta.asn["table_name"] = self.asn.get("table_name", "")
-        model.meta.asn["pool_name"] = self.asn.get("asn_pool", "")
+        if "table_name" in self.asn:
+            model.meta.asn["table_name"] = self.asn["table_name"]
+        if "asn_pool" in self.asn:
+            model.meta.asn["pool_name"] = self.asn["asn_pool"]
 
     def _load_member(self, index):
         """
