@@ -7,6 +7,7 @@ class Command(abc.ABC):
     be added to the _COMMAND_CLASSES list in core.py.
     """
 
+    @abc.abstractmethod
     @classmethod
     def get_name(cls):
         """
@@ -17,6 +18,7 @@ class Command(abc.ABC):
         str
         """
 
+    @abc.abstractmethod
     @classmethod
     def add_subparser(cls, subparsers):
         """
@@ -27,6 +29,7 @@ class Command(abc.ABC):
         subparsers : argparse._SubParsersAction
         """
 
+    @abc.abstractmethod
     @classmethod
     def run(cls, args):
         """
