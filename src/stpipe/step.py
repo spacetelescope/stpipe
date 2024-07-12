@@ -998,7 +998,6 @@ class Step:
                             idx=i,
                             suffix=suffix,
                             force=force,
-                            format=format,
                             **components,
                         )
                     )
