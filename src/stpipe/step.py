@@ -34,6 +34,7 @@ except ImportError:
 from . import config, config_parser, crds_client, log, utilities
 from .datamodel import AbstractDataModel
 from .format_template import FormatTemplate
+from .library import AbstractModelLibrary
 from .utilities import _not_set
 
 
@@ -86,7 +87,7 @@ class Step:
         return f"pars-{cls.__name__.lower()}"
 
     @classmethod
-    def merge_config(cls, config, config_file):  # noqa: ARG003
+    def merge_config(cls, config, config_file):
         return config
 
     @classmethod
@@ -189,7 +190,7 @@ class Step:
     def _parse_class_and_name(
         cls,
         config,
-        parent=None,  # noqa: ARG003
+        parent=None,
         name=None,
         config_file=None,
     ):
@@ -471,7 +472,22 @@ class Step:
                 # Run the Step-specific code.
                 if self.skip:
                     self.log.info("Step skipped.")
-                    if isinstance(args[0], AbstractDataModel):
+                    if isinstance(args[0], AbstractModelLibrary):
+                        library = args[0]
+                        with library:
+                            for i, model in enumerate(library):
+                                try:
+                                    setattr(
+                                        model.meta.cal_step, self.class_alias, "SKIPPED"
+                                    )
+                                except AttributeError as e:
+                                    self.log.info(
+                                        "Could not record skip into DataModel "
+                                        "header: %s",
+                                        e,
+                                    )
+                                library.shelve(model, i)
+                    elif isinstance(args[0], AbstractDataModel):
                         if self.class_alias is not None:
                             if isinstance(args[0], Sequence):
                                 for model in args[0]:
@@ -519,16 +535,19 @@ class Step:
                         step_result = hook_results
 
                 # Update meta information
-                if not isinstance(step_result, Sequence):
-                    results = [step_result]
+                if isinstance(step_result, AbstractModelLibrary):
+                    step_result.finalize_result(self, self._reference_files_used)
                 else:
-                    results = step_result
+                    if not isinstance(step_result, Sequence):
+                        results = [step_result]
+                    else:
+                        results = step_result
 
-                # The finalize_result hook allows subclasses to add
-                # metadata (like the cal code package version) before
-                # the result is saved.
-                for result in results:
-                    self.finalize_result(result, self._reference_files_used)
+                    # The finalize_result hook allows subclasses to add
+                    # metadata (like the cal code package version) before
+                    # the result is saved.
+                    for result in results:
+                        self.finalize_result(result, self._reference_files_used)
 
                 self._reference_files_used = []
 
@@ -543,7 +562,9 @@ class Step:
                     for idx, result in enumerate(results_to_save):
                         if len(results_to_save) <= 1:
                             idx = None
-                        if isinstance(result, AbstractDataModel):
+                        if isinstance(
+                            result, (AbstractDataModel | AbstractModelLibrary)
+                        ):
                             self.save_model(result, idx=idx)
                         elif hasattr(result, "save"):
                             try:
@@ -967,7 +988,23 @@ class Step:
         if not force and not self.save_results and not output_file:
             return None
 
-        if isinstance(model, Sequence):
+        if isinstance(model, AbstractModelLibrary):
+            output_paths = []
+            with model:
+                for i, m in enumerate(model):
+                    output_paths.append(
+                        self.save_model(
+                            m,
+                            idx=i,
+                            suffix=suffix,
+                            force=force,
+                            **components,
+                        )
+                    )
+                    # leaving modify=True in case saving modify the file
+                    model.shelve(m, i)
+            return output_paths
+        elif isinstance(model, Sequence):
             save_model_func = partial(
                 self.save_model,
                 suffix=suffix,
