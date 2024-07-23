@@ -280,18 +280,23 @@ class RecordingHandler(logging.Handler):
         return self._log_records
 
     def emit(self, record):
-        self._log_records.append(record)
+        if self.formatter is not None:
+            self._log_records.append(self.formatter.format(record))
 
 
 @contextmanager
-def record_logs(level=logging.NOTSET):
-    handler = RecordingHandler(level=level)
-    logger = getLogger(STPIPE_ROOT_LOGGER)
-    logger.addHandler(handler)
-    try:
-        yield handler.log_records
-    finally:
-        logger.removeHandler(handler)
+def record_logs(level=logging.NOTSET, formatter=None):
+    if formatter is None:
+        yield []
+    else:
+        handler = RecordingHandler(level=level)
+        handler.setFormatter(formatter)
+        logger = getLogger(STPIPE_ROOT_LOGGER)
+        logger.addHandler(handler)
+        try:
+            yield handler.log_records
+        finally:
+            logger.removeHandler(handler)
 
 
 # Install the delegation handler on the root logger.  The Step class
