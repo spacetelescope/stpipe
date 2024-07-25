@@ -51,6 +51,7 @@ class LoggingPipeline(Pipeline):
         str1 = string(default='default')
         output_ext = string(default='simplestep')
     """
+    _log_records_formatter = logging.Formatter("%(message)s")
 
     def process(self):
         self.log.warning("This step has called out a warning.")
@@ -409,6 +410,4 @@ def test_log_records():
     pipeline = LoggingPipeline()
     pipeline.run()
 
-    assert any(
-        r.message == "This step has called out a warning." for r in pipeline.log_records
-    )
+    assert any(r == "This step has called out a warning." for r in pipeline.log_records)
