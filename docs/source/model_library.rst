@@ -142,6 +142,102 @@ performed on the association metadata).
    >>> library.asn["products"][0]["name"]
    >>> library.asn["table_name"]
 
+.. _library_usage_patterns:
+
+Usage Patterns
+==============
+
+What follows is a section about using `~stpipe.library.AbstractModelLibrary`
+in `~stpipe.step.Step` and `~stpipe.pipeline.Pipeline` code. This section
+is short at the moment and can be extended with additional patterns as
+the `~stpipe.library.AbstractModelLibrary` is used in more pipeline code.
+
+.. _library_step_input_handling:
+
+Step input handling
+-------------------
+
+It is recommended that any `~stpipe.step.Step` (or `~stpipe.pipeline.Pipeline`)
+that accept an
+`~stpipe.library.AbstractModelLibrary` consider the performance when
+processing the input. It likely makese sense for any `~stpipe.step.Step`
+that accepts a `~stpipe.library.AbstractModelLibrary` to also accept
+an association filename as an input. The basic input handling could look
+something like the following:
+
+.. code-block:: pycon
+
+   >>> def process(self, init):
+   ...     if isinstance(init, ModelLibrary):
+   ...         library = init  # do not copy the input ModelLibrary
+   ...     else:
+   ...         library = ModelLibrary(init, self.on_disk)
+   ...     # process library without making a copy as
+   ...     # that would lead to 2x required file space for
+   ...     # an "on disk" model and 2x the memory for an "in memory"
+   ...     # model
+   ...     return library
+
+The above pattern supports as input (``init``):
+
+- an `~stpipe.library.AbstractModelLibrary`
+- an association filename (via the `~stpipe.library.AbstractModelLibrary` constructor)
+- all other inputs supported by the `~stpipe.library.AbstractModelLibrary` constructor
+
+It is generally recommended to expose ``on_disk`` in the ``Step.spec``
+allowing the `~stpipe.step.Step` to generate an :ref:`library_on_disk`
+`~stpipe.library.AbstractModelLibrary`:
+
+.. code-block:: pycon
+
+   >>> class MyStep(Step):
+   ...     spec = """
+   ...         on_disk = boolean(default=False)  # keep models "on disk" to reduce RAM usage
+   ...     """
+
+.. NOTE::
+   As mentioned in :ref:`library_on_disk` at no point will the input files
+   referenced in the association be modified. However, the above pattern
+   does allow ``Step.process`` to "modify" ``init`` when
+   ``init`` is a `~stpipe.library.AbstractModelLibrary` (the models
+   in the library will not be copied).
+
+``Step.process`` can extend the above pattern to
+support additional inputs (for example a single
+`~stpipe.datamodel.AbstractDataModel` or filename containing
+a `~stpipe.datamodel.AbstractDataModel`) to allow more
+flexible data processings. Although some consideration
+should be given to how to handle input that does not
+contain association metadata. Does it make sense
+to construct a `~stpipe.library.AbstractModelLibrary` when the
+association metadata is made up? Alternatively, is
+it safer (less prone to misattribution of metadata)
+to have the step process the inputs separately
+(more on this below)?
+
+.. _library_isolated_processing:
+
+Isolated Processing
+-------------------
+
+Let's say we have a `~stpipe.step.Step`, ``flux_calibration``
+that performs an operation that is only concerned with the data
+for a single `~stpipe.datamodel.AbstractDataModel` at a time.
+This step applies a function ``calibrate_model_flux`` that
+accepts a single `~stpipe.datamodel.AbstractDataModel` and index as an input.
+It's ``Step.process`` function can make good use of
+`~stpipe.library.AbstractModelLibrary.map_function` to apply
+this method to each model in the library.
+
+.. code-block:: pycon
+
+   >>> class FluxCalibration(Step):
+   ...     spec = "..." # use spec defined above
+   ...     def process(self, init):
+   ...         # see input pattern described above
+   ...         # list is used here to consume the generator produced by map_function
+   ...         list(library.map_function(calibrate_model_flux))
+   ...         return library
 
 .. _library_troubleshooting:
 
