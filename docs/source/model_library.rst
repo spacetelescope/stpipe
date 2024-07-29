@@ -26,8 +26,8 @@ Most commonly an instance will be created from an association file:
    >>> library = ModelLibrary("my_asn.json")
 
 .. NOTE::
-   For an association that contains a ``group_id`` for each member,
-   creating a library will not read any models.
+    Creating a library does not read any models into memory,
+    as long as the association contains a ``group_id`` for each member
 
 .. _library_borrowing_and_shelving:
 
@@ -62,7 +62,7 @@ On Disk Mode
 
 For large associations (like those larger than memory) it is important
 that the library avoid reading all models at once. The borrow/shelve API
-above maps closely to the loading/saving of input (or tempoary) files
+above maps closely to the loading/saving of input (or temporary) files
 containing the models.
 
 .. code-block:: pycon
@@ -77,7 +77,7 @@ containing the models.
    point will the library overwrite the input file.
 
 If model is not modified during the time it's borrowed (for example if the
-``model.dq`` array was read, but not modified). It is helpful to tell the
+``model.dq`` array was read, but not modified), it is helpful to tell the
 library that the model was not modified.
 
 .. code-block:: pycon
@@ -87,7 +87,7 @@ library that the model was not modified.
    ...     # do some read-only stuff with the model
    ...     library.shelve(model, modify=False)  # No temporary file will be written
 
-This can dramatically reduce the number of times a file is written saving
+This tells the library not to overwrite the model's temporary file while shelving, saving
 on both disk space and the time required to write.
 
 
@@ -160,7 +160,7 @@ Step input handling
 It is recommended that any `~stpipe.step.Step` (or `~stpipe.pipeline.Pipeline`)
 that accept an
 `~stpipe.library.AbstractModelLibrary` consider the performance when
-processing the input. It likely makese sense for any `~stpipe.step.Step`
+processing the input. It likely makes sense for any `~stpipe.step.Step`
 that accepts a `~stpipe.library.AbstractModelLibrary` to also accept
 an association filename as an input. The basic input handling could look
 something like the following:
@@ -206,7 +206,7 @@ allowing the `~stpipe.step.Step` to generate an :ref:`library_on_disk`
 support additional inputs (for example a single
 `~stpipe.datamodel.AbstractDataModel` or filename containing
 a `~stpipe.datamodel.AbstractDataModel`) to allow more
-flexible data processings. Although some consideration
+flexible data processings, although some consideration
 should be given to how to handle input that does not
 contain association metadata. Does it make sense
 to construct a `~stpipe.library.AbstractModelLibrary` when the
@@ -400,7 +400,8 @@ container unchanged for other steps.
 A survey of container usage was performed with a few key findings:
 
 - Many uses could be replaced by simpler containers (lists)
-- When loaded from an association, the container size never changed
+- When loaded from an association, the container size never changed;
+  that is, no use-cases required adding new models to associations within steps
 - The order of models was never changed
 - Needs various methods for stpipe
 - Several steps implemented different memory optimizations
@@ -437,7 +438,7 @@ of the API (most private) and internal details.
 One core issue is how can the container know when to load and
 save models (to temporary files) if needed? With a typical list
 ``__getitem__`` can map to load but what will map to save?
-Initial prototypes used ``__setitem__`` which lead to some confusion
+Initial prototypes used ``__setitem__`` which led to some confusion
 amongst reviewers. Treating the container like a list also
 leads to expectations that the container also support
 ``append`` ``extend`` and other API that is unnecessary (as determined
@@ -531,7 +532,7 @@ Get sections
 ^^^^^^^^^^^^
 
 `~stpipe.library.AbstractModelLibrary` has no replacement for
-the ``get_sections`` API provided with ``ModelContainer``. If it's use
+the ``get_sections`` API provided with ``ModelContainer``. If its use
 is generally required it might make sense to model the API off of
 the existing group_id methods (where the subclass provides 2 methods
 for efficiently accessing either an in-memory section or an on-disk
