@@ -3,14 +3,14 @@
 Model Library
 =============
 
-`AbstractModelLibrary` is a container designed to allow efficient processing of
-collections of `AbstractDataModel` instances created from an association.
+`~stpipe.library.AbstractModelLibrary` is a container designed to allow efficient processing of
+collections of `~stpipe.datamodel.AbstractDataModel` instances created from an association.
 
-`AbstractModelLibrary` is an ordered collection (like a `list`) but provides:
+`~stpipe.library.AbstractModelLibrary` is an ordered collection (like a `list`) but provides:
 
-- access to association metadata: `AbstractModelLibrary.asn`
-- grouping API: `AbstractModelLibrary.group_indices` and `AbstractModelLibrary.group_names`
-- compatibility with `Step` and `Pipeline` runs
+- access to association metadata: `~stpipe.library.AbstractModelLibrary.asn`
+- grouping API: `~stpipe.library.AbstractModelLibrary.group_indices` and `~stpipe.library.AbstractModelLibrary.group_names`
+- compatibility with `~stpipe.step.Step` and `~stpipe.pipeline.Pipeline` runs
 - a consistent indexing API that is the same for "in memory" and "on disk" libraries
 
 
@@ -34,7 +34,7 @@ Most commonly an instance will be created from an association file:
 Borrowing and shelving models
 -----------------------------
 
-Interacting with an `AbstractModelLibrary` involves "borrowing" and "shelving"
+Interacting with an `~stpipe.library.AbstractModelLibrary` involves "borrowing" and "shelving"
 models, both of which must occur during a ``with`` statement (while the library
 is "open"):
 
@@ -77,7 +77,7 @@ containing the models.
    point will the library overwrite the input file.
 
 If model is not modified during the time it's borrowed (for example if the
-`model.dq` array was read, but not modified). It is helpful to tell the
+``model.dq`` array was read, but not modified). It is helpful to tell the
 library that the model was not modified.
 
 .. code-block:: pycon
@@ -98,7 +98,7 @@ Map function
 
 Let's say you want to get the ``meta.filename`` attribute for all models
 in a library. The above "open", "borrow", "shelve" pattern can be quite
-verbose. Instead, the helper method `AbstractModelLibrary.map_function`
+verbose. Instead, the helper method `~stpipe.library.AbstractModelLibrary.map_function`
 can be used to generate an iterator that returns the result of a function
 applied to each model in the library:
 
@@ -110,7 +110,7 @@ applied to each model in the library:
    >>> filenames = list(library.map_function(get_model_name))
 
 .. NOTE::
-   `AbstractModelLibrary.map_function` does not require an open library
+   `~stpipe.library.AbstractModelLibrary.map_function` does not require an open library
    and will handle opening, borrowing, shelving and closing for you.
 
 
@@ -130,12 +130,12 @@ performed on the association metadata).
    ...     print(f"\tModel indices for {group_name}: {group_index_map[group_name]}")
 
 .. WARNING::
-   Although `AbstractModelLibrary.group_names` and
-   `AbstractModelLibrary.group_indices` do not require an open library,
+   Although `~stpipe.library.AbstractModelLibrary.group_names` and
+   `~stpipe.library.AbstractModelLibrary.group_indices` do not require an open library,
    any "borrows" using the indices do. Be sure to open the library before
    trying to borrow a model.
 
-`AbstractModelLibrary.asn` provides read-only access to the association data.
+`~stpipe.library.AbstractModelLibrary.asn` provides read-only access to the association data.
 
 .. code-block:: pycon
 
@@ -164,8 +164,8 @@ a model can be borrowed. This is important for keeping track of
 which models were possibly modified.
 
 This error can be avoided by "opening" the library before calling
-`AbstractModelLibrary.borrow` (and being sure to call
-`AbstractModelLibrary.shelve`, more on that below):
+`~stpipe.library.AbstractModelLibrary.borrow` (and being sure to call
+`~stpipe.library.AbstractModelLibrary.shelve`, more on that below):
 
 .. code-block:: pycon
 
@@ -187,11 +187,11 @@ BorrowError
 
    BorrowError: ModelLibrary has 1 un-returned models
 
-Forgetting to `AbstractModelLibrary.shelve` a borrowed model will result in an
+Forgetting to `~stpipe.library.AbstractModelLibrary.shelve` a borrowed model will result in an
 error. This is important for keeping track of model modifications and is
 critical when the library uses temporary files to keep models out of memory.
 
-This error can be avoided by making sure to `AbstractModelLibrary.shelve` all
+This error can be avoided by making sure to `~stpipe.library.AbstractModelLibrary.shelve` all
 borrowed models:
 
 .. code-block:: pycon
@@ -200,7 +200,7 @@ borrowed models:
    ...     model = library.borrow(0)
    ...     library.shelve(model)
 
-Attempting to "double borrow" a model will also result in a `BorrowError`.
+Attempting to "double borrow" a model will also result in a `~stpipe.library.BorrowError`.
 
 .. code-block:: pycon
 
@@ -214,7 +214,7 @@ This check is also important for the library to track model modifications. The
 error can be avoided by only borrowing each model once (it's ok to borrow
 more than one model if they are at different positions in the library).
 
-`BorrowError` exceptions can also be triggered when trying to replace
+`~stpipe.library.BorrowError` exceptions can also be triggered when trying to replace
 a model in the library.
 
 .. code-block:: pycon
@@ -228,7 +228,7 @@ Here the library does not know where to shelve ``some_other_model`` (since
 the ``some_other_model`` wasn't borrowed from the library). To replace
 a model in the library you will need to first borrow the model at the index
 you want to use and provide the index to the call to
-`AbstractModelLibrary.shelve`.
+`~stpipe.library.AbstractModelLibrary.shelve`.
 
 .. code-block:: pycon
 
@@ -237,7 +237,7 @@ you want to use and provide the index to the call to
    ...     library.shelve(some_other_model, 0)
 
 Forgetting to first borrow the model at the index will also produce a
-`BorrowError` (even if you provide the index).
+`~stpipe.library.BorrowError` (even if you provide the index).
 
 .. code-block:: pycon
 
@@ -255,25 +255,25 @@ Several methods are abstract and will need implementations:
 
 - Methods used by stpipe:
 
-  - `AbstractModelLibrary.crds_observatory`
+  - `~stpipe.library.AbstractModelLibrary.crds_observatory`
 
-- Methods used by `AbstractModelLibrary`
+- Methods used by `~stpipe.library.AbstractModelLibrary`
 
-  - `AbstractModelLibrary._datamodels_open`
-  - `AbstractModelLibrary._load_asn`
-  - `AbstractModelLibrary._filename_to_group_id`
-  - `AbstractModelLibrary._model_to_group_id`
+  - ``_datamodels_open``
+  - ``_load_asn``
+  - ``_filename_to_group_id``
+  - ``_model_to_group_id``
 
 It's likely that a few other methods might require overriding:
 
-- `AbstractModelLibrary._model_to_fileaname`
-- `AbstractModelLibrary._assign_member_to_model`
+- ``_model_to_filename``
+- ``_assign_member_to_model``
 
 Consult the docstrings (and base implementations) for more details.
 
 It may also be required (depending on your usage) to update
-`Step._datamodels_open` to allow stpipe to open and inspect an
-`AbstractModelLibrary` when provided as a `Step` input.
+``stpipe.step.Step._datamodels_open`` to allow stpipe to open and inspect an
+`~stpipe.library.AbstractModelLibrary` when provided as a `~stpipe.step.Step` input.
 
 .. _library_developer_documentation:
 
@@ -281,16 +281,16 @@ Developer Documentation
 =======================
 
 What follows are note primarily aimed towards developers and
-maintainers of `AbstractModelLibrary`. This section might be useful
+maintainers of `~stpipe.library.AbstractModelLibrary`. This section might be useful
 to provide context to users but shouldn't be necessary for a user
-to effectively use `AbstractModelLibrary`.
+to effectively use `~stpipe.library.AbstractModelLibrary`.
 
 .. _library_motivation:
 
 Motivation
 ----------
 
-The development of `AbstractModelLibrary` was largely motivated by
+The development of `~stpipe.library.AbstractModelLibrary` was largely motivated by
 the need for a container compatible with stpipe machinery
 that would allow passing "on disk" models between steps. Existing
 containers (when used in "memory saving" modes) were not compatible
@@ -298,7 +298,7 @@ with stpipe. These containers also sometimes allowed input files
 to be overwritten. It was decided that a new container would be
 developed to address these and other issues. This would allow
 gradual migration for pipeline code where specific steps and pipelines
-could update to `AbstractModelLibrary` while leaving the existing
+could update to `~stpipe.library.AbstractModelLibrary` while leaving the existing
 container unchanged for other steps.
 
 A survey of container usage was performed with a few key findings:
@@ -323,7 +323,7 @@ container code never read and hold all input data in memory.
 Design principles
 -----------------
 
-The high level goals of `AbstractModelLibrary` are:
+The high level goals of `~stpipe.library.AbstractModelLibrary` are:
 
 - Replace many uses of existing containers, focusing on areas
   where large data is expected.
@@ -354,12 +354,12 @@ in sync.
 Integration with stpipe
 -----------------------
 
-An `AbstractModelLibrary` may interact with stpipe when used as an
-input or output for a `Step`.
+An `~stpipe.library.AbstractModelLibrary` may interact with stpipe when used as an
+input or output for a `~stpipe.step.Step`.
 
-- as a `Step` input where `AbstractModelLibrary.get_crds_parameters` and
-  `AbstractModelLibrary.crds_observatory` will be used (sometimes with
+- as a `~stpipe.step.Step` input where `~stpipe.library.AbstractModelLibrary.get_crds_parameters` and
+  `~stpipe.library.AbstractModelLibrary.crds_observatory` will be used (sometimes with
   a limited model set, including only the first member of the input
   association).
-- as a `Step` output where `AbstractModelLibrary.finalize_result` will
+- as a `~stpipe.step.Step` output where `~stpipe.library.AbstractModelLibrary.finalize_result` will
   be used.

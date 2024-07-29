@@ -32,7 +32,7 @@ class Pipeline(Step):
 
     def __init__(self, *args, **kwargs):
         """
-        See `Step.__init__` for the parameters.
+        See `~stpipe.step.Step` for the parameters.
         """
         Step.__init__(self, *args, **kwargs)
 
@@ -83,8 +83,8 @@ class Pipeline(Step):
         ]
 
     def get_ref_override(self, reference_file_type):
-        """Return any override for `reference_file_type` for any of the steps in
-        Pipeline `self`.  OVERRIDES Step.
+        """Return any override for ``reference_file_type`` for any of the steps in
+        Pipeline ``self``.  OVERRIDES Step.
 
         Returns
         -------
@@ -147,11 +147,11 @@ class Pipeline(Step):
 
         Parameters
         ----------
-        cls : `jwst.stpipe.step.Step`
+        cls : `stpipe.step.Step`
             Either a class or instance of a class derived
             from `Step`.
 
-        dataset : `jwst.datamodels.ModelBase`
+        dataset : `stpipe.datamodel.AbstractDataModel`
             A model of the input file.  Metadata on this input file will
             be used by the CRDS "bestref" algorithm to obtain a reference
             file.
