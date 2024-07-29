@@ -363,3 +363,92 @@ input or output for a `~stpipe.step.Step`.
   association).
 - as a `~stpipe.step.Step` output where `~stpipe.library.AbstractModelLibrary.finalize_result` will
   be used.
+
+
+.. _library_future_directions:
+
+Future directions
+-----------------
+
+The initial implementation of `~stpipe.library.AbstractModelLibrary` was intentionally
+simple. Several features were discussed but deemed unnecessary for the current code.
+This section will describe some of the discussed features to in-part provide a
+record of these discussions.
+
+.. _library_borrow_limits:
+
+Borrow limits
+^^^^^^^^^^^^^
+
+As `~stpipe.library.AbstractModelLibrary` handles the loading and saving of models
+(when "on disk") it could be straightforward to impose a limit to the number
+and/or combined size of all "borrowed" models. This would help to avoid crashes
+due to out-of-memory issues (especially important for HPC environments where
+the memory limit may be defined at the job level). Being able to gracefully
+recover from this error could also allow pipeline code to load as many
+models as possible for more efficient batch processing.
+
+
+.. _library_hollowing_out_models:
+
+Hollowing out models
+^^^^^^^^^^^^^^^^^^^^
+
+Currently the `~stpipe.library.AbstractModelLibrary` does not close
+models when they are "shelved" (it relies on the garbage collector).
+This was done to allow easier integration with existing pipeline code
+but does mean that the memory used for a model will not be freed until
+the model is freed. By explicitly closing models and possibly
+removing references between the model and the data arrays ("hollowing
+out") memory could be freed sooner allowing for an overall decrease.
+
+.. _library_append:
+
+Append
+^^^^^^
+
+There is no way to append a model to a `~stpipe.library.AbstractModelLibrary`
+(nor is there a way to pop, extend, delete, etc, any operation that changes the
+number of models in a library). This was an intentional choice as any operation
+that changes the number of models would obviously invalidate the
+`~stpipe.library.AbstractModelLibrary.asn` data. It should be possible
+(albeit complex) to support some if not all of these operations. However
+serious consideration of their use and exhuasting of alternatives is
+recommended as the added complexity would likely introduce bugs.
+
+.. _library_updating_asn_on_shelve:
+
+Updating asn on shelve
+^^^^^^^^^^^^^^^^^^^^^^
+
+Related to the note about :ref:`library_append` updating the
+`~stpipe.library.AbstractModelLibrary.asn` data on
+`~stpipe.library.AbstractModelLibrary.shelve` would allow step code
+to modify asn-related attributes (like group_id) and have these changes
+reflected in the `~stpipe.library.AbstractModelLibrary.asn` result.
+A similar note of caution applies here where some consideration
+of the complexity required vs the benefits is recommended.
+
+.. _library_get_sections:
+
+Get sections
+^^^^^^^^^^^^
+
+`~stpipe.library.AbstractModelLibrary` has no replacement for
+the ``get_sections`` API provided with ``ModelContainer``. If it's use
+is generally required it might make sense to model the API off of
+the existing group_id methods (where the subclass provides 2 methods
+for efficiently accessing either an in-memory section or an on-disk
+section for the "in memory" and "on disk" modes).
+
+.. _library_parallel_map_function:
+
+Parallel map function
+^^^^^^^^^^^^^^^^^^^^^
+
+`~stpipe.library.AbstractModelLibrary.map_function` is applied to each model
+in a library sequentially. If this method proves useful and is typically
+used with an independent and stateless function, extending the method to
+use parallel application seems straightforward (although a new API might
+be called for since a parallel application would likely not behave
+as a generator.
