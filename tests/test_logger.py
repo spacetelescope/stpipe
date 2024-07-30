@@ -53,9 +53,7 @@ def test_record_logs():
         isinstance(h, stpipe_log.RecordingHandler) for h in root_logger.handlers
     )
 
-    with stpipe_log.record_logs(
-        level=logging.ERROR, formatter=logging.Formatter("%(message)s")
-    ) as log_records:
+    with stpipe_log.record_logs(level=logging.ERROR) as log_records:
         stpipe_logger.warning("Warning from stpipe")
         stpipe_logger.error("Error from stpipe")
         root_logger.warning("Warning from root")
@@ -69,5 +67,5 @@ def test_record_logs():
     root_logger.error("Additional error from root")
 
     assert len(log_records) == 2
-    assert log_records[0] == "Error from stpipe"
-    assert log_records[1] == "Error from root"
+    assert log_records[0].message == "Error from stpipe"
+    assert log_records[1].message == "Error from root"

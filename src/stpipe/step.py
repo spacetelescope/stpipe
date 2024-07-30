@@ -74,10 +74,6 @@ class Step:
     # but by default attempt to prefetch
     prefetch_references = True
 
-    # This needs to be set to a logging formatter for any
-    # log_records to be saved.
-    _log_records_formatter = None
-
     @classmethod
     def get_config_reftype(cls):
         """
@@ -408,7 +404,7 @@ class Step:
 
         Returns
         -------
-        list of str
+        list of logging.LogRecord
         """
         return self._log_records
 
@@ -420,7 +416,7 @@ class Step:
         """
         gc.collect()
 
-        with log.record_logs(formatter=self._log_records_formatter) as log_records:
+        with log.record_logs() as log_records:
             self._log_records = log_records
 
             # Make generic log messages go to this step's logger
