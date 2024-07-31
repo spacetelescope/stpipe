@@ -57,7 +57,7 @@ class AbstractDataModel(abc.ABC):
 
         dir_path : str
             Directory to save to. If not None, this will override
-            any directory information in the `path`
+            any directory information in the ``path``
 
         Returns
         -------

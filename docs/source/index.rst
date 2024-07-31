@@ -5,6 +5,8 @@ Welcome to stpipe's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   model_library.rst
+
 API
 ===
 

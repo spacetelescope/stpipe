@@ -55,5 +55,8 @@ html_use_index = True
 nitpicky = True
 nitpick_ignore = []
 
+# Set the default role for all single backtick annotations
+default_role = "obj"
+
 intersphinx_mapping = {}
 intersphinx_mapping["python"] = ("https://docs.python.org/3", None)

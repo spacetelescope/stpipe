@@ -131,18 +131,18 @@ class Step:
         name : str, optional
             If provided, use that name for the returned instance.
             If not provided, the following are tried (in order):
-            - The `name` parameter in the config file
+            - The ``name`` parameter in the config file
             - The filename of the config file
             - The name of returned class
 
         Returns
         -------
         step : Step instance
-            If the config file has a `class` parameter, the return
-            value will be as instance of that class.  The `class`
+            If the config file has a ``class`` parameter, the return
+            value will be as instance of that class.  The ``class``
             parameter in the config file must specify a subclass of
-            `cls`.  If the configuration file has no `class`
-            parameter, then an instance of `cls` is returned.
+            ``cls``.  If the configuration file has no ``class``
+            parameter, then an instance of ``cls`` is returned.
 
             Any parameters found in the config file will be set
             as member variables on the returned `Step` instance.
@@ -180,7 +180,7 @@ class Step:
         Returns
         -------
         step : Step instance
-            If the config file has a `class` parameter, the return
+            If the config file has a ``class`` parameter, the return
             value will be as instance of that class.
 
             Any parameters found in the config file will be set
@@ -655,21 +655,21 @@ class Step:
 
         Gets a config file from CRDS if one is available
 
-        To set configuration parameters, pass a `config_file` path or
+        To set configuration parameters, pass a ``config_file`` path or
         keyword arguments.  Keyword arguments override those in the
-        specified `config_file`.
+        specified ``config_file``.
 
-        Any positional `*args` will be passed along to the step's
-        `process` method.
+        Any positional ``*args`` will be passed along to the step's
+        ``process`` method.
 
         Note: this method creates a new instance of `Step` with the given
-        `config_file` if supplied, plus any extra `*args` and `**kwargs`.
+        ``config_file`` if supplied, plus any extra ``*args`` and ``**kwargs``.
         If you create an instance of a Step, set parameters, and then use
-        this `call()` method, it will ignore previously-set parameters, as
-        it creates a new instance of the class with only the `config_file`,
-        `*args` and `**kwargs` passed to the `call()` method.
+        this ``call()`` method, it will ignore previously-set parameters, as
+        it creates a new instance of the class with only the ``config_file``,
+        ``*args`` and ``**kwargs`` passed to the ``call()`` method.
 
-        If not used with a `config_file` or specific `*args` and `**kwargs`,
+        If not used with a ``config_file`` or specific ``*args`` and ``**kwargs``,
         it would be better to use the `run` method, which does not create
         a new instance but simply runs the existing instance of the `Step`
         class.
@@ -734,7 +734,7 @@ class Step:
         Returns
         -------
         value : obj
-            Attribute value or `default` if not found
+            Attribute value or default if not found
         """
         if parent_first:
             try:
@@ -765,7 +765,7 @@ class Step:
         """
 
     def get_ref_override(self, reference_file_type):
-        """Determine and return any override for `reference_file_type`.
+        """Determine and return any override for ``reference_file_type``.
 
         Returns
         -------
@@ -974,8 +974,8 @@ class Step:
             default would be.
 
         force : bool
-            Regardless of whether `save_results` is `False`
-            and no `output_file` is specified, try saving.
+            Regardless of whether ``save_results`` is `False`
+            and no ``output_file`` is specified, try saving.
 
         components : dict
             Other components to add to the file name.
@@ -1149,7 +1149,7 @@ class Step:
     def open_model(self, init, **kwargs):
         """Open a datamodel
 
-        Primarily a wrapper around `DataModel.open` to
+        Primarily a wrapper around ``DataModel.open`` to
         handle `Step` peculiarities
 
         Parameters
@@ -1174,7 +1174,7 @@ class Step:
     def make_input_path(self, file_path):
         """Create an input path for a given file path
 
-        If `file_path` has no directory path, use `self.input_dir`
+        If ``file_path`` has no directory path, use ``self.input_dir``
         as the directory path.
 
         Parameters
@@ -1187,7 +1187,7 @@ class Step:
         Returns
         -------
         full_path : str or obj
-            File path using `input_dir` if the input
+            File path using ``input_dir`` if the input
             had no directory path.
         """
         full_path = file_path
@@ -1280,7 +1280,7 @@ class Step:
         """Update step parameters
 
         Only existing parameters are updated. Otherwise, new keys
-        found in `parameters` are ignored.
+        found in ``parameters`` are ignored.
 
         Parameters
         ----------
@@ -1289,7 +1289,7 @@ class Step:
 
         Notes
         -----
-        `parameters` is presumed to have been produced by the
+        ``parameters`` is presumed to have been produced by the
         `Step.get_pars` method. As such, the "steps" key is treated
         special in that it is a dict whose keys are the steps assigned
         directly as parameters to the current step. This is standard

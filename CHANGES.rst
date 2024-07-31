@@ -3,6 +3,7 @@
 
 - remove Windows tests and add info box indicating lack of Windows support to README [#163]
 - add ``ModelLibrary`` container class [#156]
+- add ``ModelLibrary`` docs [#168]
 
 0.6.1 (unreleased)
 ==================
