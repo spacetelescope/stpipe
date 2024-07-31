@@ -90,6 +90,15 @@ library that the model was not modified.
 This tells the library not to overwrite the model's temporary file while shelving, saving
 on both disk space and the time required to write.
 
+.. WARNING::
+   In the above example ``model`` remains in scope after the call to
+   `~stpipe.library.AbstractModelLibrary.shelve` (and even after
+   the exit of the with statement). This means ``model`` will not
+   be garbage collected (and it's memory will not be freed) until
+   the end of the scope containing the ``with library`` exits. If
+   more work occurs within the scope please consider adding an
+   explicit ``del model`` when your code is finished with the model.
+
 
 .. _library_map_function:
 
