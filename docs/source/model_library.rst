@@ -225,7 +225,7 @@ that performs an operation that is only concerned with the data
 for a single `~stpipe.datamodel.AbstractDataModel` at a time.
 This step applies a function ``calibrate_model_flux`` that
 accepts a single `~stpipe.datamodel.AbstractDataModel` and index as an input.
-It's ``Step.process`` function can make good use of
+Its ``Step.process`` function can make good use of
 `~stpipe.library.AbstractModelLibrary.map_function` to apply
 this method to each model in the library.
 
@@ -261,7 +261,7 @@ which models were possibly modified.
 
 This error can be avoided by "opening" the library before calling
 `~stpipe.library.AbstractModelLibrary.borrow` (and being sure to call
-`~stpipe.library.AbstractModelLibrary.shelve`, more on that below):
+`~stpipe.library.AbstractModelLibrary.shelve`):
 
 .. code-block:: pycon
 
