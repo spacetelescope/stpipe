@@ -161,7 +161,7 @@ Although the specifics of what is returned by `~stpipe.library.AbstractModelLibr
 depends on how the subclass implements ``AbstractModelLibrary._load_asn``, it
 is required that the association metadata dictionary contain a "members" list. This
 can be inspected via ``library.asn["products"][0]["members"]`` and must contain a
-dictionary for each "member" including key value pairs for:
+dictionary for each "member" including key-value pairs for:
 
 - "expname" for the exposure name, with a string value corresponding to the
   name of the file for this member
