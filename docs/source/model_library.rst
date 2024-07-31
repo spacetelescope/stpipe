@@ -165,7 +165,7 @@ dictionary for each "member" including key value pairs for:
 
 - "expname" for the exposure name, with a string value corresponding to the
   name of the file for this member
-- "exptype" for the exposure type with a string value describing the type
+- "exptype" for the exposure type, with a string value describing the type
   of exposure (for example "science" or "background")
 
 Although not required, "group_id" (with a string value corresponding to the
