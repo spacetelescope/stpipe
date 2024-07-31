@@ -168,7 +168,7 @@ dictionary for each "member" including key value pairs for:
 - "exptype" for the exposure type with a string value describing the type
   of exposure (for example "science" or "background")
 
-Although not required "group_id" (with a string value corresponding to the
+Although not required, "group_id" (with a string value corresponding to the
 group name) should be added to each member dictionary (see
 :ref:`library_association` for more details).
 
