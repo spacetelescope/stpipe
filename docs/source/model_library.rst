@@ -406,7 +406,7 @@ A survey of container usage was performed with a few key findings:
 - Must be compatible with stpipe infrastructure (eg implements
   ``crds_observatory``, ``get_crds_parameters``, etc methods)
 - Several steps implemented different memory optimizations
-  and had significant complexity added to deal with containers
+- Step code has additional complexity to deal with containers
   that sometimes returned filenames and sometimes returned models
 
 Additionally, pipelines and steps may be expected to handle large
