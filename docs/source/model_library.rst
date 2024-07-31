@@ -144,12 +144,33 @@ performed on the association metadata).
    any "borrows" using the indices do. Be sure to open the library before
    trying to borrow a model.
 
+
+.. _library_association_information:
+
+Association Information
+=======================
+
 `~stpipe.library.AbstractModelLibrary.asn` provides read-only access to the association data.
 
 .. code-block:: pycon
 
    >>> library.asn["products"][0]["name"]
    >>> library.asn["table_name"]
+
+Although the specifics of what is returned by `~stpipe.library.AbstractModelLibrary.asn`
+depends on how the subclass implements ``AbstractModelLibrary._load_asn``, it
+is required that the association metadata dictionary contain a "members" list. This
+can be inspected via ``library.asn["products"][0]["members"]`` and must contain a
+dictionary for each "member" including key value pairs for:
+
+- "expname" for the exposure name with a string value corresponding to the
+  name of the file for this member
+- "exptype" for the exposure type with a string value describing the type
+  of exposure (for example "science" or "background")
+
+Although not required "group_id" (with a string value corresponding to the
+group name) should be added to each member dictionary (see
+:ref:`library_association` for more details).
 
 .. _library_usage_patterns:
 
