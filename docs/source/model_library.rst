@@ -163,7 +163,7 @@ is required that the association metadata dictionary contain a "members" list. T
 can be inspected via ``library.asn["products"][0]["members"]`` and must contain a
 dictionary for each "member" including key value pairs for:
 
-- "expname" for the exposure name with a string value corresponding to the
+- "expname" for the exposure name, with a string value corresponding to the
   name of the file for this member
 - "exptype" for the exposure type with a string value describing the type
   of exposure (for example "science" or "background")
