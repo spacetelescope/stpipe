@@ -403,7 +403,8 @@ A survey of container usage was performed with a few key findings:
 - When loaded from an association, the container size never changed;
   that is, no use-cases required adding new models to associations within steps
 - The order of models was never changed
-- Needs various methods for stpipe
+- Must be compatible with stpipe infrastructure (eg implements
+  ``crds_observatory``, ``get_crds_parameters``, etc methods)
 - Several steps implemented different memory optimizations
   and had significant complexity added to deal with containers
   that sometimes returned filenames and sometimes returned models
