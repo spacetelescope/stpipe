@@ -50,7 +50,7 @@ Iteration is also supported (but don't forget to return your models!).
 .. code-block:: pycon
 
    >>> with library:
-   ...    for model in library:
+   ...    for model in library:  # implicitly calls borrow()
    ...        # do stuff with the model...
    ...        library.shelve(model)
 
