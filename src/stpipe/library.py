@@ -743,6 +743,9 @@ class AbstractModelLibrary(abc.ABC):
                     # this is in a finally to allow cleanup if the generator is
                     # deleted after it finishes (when it's not fully consumed)
                     self.shelve(model, index, modify)
+                # remove the local reference to model here to allow it
+                # to be garbage collected before the next model is generated
+                del model
 
     def _model_to_filename(self, model):
         """
