@@ -1,4 +1,9 @@
-0.7.0 (unreleased)
+0.7.1 (unreleased)
+==================
+
+-
+
+0.7.0 (2024-08-13)
 ==================
 
 - remove Windows tests and add info box indicating lack of Windows support to README [#163]
