@@ -2,6 +2,7 @@
 Step
 """
 
+import contextlib
 import gc
 import os
 import sys
@@ -755,6 +756,42 @@ class Step:
             value = default
         return value
 
+    @classmethod
+    def _get_crds_info(cls, init):
+        """
+        Using a datamodel, filename or container get the:
+            - crds parameters
+            - crds observatory
+        without re-opening, cloning or copying the input.
+
+        Parameters
+        ----------
+        init : `stpipe.datamodel.AbstractDataModel` or str
+            A datamodel, container, or filename. This method uses
+            duck-typing checking for "crds_parameters" and "crds_observatory"
+            attributes (similar to those in
+            `stpipe.datamodel.AbstractDataModel`).
+
+        Returns
+        -------
+        parameters : dict
+            Result of get_crds_parameters
+
+        observatory : str
+            Result of crds_observatory
+        """
+        if hasattr(init, "get_crds_parameters") and hasattr(init, "crds_observatory"):
+            ctx = contextlib.nullcontext(init)
+        else:
+            ctx = cls._datamodels_open(init, asn_n_members=1)
+
+        with ctx as model_or_container:
+            if isinstance(model_or_container, Sequence):
+                model = model_or_container[0]
+            else:
+                model = model_or_container
+            return model.get_crds_parameters(), model.crds_observatory
+
     def _precache_references(self, input_file):
         """Because Step precaching precedes calls to get_reference_file() almost
         immediately, true precaching has been moved to Pipeline where the
@@ -817,12 +854,12 @@ class Step:
             else:
                 return ""
         else:
-            with self.open_model(input_file) as model:
-                reference_name = crds_client.get_reference_file(
-                    model.get_crds_parameters(),
-                    reference_file_type,
-                    model.crds_observatory,
-                )
+            crds_parameters, crds_observatory = self._get_crds_info(input_file)
+            reference_name = crds_client.get_reference_file(
+                crds_parameters,
+                reference_file_type,
+                crds_observatory,
+            )
             if reference_name != "N/A":
                 hdr_name = "crds://" + basename(reference_name)
             else:
@@ -867,15 +904,11 @@ class Step:
             if crds_observatory is None:
                 raise ValueError("Need a valid name for crds_observatory.")
         else:
+
             # If the dataset is not an operable instance of AbstractDataModel,
             # log as such and return an empty config object
             try:
-                with cls._datamodels_open(dataset, asn_n_members=1) as model:
-                    if isinstance(model, Sequence):
-                        # Pull out first model in ModelContainer
-                        model = model[0]
-                    crds_parameters = model.get_crds_parameters()
-                    crds_observatory = model.crds_observatory
+                crds_parameters, crds_observatory = cls._get_crds_info(dataset)
             except (OSError, TypeError, ValueError):
                 logger.warning("Input dataset is not an instance of AbstractDataModel.")
                 disable = True
