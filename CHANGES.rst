@@ -5,9 +5,6 @@
 - add ``ModelLibrary`` container class [#156]
 - add ``ModelLibrary`` docs [#168]
 - improve memory usage of ``ModelLibrary.map_function`` [#181]
-
-0.6.1 (unreleased)
-==================
 - log only strings in ``Step.log_records`` when a formatter is provided [#171]
 
 0.6.0 (2024-01-24)
