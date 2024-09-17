@@ -6,6 +6,7 @@ Welcome to stpipe's documentation!
    :caption: Contents:
 
    model_library.rst
+   changes.rst
 
 API
 ===
