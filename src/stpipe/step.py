@@ -988,7 +988,7 @@ class Step:
                     model.shelve(m, i)
             return output_paths
 
-        elif isinstance(model, Sequence):
+        elif isinstance(model, Sequence) and not isinstance(model, str):
             if not hasattr(model, "save"):
                 # list of datamodels, e.g. ModelContainer
                 output_paths = []
