@@ -24,13 +24,6 @@ from typing import ClassVar
 
 import yaml
 
-try:
-    from astropy.io import fits
-
-    DISCOURAGED_TYPES = (fits.HDUList,)
-except ImportError:
-    DISCOURAGED_TYPES = None
-
 from . import config, config_parser, crds_client, log, utilities
 from .datamodel import AbstractDataModel
 from .format_template import FormatTemplate
@@ -387,21 +380,6 @@ class Step:
             self._pre_hooks = []
             self._post_hooks = []
 
-    def _check_args(self, args, discouraged_types, msg):
-        if discouraged_types is None:
-            return
-
-        if type(args) not in (list, tuple):
-            args = [args]
-
-        for i, arg in enumerate(args):
-            if isinstance(arg, discouraged_types):
-                self.log.error(
-                    "%s %s object.  Use an instance of AbstractDataModel instead.",
-                    msg,
-                    i,
-                )
-
     @property
     def log_records(self):
         """
@@ -469,10 +447,6 @@ class Step:
 
                 self._reference_files_used = []
 
-                # Warn if passing in objects that should be
-                # discouraged.
-                self._check_args(args, DISCOURAGED_TYPES, "Passed")
-
                 # Run the Step-specific code.
                 if self.skip:
                     self.log.info("Step skipped.")
@@ -529,9 +503,6 @@ class Step:
                             ) from e
                         raise
 
-                # Warn if returning a discouraged object
-                self._check_args(step_result, DISCOURAGED_TYPES, "Returned")
-
                 # Run the post hooks
                 for post_hook in self._post_hooks:
                     hook_results = post_hook.run(step_result)
@@ -570,22 +541,12 @@ class Step:
                             result, (AbstractDataModel | AbstractModelLibrary)
                         ):
                             self.save_model(result, idx=idx)
-                        elif hasattr(result, "save"):
-                            try:
-                                output_path = self.make_output_path(idx=idx)
-                            except AttributeError:
-                                self.log.warning(
-                                    "`save_results` has been requested, but cannot"
-                                    " determine filename."
+                        else:
+                            if hasattr(result, "save"):
+                                raise Exception(
+                                    f"non-datamodel result with a save: {result}"
                                 )
-                                self.log.warning(
-                                    "Specify an output file with `--output_file` or set"
-                                    " `--save_results=false`"
-                                )
-                            else:
-                                self.log.info("Saving file %s", output_path)
-                                result.save(output_path, overwrite=True)
-
+                                # what has "save"? Does anything ever reach this code
                 if not self.skip:
                     self.log.info("Step %s done", self.name)
             finally:
