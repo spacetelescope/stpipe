@@ -334,6 +334,7 @@ class Step:
             Additional parameters to set.  These will be set as member
             variables on the new Step instance.
         """
+        self._initialized = {}
         self._reference_files_used = []
         # A list of logging.LogRecord emitted to the stpipe root logger
         # during the most recent call to Step.run.
@@ -361,6 +362,11 @@ class Step:
         # Set the parameters as member variables
         for key, val in kws.items():
             setattr(self, key, val)
+
+            # Mark them as uninitialized, from the user standpoint,
+            # unless they are required to be used as is
+            if _validate_kwds:
+                self._initialized[key] = False
 
         # Create a new logger for this step
         self.log = log.getLogger(self.qualified_name)
@@ -402,6 +408,12 @@ class Step:
                     i,
                 )
 
+    def __setattr__(self, key, value):
+        """Override setattr to track initialization status for step parameters."""
+        super().__setattr__(key, value)
+        if not key.startswith('_'):
+            self._initialized[key] = True
+
     @property
     def log_records(self):
         """
@@ -413,7 +425,7 @@ class Step:
         """
         return self._log_records
 
-    def run(self, *args):
+    def run(self, *args, **kwargs):
         """
         Run handles the generic setup and teardown that happens with
         the running of each step.  The real work that is unique to
@@ -431,6 +443,33 @@ class Step:
             step_result = None
 
             self.log.info("Step %s running with args %s.", self.name, args)
+
+            # Set any uninitialized parameters
+            filename = None
+            if len(args) > 0:
+                filename = args[0]
+
+            try:
+                config, config_file = self.build_config(filename, **kwargs)
+            except NotImplementedError:
+                # Catch steps that cannot build a config
+                # (i.e. post hooks created from local functions)
+                config = {}
+
+            skip = {"class", "logcfg", "name", "config_file"}
+            for key in config:
+                if key in kwargs or (key not in skip and key in self._initialized
+                                     and not self._initialized[key]):
+                    self.log.debug(f'Setting parameter {key} to {config[key]}')
+                    setattr(self, key, config[key])
+                    if key == 'steps':
+                        for step, step_dict in config[key].items():
+                            for step_key, step_value in step_dict.items():
+                                self.log.debug(f'Setting parameters {step}.{step_key} '
+                                               f'to {step_value}')
+                                step_instance = getattr(self, step)
+                                setattr(step_instance, step_key, step_value)
+
             # log Step or Pipeline parameters from top level only
             if self.parent is None:
                 self.log.info(
