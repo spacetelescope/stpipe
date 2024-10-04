@@ -449,11 +449,12 @@ class Step:
             if len(args) > 0:
                 filename = args[0]
 
+            # Catch steps that cannot build a config
+            # (e.g. post hooks created from local functions,
+            # missing input files)
             try:
                 config, config_file = self.build_config(filename, **kwargs)
-            except NotImplementedError:
-                # Catch steps that cannot build a config
-                # (i.e. post hooks created from local functions)
+            except (NotImplementedError, FileNotFoundError):
                 config = {}
 
             skip = {"class", "logcfg", "name", "config_file"}
