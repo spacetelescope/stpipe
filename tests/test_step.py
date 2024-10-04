@@ -8,7 +8,7 @@ import asdf
 import pytest
 
 import stpipe.config_parser as cp
-from stpipe import cmdline
+from stpipe import cmdline, crds_client
 from stpipe.pipeline import Pipeline
 from stpipe.step import Step
 
@@ -180,6 +180,47 @@ def _mock_step_crds(monkeypatch):
         "get_config_from_reference",
         mock_get_config_from_reference_list_arg_step,
     )
+
+
+@pytest.fixture()
+def _mock_crds_reffile(monkeypatch, config_file_step, config_file_pipe):
+    """Mock a reference file returned from CRDS."""
+
+    def mock_crds_get_reference_file(crds_parameters, reftype, crds_observatory):
+        if crds_observatory == "step":
+            return config_file_step
+        return config_file_pipe
+
+    class SimpleModel:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def get_crds_parameters(self):
+            return None
+
+    class SimpleStepModel(SimpleModel):
+        crds_observatory = "step"
+
+    class SimplePipeModel(SimpleModel):
+        crds_observatory = "pipe"
+
+    monkeypatch.setattr(crds_client, "get_reference_file", mock_crds_get_reference_file)
+
+    monkeypatch.setattr(SimpleStep, "_datamodels_open", SimpleStepModel)
+    monkeypatch.setattr(SimplePipe, "_datamodels_open", SimplePipeModel)
+
+    small_spec = """
+    str1 = string(default='default')
+    output_ext = string(default='simplestep')
+    """
+    monkeypatch.setattr(SimpleStep, "spec", small_spec)
+    monkeypatch.setattr(SimplePipe, "spec", small_spec)
 
 
 # #####
@@ -411,3 +452,49 @@ def test_log_records():
     pipeline.run()
 
     assert any(r == "This step has called out a warning." for r in pipeline.log_records)
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_crds_values(step_class):
+    """Test that parameters in CRDS files are discarded."""
+    step = step_class()
+    step.process = lambda *args: None
+
+    assert step.str1 == 'default'
+    assert step._initialized['str1'] is False
+
+    step.run("science.fits")
+    assert step.str1 == 'from config'
+    assert step._initialized['str1'] is True
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_keyword_values(step_class):
+    """Test that parameters in CRDS files are discarded."""
+    step = step_class()
+    step.process = lambda *args: None
+
+    assert step.str1 == 'default'
+    assert step._initialized['str1'] is False
+
+    step.run("science.fits", str1='from keywords')
+    assert step.str1 == 'from keywords'
+    assert step._initialized['str1'] is True
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+def test_pipe_run_step_values():
+    """Test that parameters in CRDS files are discarded."""
+    step = SimplePipe()
+    step.process = lambda *args: None
+
+    # Step parameters are initialized when created via the pipeline
+    assert step.step1.str1 == 'default'
+    assert step.step1._initialized['str1'] is True
+
+    # Parameters in a step dictionary can still override them
+    step.run("science.fits", steps={'step1': {'str1': 'from steps'}})
+    assert step.step1.str1 == 'from steps'
+    assert step.step1._initialized['str1'] is True
