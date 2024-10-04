@@ -411,7 +411,7 @@ class Step:
     def __setattr__(self, key, value):
         """Override setattr to track initialization status for step parameters."""
         super().__setattr__(key, value)
-        if not key.startswith('_'):
+        if not key.startswith("_"):
             self._initialized[key] = True
 
     @property
@@ -458,15 +458,20 @@ class Step:
 
             skip = {"class", "logcfg", "name", "config_file"}
             for key in config:
-                if key in kwargs or (key not in skip and key in self._initialized
-                                     and not self._initialized[key]):
-                    self.log.debug(f'Setting parameter {key} to {config[key]}')
+                if key in kwargs or (
+                    key not in skip
+                    and key in self._initialized
+                    and not self._initialized[key]
+                ):
+                    self.log.debug(f"Setting parameter {key} to {config[key]}")
                     setattr(self, key, config[key])
-                    if key == 'steps':
+                    if key == "steps":
                         for step, step_dict in config[key].items():
                             for step_key, step_value in step_dict.items():
-                                self.log.debug(f'Setting parameters {step}.{step_key} '
-                                               f'to {step_value}')
+                                self.log.debug(
+                                    f"Setting parameters {step}.{step_key} "
+                                    f"to {step_value}"
+                                )
                                 step_instance = getattr(self, step)
                                 setattr(step_instance, step_key, step_value)
 
