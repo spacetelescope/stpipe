@@ -1340,9 +1340,11 @@ class Step:
         for parameter, value in parameters.items():
             if parameter in existing:
                 if parameter != "steps":
-                    if (skip_initialized
-                            and parameter in self._initialized
-                            and self._initialized[parameter]):
+                    if (
+                        skip_initialized
+                        and parameter in self._initialized
+                        and self._initialized[parameter]
+                    ):
                         self.log.debug(f"Skipping initialized parameter {parameter}")
                     else:
                         self.log.debug(f"Setting parameter {parameter} to {value}")
@@ -1350,7 +1352,8 @@ class Step:
                 else:
                     for step_name, step_parameters in value.items():
                         getattr(self, step_name).update_pars(
-                            step_parameters, skip_initialized=skip_initialized)
+                            step_parameters, skip_initialized=skip_initialized
+                        )
             else:
                 self.log.debug(
                     "Parameter %s is not valid for step %s. Ignoring.", parameter, self
