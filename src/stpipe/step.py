@@ -342,7 +342,8 @@ class Step:
         self._input_filename = None
         self._input_dir = None
         self._keywords = kws
-        if _validate_kwds:
+        self._validate_kwds = _validate_kwds
+        if self._validate_kwds:
             spec = self.load_spec_file()
             kws = config_parser.config_from_dict(
                 kws,
@@ -363,10 +364,8 @@ class Step:
         for key, val in kws.items():
             setattr(self, key, val)
 
-            # Mark them as uninitialized, from the user standpoint,
-            # unless they are required to be used as is
-            if _validate_kwds:
-                self._initialized[key] = False
+            # Mark them as uninitialized, from the user standpoint
+            self._initialized[key] = False
 
         # Create a new logger for this step
         self.log = log.getLogger(self.qualified_name)
@@ -444,37 +443,31 @@ class Step:
 
             self.log.info("Step %s running with args %s.", self.name, args)
 
-            # Set any uninitialized parameters
+            # Get the first filename, if available
             filename = None
             if len(args) > 0:
                 filename = args[0]
 
-            # Catch steps that cannot build a config
-            # (e.g. post hooks created from local functions,
-            # missing input files)
-            try:
-                config, config_file = self.build_config(filename, **kwargs)
-            except (NotImplementedError, FileNotFoundError):
+            # Get the config from CRDS if desired
+            if kwargs:
+                # Unset initialization for any provided override keywords
+                for key in kwargs:
+                    if key in self._initialized:
+                        self._initialized[key] = False
+                config = kwargs.copy()
+            else:
                 config = {}
+            if self._validate_kwds:
+                try:
+                    config, _ = self.build_config(filename, **kwargs)
+                except (NotImplementedError, FileNotFoundError):
+                    # Catch steps that cannot build a config
+                    # (e.g. post hooks created from local functions,
+                    # missing input files)
+                    self.log.warning(f"Cannot retrieve CRDS keywords for {self.name}.")
 
-            skip = {"class", "logcfg", "name", "config_file"}
-            for key in config:
-                if key in kwargs or (
-                    key not in skip
-                    and key in self._initialized
-                    and not self._initialized[key]
-                ):
-                    self.log.debug(f"Setting parameter {key} to {config[key]}")
-                    setattr(self, key, config[key])
-                    if key == "steps":
-                        for step, step_dict in config[key].items():
-                            for step_key, step_value in step_dict.items():
-                                self.log.debug(
-                                    f"Setting parameters {step}.{step_key} "
-                                    f"to {step_value}"
-                                )
-                                step_instance = getattr(self, step)
-                                setattr(step_instance, step_key, step_value)
+            # Update parameters from the retrieved config + keywords
+            self.update_pars(config, skip_initialized=True)
 
             # log Step or Pipeline parameters from top level only
             if self.parent is None:
@@ -1321,7 +1314,7 @@ class Step:
         ) as af:
             af.write_to(filename)
 
-    def update_pars(self, parameters):
+    def update_pars(self, parameters, skip_initialized=False):
         """Update step parameters
 
         Only existing parameters are updated. Otherwise, new keys
@@ -1331,6 +1324,9 @@ class Step:
         ----------
         parameters : dict
             Parameters to update.
+
+        skip_initialized : bool, optional
+            If True, values that have been initialized are not updated.
 
         Notes
         -----
@@ -1344,10 +1340,17 @@ class Step:
         for parameter, value in parameters.items():
             if parameter in existing:
                 if parameter != "steps":
-                    setattr(self, parameter, value)
+                    if (skip_initialized
+                            and parameter in self._initialized
+                            and self._initialized[parameter]):
+                        self.log.debug(f"Skipping initialized parameter {parameter}")
+                    else:
+                        self.log.debug(f"Setting parameter {parameter} to {value}")
+                        setattr(self, parameter, value)
                 else:
                     for step_name, step_parameters in value.items():
-                        getattr(self, step_name).update_pars(step_parameters)
+                        getattr(self, step_name).update_pars(
+                            step_parameters, skip_initialized=skip_initialized)
             else:
                 self.log.debug(
                     "Parameter %s is not valid for step %s. Ignoring.", parameter, self
