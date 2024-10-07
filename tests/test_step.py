@@ -457,7 +457,7 @@ def test_log_records():
 @pytest.mark.usefixtures("_mock_crds_reffile")
 @pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
 def test_step_run_crds_values(step_class):
-    """Test that parameters in CRDS files are discarded."""
+    """Test that parameters in CRDS files are checked when run is called."""
     step = step_class()
     step.process = lambda *args: None
 
@@ -471,8 +471,26 @@ def test_step_run_crds_values(step_class):
 
 @pytest.mark.usefixtures("_mock_crds_reffile")
 @pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_initialized_values(step_class):
+    """Test that parameters pre-set are not overriden when run is called."""
+    step = step_class()
+    step.process = lambda *args: None
+
+    assert step.str1 == "default"
+    assert step._initialized["str1"] is False
+
+    step.str1 = "from user"
+    assert step._initialized["str1"] is True
+
+    step.run("science.fits")
+    assert step.str1 == "from user"
+    assert step._initialized["str1"] is True
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
 def test_step_run_keyword_values(step_class):
-    """Test that parameters in CRDS files are discarded."""
+    """Test that parameters can be provided via keywords in run."""
     step = step_class()
     step.process = lambda *args: None
 
@@ -485,16 +503,73 @@ def test_step_run_keyword_values(step_class):
 
 
 @pytest.mark.usefixtures("_mock_crds_reffile")
-def test_pipe_run_step_values():
-    """Test that parameters in CRDS files are discarded."""
-    step = SimplePipe()
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_keyword_values_after_initialize(step_class):
+    """Test that parameters can be provided via keywords in run."""
+    step = step_class()
     step.process = lambda *args: None
 
-    # Step parameters are initialized when created via the pipeline
-    assert step.step1.str1 == "default"
-    assert step.step1._initialized["str1"] is True
+    assert step.str1 == "default"
+    assert step._initialized["str1"] is False
 
-    # Parameters in a step dictionary can still override them
-    step.run("science.fits", steps={"step1": {"str1": "from steps"}})
-    assert step.step1.str1 == "from steps"
-    assert step.step1._initialized["str1"] is True
+    step.str1 = "from user"
+    assert step._initialized["str1"] is True
+
+    # Keyword values still override direct attribute setting
+    step.run("science.fits", str1="from keywords")
+    assert step.str1 == "from keywords"
+    assert step._initialized["str1"] is True
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+def test_pipe_run_step_values():
+    """Test that CRDS parameters are checked when created by a pipeline."""
+    pipe = SimplePipe()
+    pipe.process = lambda *args: None
+
+    # Step parameters are not initialized when created via the pipeline
+    # from defaults
+    assert pipe.step1.str1 == "default"
+    assert pipe.step1._initialized["str1"] is False
+
+    # Parameters are set by CRDS
+    pipe.run("science.fits")
+    assert pipe.step1.str1 == "from config"
+    assert pipe.step1._initialized["str1"] is True
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+def test_pipe_run_step_values_from_keywords():
+    """Test that CRDS parameters are checked when created by a pipeline."""
+    pipe = SimplePipe()
+    pipe.process = lambda *args: None
+
+    # Step parameters are not initialized when created via the pipeline
+    # from defaults
+    assert pipe.step1.str1 == "default"
+    assert pipe.step1._initialized["str1"] is False
+
+    # Parameters are set by user
+    pipe.run("science.fits", steps={"step1": {"str1": "from keywords"}})
+    assert pipe.step1.str1 == "from keywords"
+    assert pipe.step1._initialized["str1"] is True
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+def test_pipe_run_step_values_skip_initialized():
+    """Test that CRDS parameters are checked when created by a pipeline."""
+    pipe = SimplePipe()
+    pipe.process = lambda *args: None
+
+    # Step parameters are initialized when created via the pipeline
+    # from defaults
+    assert pipe.step1.str1 == "default"
+    assert pipe.step1._initialized["str1"] is False
+
+    pipe.step1.str1 = "from user"
+    assert pipe.step1._initialized["str1"] is True
+
+    # Parameters are not overridden by CRDS
+    pipe.run("science.fits")
+    assert pipe.step1.str1 == "from user"
+    assert pipe.step1._initialized["str1"] is True
