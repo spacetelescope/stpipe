@@ -472,7 +472,7 @@ def test_step_run_crds_values(step_class):
 @pytest.mark.usefixtures("_mock_crds_reffile")
 @pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
 def test_step_run_initialized_values(step_class):
-    """Test that parameters pre-set are not overriden when run is called."""
+    """Test that parameters pre-set are not overridden when run is called."""
     step = step_class()
     step.process = lambda *args: None
 
