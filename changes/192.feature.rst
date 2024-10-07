@@ -1,1 +1,1 @@
-Allow parameter updates from CRDS or user in `run` method.
+Allow parameter updates from CRDS or user in ``step.run`` method.
