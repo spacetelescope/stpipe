@@ -423,12 +423,11 @@ class StepWithModel(Step):
     output_ext = string(default='simplestep')
     save_results = boolean(default=True)
     """
-    # spec = """
-    #
-    # skip = bool(default=False)
-    # """
 
     def process(self, input_model):
+        # make a change to ensure step skip is working
+        # without having to define SimpleDataModel.meta.stepname
+        input_model.stepstatus = "COMPLETED"
         return input_model
 
 
@@ -439,17 +438,12 @@ class SimpleDataModel(AbstractDataModel):
     def crds_observatory(self):
         return "jwst"
 
-    # @property
-    # def meta(self):
-    #     return {"filename": "test.fits"}
-
     def get_crds_parameters(self):
         return {"test": "none"}
 
     def save(self, path, dir_path=None, *args, **kwargs):
         saveid = getattr(self, "saveid", None)
         if saveid is not None:
-            print(f"here {saveid}")
             fname = saveid+"-saved.txt"
             with open(fname, "w") as f:
                 f.write(f"{path}")
@@ -464,6 +458,15 @@ def test_save(tmp_cwd):
     step = StepWithModel()
     step.run(model)
     assert (tmp_cwd / "test-saved.txt").exists()
+
+
+def test_skip():
+    model = SimpleDataModel()
+    step = StepWithModel()
+    step.skip = True
+    out = step.run(model)
+    assert not hasattr(out, "stepstatus")
+    assert out is model
 
 
 @pytest.fixture(scope="function")
@@ -525,6 +528,16 @@ def test_save_container(tmp_cwd, model_list):
     step.run(container)
     for i in range(3):
         assert (tmp_cwd / f"test{i}-saved.txt").exists()
+
+
+def test_skip_container(tmp_cwd, model_list):
+    step = StepWithModel()
+    step.skip = True
+    out = step.run(model_list)
+    assert not hasattr(out, "stepstatus")
+    for i, model in enumerate(out):
+        assert not hasattr(model, "stepstatus")
+        assert model_list[i] is model
 
 
 def test_save_container_with_save_method(tmp_cwd, model_list):
