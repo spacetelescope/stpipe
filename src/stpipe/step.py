@@ -990,7 +990,7 @@ class Step:
 
         elif isinstance(model, Sequence) and not isinstance(model, str):
             if not hasattr(model, "save"):
-                # list of datamodels, e.g. ModelContainer
+                # list of datamodels, e.g. JWST ModelContainer
                 output_paths = []
                 for i, m in enumerate(model):
                     # ignore list of lists. individual steps should handle this
