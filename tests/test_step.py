@@ -427,7 +427,11 @@ class StepWithModel(Step):
     def process(self, input_model):
         # make a change to ensure step skip is working
         # without having to define SimpleDataModel.meta.stepname
-        input_model.stepstatus = "COMPLETED"
+        if isinstance(input_model, SimpleDataModel):
+            input_model.stepstatus = "COMPLETED"
+        elif isinstance(input_model, SimpleContainer):
+            for model in input_model:
+                model.stepstatus = "COMPLETED"
         return input_model
 
 
