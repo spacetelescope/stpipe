@@ -215,13 +215,6 @@ def _mock_crds_reffile(monkeypatch, config_file_step, config_file_pipe):
     monkeypatch.setattr(SimpleStep, "_datamodels_open", SimpleStepModel)
     monkeypatch.setattr(SimplePipe, "_datamodels_open", SimplePipeModel)
 
-    small_spec = """
-    str1 = string(default='default')
-    output_ext = string(default='simplestep')
-    """
-    monkeypatch.setattr(SimpleStep, "spec", small_spec)
-    monkeypatch.setattr(SimplePipe, "spec", small_spec)
-
 
 # #####
 # Tests
@@ -519,6 +512,28 @@ def test_step_run_keyword_values_after_initialize(step_class):
     step.run("science.fits", str1="from keywords")
     assert step.str1 == "from keywords"
     assert step._initialized["str1"] is True
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_invalid_parameter(step_class):
+    """Test that parameters are validated against spec."""
+    step = step_class()
+    step.process = lambda *args: None
+
+    with pytest.raises(cp.ValidationError, match="Extra value"):
+        step.run("science.fits", bad_param='from keywords')
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_format_bool_parameters(step_class):
+    """Test that parameters are validated against spec."""
+    step = step_class()
+    step.process = lambda *args: None
+
+    step.run("science.fits", save_results='False')
+    assert step.save_results is False
 
 
 @pytest.mark.usefixtures("_mock_crds_reffile")

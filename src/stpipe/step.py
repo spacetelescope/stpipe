@@ -443,23 +443,25 @@ class Step:
 
             self.log.info("Step %s running with args %s.", self.name, args)
 
-            # Get the first filename, if available
-            filename = None
-            if len(args) > 0:
-                filename = args[0]
-
-            # Get the config from CRDS if desired
+            # Get parameters from user
+            parameters = None
             if kwargs:
                 # Unset initialization for any provided override keywords
                 for key in kwargs:
                     if key in self._initialized:
                         self._initialized[key] = False
-                config = kwargs.copy()
-            else:
-                config = {}
+                parameters = kwargs
+
+            # Get parameters from CRDS
             if self._validate_kwds:
+                # Get the first filename, if available
+                filename = None
+                if len(args) > 0:
+                    filename = args[0]
+
+                # Build config from CRDS + user keywords
                 try:
-                    config, _ = self.build_config(filename, **kwargs)
+                    parameters, _ = self.build_config(filename, **kwargs)
                 except (NotImplementedError, FileNotFoundError):
                     # Catch steps that cannot build a config
                     # (e.g. post hooks created from local functions,
@@ -467,7 +469,9 @@ class Step:
                     self.log.warning(f"Cannot retrieve CRDS keywords for {self.name}.")
 
             # Update parameters from the retrieved config + keywords
-            self.update_pars(config, skip_initialized=True)
+            if parameters:
+                self._validate_parameter_updates(parameters)
+                self.update_pars(parameters, skip_initialized=True)
 
             # log Step or Pipeline parameters from top level only
             if self.parent is None:
@@ -1431,6 +1435,33 @@ class Step:
         config_parser.merge_config(config, config_kwargs)
 
         return config, config_file
+
+    def _validate_parameter_updates(self, parameter_updates):
+        """Validate new config keywords without adding the full spec."""
+
+        # Strip unnecessary keys from a low level section
+        def _strip_keys(config_dict, keys_to_strip):
+            for key in keys_to_strip:
+                if key in config_dict:
+                    del config_dict[key]
+
+        # Recursively format keywords from the full config
+        def _format_new_keywords(config_dict, full_config, keys_to_strip):
+            _strip_keys(config_dict, keys_to_strip)
+            for key in config_dict:
+                if key == 'steps':
+                    for step_name, step_parameters in config_dict[key].items():
+                        _format_new_keywords(
+                            step_parameters, full_config[key][step_name], keys_to_strip)
+                else:
+                    config_dict[key] = full_config[key]
+
+        skip = {"class", "logcfg", "name", "config_file"}
+        spec = self.load_spec_file()
+        _strip_keys(parameter_updates, skip)
+        formatted = config_parser.config_from_dict(parameter_updates, spec)
+
+        _format_new_keywords(parameter_updates, formatted, skip)
 
 
 # #########
