@@ -993,16 +993,18 @@ class Step:
                 # list of datamodels, e.g. ModelContainer
                 output_paths = []
                 for i, m in enumerate(model):
-                    idx = None if len(model) == 1 else i
-                    output_paths.append(
-                        self.save_model(
-                            m,
-                            idx=idx,
-                            suffix=suffix,
-                            force=force,
-                            **components,
+                    # ignore list of lists. individual steps should handle this
+                    if not isinstance(m, Sequence):
+                        idx = None if len(model) == 1 else i
+                        output_paths.append(
+                            self.save_model(
+                                m,
+                                idx=idx,
+                                suffix=suffix,
+                                force=force,
+                                **components,
+                            )
                         )
-                    )
                 return output_paths
             else:
                 # JWST SourceModelContainer takes this path
