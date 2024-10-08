@@ -509,6 +509,15 @@ class SimpleContainer(Sequence):
         self._models.pop(index)
 
 
+class SimpleContainerWithSave(SimpleContainer):
+
+    def save(self, path, dir_path=None, *args, **kwargs):
+        for model in self._models[1:]:
+            # skip the first model to test that the save method is called
+            # rather than just looping over all models like in the without-save case
+            model.save(path, dir_path, *args, **kwargs)
+
+
 def test_save_container(tmp_cwd, model_list):
     """ensure list-like save still works for non-list sequence"""
     container = SimpleContainer(model_list)
@@ -516,6 +525,16 @@ def test_save_container(tmp_cwd, model_list):
     step.run(container)
     for i in range(3):
         assert (tmp_cwd / f"test{i}-saved.txt").exists()
+
+
+def test_save_container_with_save_method(tmp_cwd, model_list):
+    """ensure list-like save still works for non-list sequence"""
+    container = SimpleContainerWithSave(model_list)
+    step = StepWithModel()
+    step.run(container)
+    assert not (tmp_cwd / "test0-saved.txt").exists()
+    assert (tmp_cwd / "test1-saved.txt").exists()
+    assert (tmp_cwd / "test2-saved.txt").exists()
 
 
 def test_save_tuple_with_nested_list(tmp_cwd, model_list):
