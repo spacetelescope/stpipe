@@ -522,7 +522,7 @@ def test_step_run_invalid_parameter(step_class):
     step.process = lambda *args: None
 
     with pytest.raises(cp.ValidationError, match="Extra value"):
-        step.run("science.fits", bad_param='from keywords')
+        step.run("science.fits", bad_param="from keywords")
 
 
 @pytest.mark.usefixtures("_mock_crds_reffile")
@@ -532,7 +532,7 @@ def test_step_run_format_bool_parameters(step_class):
     step = step_class()
     step.process = lambda *args: None
 
-    step.run("science.fits", save_results='False')
+    step.run("science.fits", save_results="False")
     assert step.save_results is False
 
 
