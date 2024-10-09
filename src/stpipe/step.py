@@ -1449,10 +1449,11 @@ class Step:
         def _format_new_keywords(config_dict, full_config, keys_to_strip):
             _strip_keys(config_dict, keys_to_strip)
             for key in config_dict:
-                if key == 'steps':
+                if key == "steps":
                     for step_name, step_parameters in config_dict[key].items():
                         _format_new_keywords(
-                            step_parameters, full_config[key][step_name], keys_to_strip)
+                            step_parameters, full_config[key][step_name], keys_to_strip
+                        )
                 else:
                     config_dict[key] = full_config[key]
 
