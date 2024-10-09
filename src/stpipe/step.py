@@ -477,46 +477,28 @@ class Step:
                 # Run the Step-specific code.
                 if self.skip:
                     self.log.info("Step skipped.")
-                    if isinstance(args[0], AbstractModelLibrary):
-                        library = args[0]
-                        with library:
-                            for i, model in enumerate(library):
-                                try:
-                                    setattr(
-                                        model.meta.cal_step, self.class_alias, "SKIPPED"
-                                    )
-                                except AttributeError as e:
-                                    self.log.info(
-                                        "Could not record skip into DataModel "
-                                        "header: %s",
-                                        e,
-                                    )
-                                library.shelve(model, i)
-                    elif isinstance(args[0], AbstractDataModel):
-                        if self.class_alias is not None:
+
+                    if self.class_alias is not None:
+
+                        def set_skipped(model):
+                            try:
+                                setattr(
+                                    model.meta.cal_step, self.class_alias, "SKIPPED"
+                                )
+                            except AttributeError as e:
+                                self.log.info(
+                                    "Could not record skip into DataModel "
+                                    "header: %s",
+                                    e,
+                                )
+
+                        if isinstance(args[0], AbstractModelLibrary):
+                            list(args[0].map_function(lambda m, i: set_skipped(m)))
+                        elif isinstance(args[0], AbstractDataModel):
                             if isinstance(args[0], Sequence):
-                                for model in args[0]:
-                                    try:
-                                        model[f"meta.cal_step.{self.class_alias}"] = (
-                                            "SKIPPED"
-                                        )
-                                    except AttributeError as e:  # noqa: PERF203
-                                        self.log.info(
-                                            "Could not record skip into DataModel "
-                                            "header: %s",
-                                            e,
-                                        )
-                            elif isinstance(args[0], AbstractDataModel):
-                                try:
-                                    args[0][
-                                        f"meta.cal_step.{self.class_alias}"
-                                    ] = "SKIPPED"
-                                except AttributeError as e:
-                                    self.log.info(
-                                        "Could not record skip into DataModel"
-                                        " header: %s",
-                                        e,
-                                    )
+                                [set_skipped(m) for m in args[0]]
+                            else:
+                                set_skipped(args[0])
                     step_result = args[0]
                 else:
                     if self.prefetch_references:
