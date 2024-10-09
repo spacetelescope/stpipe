@@ -426,9 +426,26 @@ class Step:
 
     def run(self, *args, **kwargs):
         """
+        Set up and run a step process.
+
         Run handles the generic setup and teardown that happens with
         the running of each step.  The real work that is unique to
         each step type is done in the `process` method.
+
+        If this step was not created via a `call` or command line process,
+        default parameters from CRDS are retrieved if available.  Override
+        parameters can also be passed as keyword arguments if desired.
+
+        The order of parameter checking and overrides is:
+           1. spec default value for the step
+           2. keyword parameters or configuration set on step initialization
+           3. CRDS parameters if available
+           4. step attributes directly set by the user before calling run
+           5. keyword parameters passed directly to the run call
+
+        Only 1 and 2 are checked if the step was created via `call`
+        or the command line.
+
         """
         gc.collect()
 
