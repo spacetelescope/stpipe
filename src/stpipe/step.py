@@ -492,9 +492,11 @@ class Step:
                                     )
                                 library.shelve(model, i)
 
-                    elif isinstance(args[0], Sequence) and self.class_alias is not None:
+                    elif (isinstance(args[0], Sequence)) and \
+                         (not isinstance(args[0], str)) and \
+                         (self.class_alias is not None):
                         # handle ModelContainer or list of models
-                        if isinstance(args[0][0], AbstractDataModel):
+                        if args[0] and isinstance(args[0][0], AbstractDataModel):
                             for model in args[0]:
                                 try:
                                     setattr(
@@ -515,8 +517,7 @@ class Step:
                             ] = "SKIPPED"
                         except AttributeError as e:
                             self.log.info(
-                                "Could not record skip into DataModel"
-                                " header: %s",
+                                "Could not record skip into DataModel header: %s",
                                 e,
                             )
                     step_result = args[0]
