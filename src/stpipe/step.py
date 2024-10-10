@@ -491,35 +491,31 @@ class Step:
                                         e,
                                     )
                                 library.shelve(model, i)
-
-                    elif (isinstance(args[0], Sequence)) and \
-                         (not isinstance(args[0], str)) and \
-                         (self.class_alias is not None):
-                        # handle ModelContainer or list of models
-                        if args[0] and isinstance(args[0][0], AbstractDataModel):
-                            for model in args[0]:
+                    elif isinstance(args[0], AbstractDataModel):
+                        if self.class_alias is not None:
+                            if isinstance(args[0], Sequence):
+                                for model in args[0]:
+                                    try:
+                                        model[f"meta.cal_step.{self.class_alias}"] = (
+                                            "SKIPPED"
+                                        )
+                                    except AttributeError as e:  # noqa: PERF203
+                                        self.log.info(
+                                            "Could not record skip into DataModel "
+                                            "header: %s",
+                                            e,
+                                        )
+                            elif isinstance(args[0], AbstractDataModel):
                                 try:
-                                    setattr(
-                                        model.meta.cal_step, self.class_alias, "SKIPPED"
-                                    )
+                                    args[0][
+                                        f"meta.cal_step.{self.class_alias}"
+                                    ] = "SKIPPED"
                                 except AttributeError as e:
                                     self.log.info(
-                                        "Could not record skip into DataModel "
-                                        "header: %s",
+                                        "Could not record skip into DataModel"
+                                        " header: %s",
                                         e,
                                     )
-
-                    elif isinstance(args[0], AbstractDataModel) and \
-                        self.class_alias is not None:
-                        try:
-                            args[0][
-                                f"meta.cal_step.{self.class_alias}"
-                            ] = "SKIPPED"
-                        except AttributeError as e:
-                            self.log.info(
-                                "Could not record skip into DataModel header: %s",
-                                e,
-                            )
                     step_result = args[0]
                 else:
                     if self.prefetch_references:
@@ -562,13 +558,10 @@ class Step:
                 # Save the output file if one was specified
                 if not self.skip and self.save_results:
                     # Setup the save list.
-                    if isinstance(step_result, Sequence):
-                        if hasattr(step_result, "save") or isinstance(step_result, str):
-                            results_to_save = [step_result]
-                        else:
-                            results_to_save = step_result
-                    else:
+                    if not isinstance(step_result, list | tuple):
                         results_to_save = [step_result]
+                    else:
+                        results_to_save = step_result
 
                     for idx, result in enumerate(results_to_save):
                         if len(results_to_save) <= 1:
@@ -999,9 +992,6 @@ class Step:
         if not force and not self.save_results and not output_file:
             return None
 
-        if model is None:
-            return None
-
         if isinstance(model, AbstractModelLibrary):
             output_paths = []
             with model:
@@ -1018,7 +1008,6 @@ class Step:
                     # leaving modify=True in case saving modify the file
                     model.shelve(m, i)
             return output_paths
-
         elif isinstance(model, Sequence):
             save_model_func = partial(
                 self.save_model,
