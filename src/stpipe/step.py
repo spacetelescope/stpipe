@@ -364,8 +364,10 @@ class Step:
         for key, val in kws.items():
             setattr(self, key, val)
 
-            # Mark them as uninitialized, from the user standpoint
-            self._initialized[key] = False
+            # Mark them as uninitialized, from the user standpoint,
+            # unless they were explicitly passed on instantiation
+            if key not in self._keywords or parent is not None:
+                self._initialized[key] = False
 
         # Create a new logger for this step
         self.log = log.getLogger(self.qualified_name)
@@ -439,8 +441,10 @@ class Step:
         The order of parameter checking and overrides is:
            1. spec default value for the step
            2. keyword parameters or configuration set on step initialization
-           3. CRDS parameters if available
-           4. step attributes directly set by the user before calling run
+           3. CRDS parameters if available and if CRDS checks are not disabled
+           4. step attributes explicitly set by the user before calling run,
+              either on instantiation or by directly setting the attribute
+              after instantiation.
            5. keyword parameters passed directly to the run call
 
         Only 1 and 2 are checked if the step was created via `call`
@@ -460,6 +464,9 @@ class Step:
 
             self.log.info("Step %s running with args %s.", self.name, args)
 
+            # Check for explicit disable for CRDS parameters
+            disable_crds_steppars = kwargs.pop('disable_crds_steppars', None)
+
             # Get parameters from user
             parameters = None
             if kwargs:
@@ -478,7 +485,8 @@ class Step:
 
                 # Build config from CRDS + user keywords
                 try:
-                    parameters, _ = self.build_config(filename, **kwargs)
+                    parameters, _ = self.build_config(
+                        filename, disable=disable_crds_steppars, **kwargs)
                 except (NotImplementedError, FileNotFoundError):
                     # Catch steps that cannot build a config
                     # (e.g. post hooks created from local functions,
@@ -1381,7 +1389,7 @@ class Step:
                 )
 
     @classmethod
-    def build_config(cls, input, **kwargs):  # noqa: A002
+    def build_config(cls, input, disable=None, **kwargs):  # noqa: A002
         """Build the ConfigObj to initialize a Step
 
         A Step config is built in the following order:
@@ -1395,6 +1403,9 @@ class Step:
         input : str or None
             Input file
 
+        disable : bool, optional
+            Do not retrieve parameters from CRDS. If None, check global settings.
+
         kwargs : dict
             Keyword arguments that specify Step parameters.
 
@@ -1406,7 +1417,7 @@ class Step:
         logger_name = cls.__name__
         log_cls = log.getLogger(logger_name)
         if input:
-            config = cls.get_config_from_reference(input)
+            config = cls.get_config_from_reference(input, disable=disable)
         else:
             log_cls.info("No filename given, cannot retrieve config from CRDS")
             config = config_parser.ConfigObj()
