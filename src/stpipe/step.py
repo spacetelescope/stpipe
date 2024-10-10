@@ -465,7 +465,7 @@ class Step:
             self.log.info("Step %s running with args %s.", self.name, args)
 
             # Check for explicit disable for CRDS parameters
-            disable_crds_steppars = kwargs.pop('disable_crds_steppars', None)
+            disable_crds_steppars = kwargs.pop("disable_crds_steppars", None)
 
             # Get parameters from user
             parameters = None
@@ -486,7 +486,8 @@ class Step:
                 # Build config from CRDS + user keywords
                 try:
                     parameters, _ = self.build_config(
-                        filename, disable=disable_crds_steppars, **kwargs)
+                        filename, disable=disable_crds_steppars, **kwargs
+                    )
                 except (NotImplementedError, FileNotFoundError):
                     # Catch steps that cannot build a config
                     # (e.g. post hooks created from local functions,
