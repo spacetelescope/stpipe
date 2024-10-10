@@ -638,7 +638,7 @@ def test_pipe_run_step_values_skip_initialized():
 
 
 @pytest.mark.usefixtures("_mock_crds_reffile")
-def test_pipe_run_step_values_skip_initialized():
+def test_pipe_run_step_values_skip_initialized_on_instantiation():
     """Test that initialized parameters are not overridden."""
     pipe = SimplePipe(steps={"step1": {"str1": "on instantiation"}})
     pipe.process = lambda *args: None
