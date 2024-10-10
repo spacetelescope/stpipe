@@ -37,6 +37,7 @@ class Pipeline(Step):
         Step.__init__(self, *args, **kwargs)
 
         # Configure all of the steps
+        step_parameters = kwargs.get('steps', {})
         for key, val in self.step_defs.items():
             cfg = self.steps.get(key)
             if cfg is not None:
@@ -44,7 +45,7 @@ class Pipeline(Step):
                     cfg,
                     parent=self,
                     name=key,
-                    config_file=self.config_file,
+                    config_file=self.config_file
                 )
             else:
                 new_step = val(
@@ -53,6 +54,13 @@ class Pipeline(Step):
                     config_file=self.config_file,
                     **kwargs.get(key, {}),
                 )
+
+            # Make sure explicitly passed parameters for sub-steps
+            # are marked as initialized
+            input_parameters = step_parameters.get(key, {})
+            for param in input_parameters:
+                if param in new_step._initialized:
+                    new_step._initialized[param] = True
 
             setattr(self, key, new_step)
 

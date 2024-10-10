@@ -464,6 +464,38 @@ def test_step_run_crds_values(step_class):
 
 @pytest.mark.usefixtures("_mock_crds_reffile")
 @pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_disable_crds_explicit(step_class):
+    """Test that CRDS parameters are not checked if disabled."""
+    step = step_class()
+    step.process = lambda *args: None
+
+    assert step.str1 == "default"
+    assert step._initialized["str1"] is False
+
+    step.run("science.fits", disable_crds_steppars=True)
+    assert step.str1 == "default"
+    assert step._initialized["str1"] is False
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_disable_crds_via_environment(monkeypatch, step_class):
+    """Test that CRDS parameters are not checked if disabled."""
+    step = step_class()
+    step.process = lambda *args: None
+
+    assert step.str1 == "default"
+    assert step._initialized["str1"] is False
+
+    monkeypatch.setenv('STPIPE_DISABLE_CRDS_STEPPARS', 'True')
+
+    step.run("science.fits")
+    assert step.str1 == "default"
+    assert step._initialized["str1"] is False
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
 def test_step_run_initialized_values(step_class):
     """Test that parameters pre-set are not overridden when run is called."""
     step = step_class()
@@ -477,6 +509,21 @@ def test_step_run_initialized_values(step_class):
 
     step.run("science.fits")
     assert step.str1 == "from user"
+    assert step._initialized["str1"] is True
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_initialized_values_on_instantiation(step_class):
+    """Test that parameters pre-set are not overridden when run is called."""
+    step = step_class(str1='on instantiation')
+    step.process = lambda *args: None
+
+    assert step.str1 == "on instantiation"
+    assert step._initialized["str1"] is True
+
+    step.run("science.fits")
+    assert step.str1 == "on instantiation"
     assert step._initialized["str1"] is True
 
 
@@ -576,8 +623,8 @@ def test_pipe_run_step_values_skip_initialized():
     pipe = SimplePipe()
     pipe.process = lambda *args: None
 
-    # Step parameters are initialized when created via the pipeline
-    # from defaults
+    # Step parameters are not initialized when created via the
+    # pipeline from defaults
     assert pipe.step1.str1 == "default"
     assert pipe.step1._initialized["str1"] is False
 
@@ -587,4 +634,19 @@ def test_pipe_run_step_values_skip_initialized():
     # Parameters are not overridden by CRDS
     pipe.run("science.fits")
     assert pipe.step1.str1 == "from user"
+    assert pipe.step1._initialized["str1"] is True
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+def test_pipe_run_step_values_skip_initialized():
+    """Test that initialized parameters are not overridden."""
+    pipe = SimplePipe(steps={'step1': {'str1': 'on instantiation'}})
+    pipe.process = lambda *args: None
+
+    assert pipe.step1.str1 == "on instantiation"
+    assert pipe.step1._initialized["str1"] is True
+
+    # Parameters are not overridden by CRDS
+    pipe.run("science.fits")
+    assert pipe.step1.str1 == "on instantiation"
     assert pipe.step1._initialized["str1"] is True
