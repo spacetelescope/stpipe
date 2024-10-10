@@ -37,15 +37,12 @@ class Pipeline(Step):
         Step.__init__(self, *args, **kwargs)
 
         # Configure all of the steps
-        step_parameters = kwargs.get('steps', {})
+        step_parameters = kwargs.get("steps", {})
         for key, val in self.step_defs.items():
             cfg = self.steps.get(key)
             if cfg is not None:
                 new_step = val.from_config_section(
-                    cfg,
-                    parent=self,
-                    name=key,
-                    config_file=self.config_file
+                    cfg, parent=self, name=key, config_file=self.config_file
                 )
             else:
                 new_step = val(
