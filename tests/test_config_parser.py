@@ -58,3 +58,25 @@ def test_preserve_comments_deprecation(value):
     assert "initial comment" in spec.initial_comment[0]
     assert "final comment" in spec.final_comment[0]
     assert "inline comment (with parentheses)" in spec.inline_comments["bar"]
+
+
+def _config_from_crds():
+    cfg = ConfigObj()
+    cfg._from_crds = True
+    return cfg
+
+
+@pytest.mark.parametrize(
+    "a, b, from_crds",
+    (
+        (_config_from_crds(), ConfigObj(), True),
+        (ConfigObj(), _config_from_crds(), True),
+        (ConfigObj(), ConfigObj(), False),
+    ),
+)
+def test_merge_preserves_from_crds(a, b, from_crds):
+    """
+    Test that merging configs preserves _from_crds
+    """
+    config_parser.merge_config(a, b)
+    assert getattr(a, "_from_crds", False) == from_crds
