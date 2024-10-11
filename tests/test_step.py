@@ -457,7 +457,7 @@ def test_step_run_crds_values(step_class):
     assert step.str1 == "default"
     assert step._initialized["str1"] is False
 
-    step.run("science.fits")
+    step.run("science.fits", disable_crds_steppars=False)
     assert step.str1 == "from config"
     assert step._initialized["str1"] is True
 
@@ -489,9 +489,41 @@ def test_step_run_disable_crds_via_environment(monkeypatch, step_class):
 
     monkeypatch.setenv("STPIPE_DISABLE_CRDS_STEPPARS", "True")
 
+    step.run("science.fits", disable_crds_steppars=None)
+    assert step.str1 == "default"
+    assert step._initialized["str1"] is False
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_disable_crds_default(caplog, step_class):
+    """Test that CRDS parameters are not checked by default."""
+    step = step_class()
+    step.process = lambda *args: None
+
+    assert step.str1 == "default"
+    assert step._initialized["str1"] is False
+
     step.run("science.fits")
     assert step.str1 == "default"
     assert step._initialized["str1"] is False
+
+    assert "CRDS parameter checks are currently disabled by default" in caplog.text
+
+
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_crds_error(caplog, step_class):
+    """Test that exception is raised if CRDS parameters cannot be checked."""
+    step = step_class()
+    step.process = lambda *args: None
+
+    assert step.str1 == "default"
+    assert step._initialized["str1"] is False
+
+    # Call run with an incomplete step implementation, on a file that does
+    # not exist, without mocking the CRDS retrieval
+    with pytest.raises(ValueError, match='Cannot retrieve CRDS keywords'):
+        step.run("science.fits", disable_crds_steppars=False)
 
 
 @pytest.mark.usefixtures("_mock_crds_reffile")
@@ -507,7 +539,7 @@ def test_step_run_initialized_values(step_class):
     step.str1 = "from user"
     assert step._initialized["str1"] is True
 
-    step.run("science.fits")
+    step.run("science.fits", disable_crds_steppars=False)
     assert step.str1 == "from user"
     assert step._initialized["str1"] is True
 
@@ -522,7 +554,7 @@ def test_step_run_initialized_values_on_instantiation(step_class):
     assert step.str1 == "on instantiation"
     assert step._initialized["str1"] is True
 
-    step.run("science.fits")
+    step.run("science.fits", disable_crds_steppars=False)
     assert step.str1 == "on instantiation"
     assert step._initialized["str1"] is True
 
@@ -537,7 +569,7 @@ def test_step_run_keyword_values(step_class):
     assert step.str1 == "default"
     assert step._initialized["str1"] is False
 
-    step.run("science.fits", str1="from keywords")
+    step.run("science.fits", str1="from keywords", disable_crds_steppars=False)
     assert step.str1 == "from keywords"
     assert step._initialized["str1"] is True
 
@@ -556,7 +588,7 @@ def test_step_run_keyword_values_after_initialize(step_class):
     assert step._initialized["str1"] is True
 
     # Keyword values still override direct attribute setting
-    step.run("science.fits", str1="from keywords")
+    step.run("science.fits", str1="from keywords", disable_crds_steppars=False)
     assert step.str1 == "from keywords"
     assert step._initialized["str1"] is True
 
@@ -569,7 +601,7 @@ def test_step_run_invalid_parameter(step_class):
     step.process = lambda *args: None
 
     with pytest.raises(cp.ValidationError, match="Extra value"):
-        step.run("science.fits", bad_param="from keywords")
+        step.run("science.fits", bad_param="from keywords", disable_crds_steppars=False)
 
 
 @pytest.mark.usefixtures("_mock_crds_reffile")
@@ -579,7 +611,7 @@ def test_step_run_format_bool_parameters(step_class):
     step = step_class()
     step.process = lambda *args: None
 
-    step.run("science.fits", save_results="False")
+    step.run("science.fits", save_results="False", disable_crds_steppars=False)
     assert step.save_results is False
 
 
@@ -595,7 +627,7 @@ def test_pipe_run_step_values():
     assert pipe.step1._initialized["str1"] is False
 
     # Parameters are set by CRDS
-    pipe.run("science.fits")
+    pipe.run("science.fits", disable_crds_steppars=False)
     assert pipe.step1.str1 == "from config"
     assert pipe.step1._initialized["str1"] is True
 
@@ -612,7 +644,8 @@ def test_pipe_run_step_values_from_keywords():
     assert pipe.step1._initialized["str1"] is False
 
     # Parameters are set by user
-    pipe.run("science.fits", steps={"step1": {"str1": "from keywords"}})
+    pipe.run("science.fits", steps={"step1": {"str1": "from keywords"}},
+             disable_crds_steppars=False)
     assert pipe.step1.str1 == "from keywords"
     assert pipe.step1._initialized["str1"] is True
 
@@ -632,7 +665,7 @@ def test_pipe_run_step_values_skip_initialized():
     assert pipe.step1._initialized["str1"] is True
 
     # Parameters are not overridden by CRDS
-    pipe.run("science.fits")
+    pipe.run("science.fits", disable_crds_steppars=False)
     assert pipe.step1.str1 == "from user"
     assert pipe.step1._initialized["str1"] is True
 
@@ -647,6 +680,6 @@ def test_pipe_run_step_values_skip_initialized_on_instantiation():
     assert pipe.step1._initialized["str1"] is True
 
     # Parameters are not overridden by CRDS
-    pipe.run("science.fits")
+    pipe.run("science.fits", disable_crds_steppars=False)
     assert pipe.step1.str1 == "on instantiation"
     assert pipe.step1._initialized["str1"] is True

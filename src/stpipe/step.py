@@ -434,14 +434,17 @@ class Step:
         the running of each step.  The real work that is unique to
         each step type is done in the `process` method.
 
-        If this step was not created via a `call` or command line process,
-        default parameters from CRDS are retrieved if available.  Override
-        parameters can also be passed as keyword arguments if desired.
+        If this step was not created via a `call` or a command line process,
+        and if 'disable_crds_parameters' is set to False,
+        default parameters from CRDS are retrieved at runtime, if available.
+        Override parameters can also be passed as keyword arguments if desired.
 
         The order of parameter checking and overrides is:
+
            1. spec default value for the step
            2. keyword parameters or configuration set on step initialization
            3. CRDS parameters if available and if CRDS checks are not disabled
+              (disable_crds_parameters = False)
            4. step attributes explicitly set by the user before calling run,
               either on instantiation or by directly setting the attribute
               after instantiation.
@@ -449,6 +452,23 @@ class Step:
 
         Only 1 and 2 are checked if the step was created via `call`
         or the command line.
+
+        Parameters
+        ----------
+        disable_crds_steppars : bool, optional
+            If set to True, CRDS parameter checks are disabled.
+            If set to False, CRDS parameter checks are enabled.
+            If set to None, the environment variable STPIPE_DISABLE_CRDS_STEPPARS
+            is checked: if set to 'true', CRDS parameters checks
+            are disabled.
+
+        Notes
+        -----
+        Currently, the default value for disable_crds_steppars is True,
+        for backward compatibility with previous behavior for the `run`
+        function.  In future builds, the default value will be None,
+        so that the default behavior is to check CRDS for default
+        parameters when possible.
 
         """
         gc.collect()
@@ -465,7 +485,15 @@ class Step:
             self.log.info("Step %s running with args %s.", self.name, args)
 
             # Check for explicit disable for CRDS parameters
-            disable_crds_steppars = kwargs.pop("disable_crds_steppars", None)
+            if 'disable_crds_steppars' in kwargs:
+                disable_crds_steppars = kwargs.pop("disable_crds_steppars")
+            else:
+                disable_crds_steppars = True
+                if self.parent is None and self._validate_kwds:
+                    self.log.warning("CRDS parameter checks are currently disabled by default.")
+                    self.log.warning("In future builds, they will be enabled by default.")
+                    self.log.warning("To turn them on now, set 'disable_crds_steppars' to False "
+                                     "in the arguments to 'run'.")
 
             # Get parameters from user
             parameters = None
@@ -488,11 +516,12 @@ class Step:
                     parameters, _ = self.build_config(
                         filename, disable=disable_crds_steppars, **kwargs
                     )
-                except (NotImplementedError, FileNotFoundError):
+                except (NotImplementedError, FileNotFoundError, RuntimeError):
                     # Catch steps that cannot build a config
                     # (e.g. post hooks created from local functions,
                     # missing input files)
-                    self.log.warning(f"Cannot retrieve CRDS keywords for {self.name}.")
+                    raise ValueError(f"Cannot retrieve CRDS keywords for "
+                                     f"{self.name} with input {str(filename)}.")
 
             # Update parameters from the retrieved config + keywords
             if parameters:
@@ -530,7 +559,7 @@ class Step:
 
                 hook_args = args
                 for pre_hook in self._pre_hooks:
-                    hook_results = pre_hook.run(*hook_args)
+                    hook_results = pre_hook.run(*hook_args, disable_crds_steppars=True)
                     if hook_results is not None:
                         hook_args = hook_results
                 args = hook_args
@@ -602,7 +631,7 @@ class Step:
 
                 # Run the post hooks
                 for post_hook in self._post_hooks:
-                    hook_results = post_hook.run(step_result)
+                    hook_results = post_hook.run(step_result, disable_crds_steppars=True)
                     if hook_results is not None:
                         step_result = hook_results
 
