@@ -5,6 +5,7 @@ Step
 import gc
 import os
 import sys
+import warnings
 from collections.abc import Sequence
 from contextlib import contextmanager, suppress
 from functools import partial
@@ -36,6 +37,10 @@ from .datamodel import AbstractDataModel
 from .format_template import FormatTemplate
 from .library import AbstractModelLibrary
 from .utilities import _not_set
+
+
+class NoCRDSParametersWarning(UserWarning):
+    pass
 
 
 class Step:
@@ -295,13 +300,15 @@ class Step:
             else:
                 kwargs[k] = config[k]
 
-        return cls(
+        instance = cls(
             name=name,
             parent=parent,
             config_file=config_file,
             _validate_kwds=False,
             **kwargs,
         )
+        instance._params_from_crds = getattr(config, "_from_crds", False)
+        return instance
 
     def __init__(
         self,
@@ -419,6 +426,12 @@ class Step:
         the running of each step.  The real work that is unique to
         each step type is done in the `process` method.
         """
+        if (
+            not get_disable_crds_steppars()
+            and self.parent is None
+            and not getattr(self, "_params_from_crds", False)
+        ):
+            warnings.warn("No CRDS parameters", NoCRDSParametersWarning)
         gc.collect()
 
         with log.record_logs(formatter=self._log_records_formatter) as log_records:
@@ -899,7 +912,9 @@ class Step:
             )
         except (AttributeError, crds_client.CrdsError):
             logger.debug("%s: No parameters found", reftype.upper())
-            return config_parser.ConfigObj()
+            config = config_parser.ConfigObj()
+            config._from_crds = True
+            return config
         if ref_file != "N/A":
             logger.info("%s parameters found: %s", reftype.upper(), ref_file)
             ref = config_parser.load_config_file(ref_file)
@@ -910,11 +925,14 @@ class Step:
             logger.debug(
                 "%s parameters retrieved from CRDS: %s", reftype.upper(), ref_pars
             )
+            ref._from_crds = True
 
             return ref
 
         logger.debug("No %s reference files found.", reftype.upper())
-        return config_parser.ConfigObj()
+        config = config_parser.ConfigObj()
+        config._from_crds = True
+        return config
 
     def set_primary_input(self, obj, exclusive=True):
         """
