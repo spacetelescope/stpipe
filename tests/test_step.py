@@ -2,6 +2,7 @@
 
 import logging
 import re
+import warnings
 from typing import ClassVar
 
 import asdf
@@ -152,7 +153,7 @@ def _mock_step_crds(monkeypatch):
     """Mock various crds calls from Step"""
 
     def mock_get_config_from_reference_pipe(dataset, disable=None):
-        return cp.config_from_dict(
+        cfg = cp.config_from_dict(
             {
                 "str1": "from crds",
                 "str2": "from crds",
@@ -166,14 +167,20 @@ def _mock_step_crds(monkeypatch):
                 },
             }
         )
+        cfg._from_crds = True
+        return cfg
 
     def mock_get_config_from_reference_step(dataset, disable=None):
-        return cp.config_from_dict(
+        cfg = cp.config_from_dict(
             {"str1": "from crds", "str2": "from crds", "str3": "from crds"}
         )
+        cfg._from_crds = True
+        return cfg
 
     def mock_get_config_from_reference_list_arg_step(dataset, disable=None):
-        return cp.config_from_dict({"rotation": "15", "pixel_scale": "0.85"})
+        cfg = cp.config_from_dict({"rotation": "15", "pixel_scale": "0.85"})
+        cfg._from_crds = True
+        return cfg
 
     monkeypatch.setattr(
         SimplePipe, "get_config_from_reference", mock_get_config_from_reference_pipe
@@ -424,4 +431,21 @@ def test_warning_for_missing_crds_pars(StepClass):
     s = StepClass()
     s._warn_on_missing_crds_steppars = True
     with pytest.warns(NoCRDSParametersWarning):
+        s.run()
+
+
+@pytest.mark.parametrize("StepClass", (SimpleStep, SimplePipe))
+def test_no_warning_for_call(StepClass, _mock_step_crds, monkeypatch):
+    monkeypatch.setattr(StepClass, "_warn_on_missing_crds_steppars", True)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        StepClass.call("foo")
+
+
+@pytest.mark.parametrize("StepClass", (SimpleStep, SimplePipe))
+def test_no_warning_for_build_config(StepClass, _mock_step_crds, monkeypatch):
+    s = StepClass.from_config_section(StepClass.build_config("foo")[0])
+    s._warn_on_missing_crds_steppars = True
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         s.run()

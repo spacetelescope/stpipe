@@ -39,12 +39,12 @@ from .library import AbstractModelLibrary
 from .utilities import _not_set
 
 
-
 class NoCRDSParametersWarning(UserWarning):
     """
     Warning shown when a Step with CRDS parameters
     is run without fetching those parameters.
     """
+
     pass
 
 
@@ -55,7 +55,7 @@ def _warn_missing_crds_pars(step):
         "CRDS parameters use "
         "Step.from_config_section(Step.build_config(input)[0]) or "
         "use Step.call which will create and use the instance in one method.",
-        NoCRDSParametersWarning
+        NoCRDSParametersWarning,
     )
 
 
