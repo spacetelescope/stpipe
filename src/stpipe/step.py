@@ -477,7 +477,7 @@ class Step:
                 parameters = kwargs
 
             # Get parameters from CRDS
-            if self._validate_kwds:
+            if self._validate_kwds and not disable_crds_steppars:
                 # Get the first filename, if available
                 filename = None
                 if len(args) > 0:
