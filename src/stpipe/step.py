@@ -54,7 +54,7 @@ def _warn_missing_crds_pars(step):
         "step parameters from CRDS. To create a Step instance using "
         "CRDS parameters use "
         "Step.from_config_section(Step.build_config(input)[0]) or "
-        "use Step.call which will create and use the instance in one method.",
+        "use Step.call which will create and use the instance.",
         NoCRDSParametersWarning,
     )
 
