@@ -10,7 +10,7 @@ import pytest
 import stpipe.config_parser as cp
 from stpipe import cmdline
 from stpipe.pipeline import Pipeline
-from stpipe.step import Step
+from stpipe.step import NoCRDSParametersWarning, Step
 
 
 # ######################
@@ -27,6 +27,9 @@ class SimpleStep(Step):
         output_ext = string(default='simplestep')
     """
 
+    def process(self, *args):
+        return args
+
 
 class SimplePipe(Pipeline):
     """A Pipeline with parameters and one step"""
@@ -40,6 +43,9 @@ class SimplePipe(Pipeline):
     """
 
     step_defs: ClassVar = {"step1": SimpleStep}
+
+    def process(self, *args):
+        return args
 
 
 class LoggingPipeline(Pipeline):
@@ -411,3 +417,11 @@ def test_log_records():
     pipeline.run()
 
     assert any(r == "This step has called out a warning." for r in pipeline.log_records)
+
+
+@pytest.mark.parametrize("StepClass", (SimpleStep, SimplePipe))
+def test_warning_for_missing_crds_pars(StepClass):
+    s = StepClass()
+    s._warn_on_missing_crds_steppars = True
+    with pytest.warns(NoCRDSParametersWarning):
+        s.run()
