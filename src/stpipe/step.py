@@ -50,7 +50,7 @@ class NoCRDSParametersWarning(UserWarning):
 
 def _warn_missing_crds_pars(step):
     warnings.warn(
-        f"Step({step}).run was called without first getting "
+        f"{step.__class__.__name__}.run was called without first getting "
         "step parameters from CRDS. To create a Step instance using "
         "CRDS parameters use "
         "Step.from_config_section(Step.build_config(input)[0]) or "
