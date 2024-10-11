@@ -522,7 +522,7 @@ def test_step_run_crds_error(caplog, step_class):
 
     # Call run with an incomplete step implementation, on a file that does
     # not exist, without mocking the CRDS retrieval
-    with pytest.raises(ValueError, match='Cannot retrieve CRDS keywords'):
+    with pytest.raises(ValueError, match="Cannot retrieve CRDS keywords"):
         step.run("science.fits", disable_crds_steppars=False)
 
 
@@ -644,8 +644,11 @@ def test_pipe_run_step_values_from_keywords():
     assert pipe.step1._initialized["str1"] is False
 
     # Parameters are set by user
-    pipe.run("science.fits", steps={"step1": {"str1": "from keywords"}},
-             disable_crds_steppars=False)
+    pipe.run(
+        "science.fits",
+        steps={"step1": {"str1": "from keywords"}},
+        disable_crds_steppars=False,
+    )
     assert pipe.step1.str1 == "from keywords"
     assert pipe.step1._initialized["str1"] is True
 
