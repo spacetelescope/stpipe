@@ -216,6 +216,7 @@ class Pipeline(Step):
             else:
                 logger.debug("No %s reference files found.", reftype.upper())
 
+        refcfg._from_crds = True
         return refcfg
 
     @classmethod
