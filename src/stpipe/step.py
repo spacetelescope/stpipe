@@ -39,8 +39,24 @@ from .library import AbstractModelLibrary
 from .utilities import _not_set
 
 
+
 class NoCRDSParametersWarning(UserWarning):
+    """
+    Warning shown when a Step with CRDS parameters
+    is run without fetching those parameters.
+    """
     pass
+
+
+def _warn_missing_crds_pars(step):
+    warnings.warn(
+        f"Step({step}).run was called without first getting "
+        "step parameters from CRDS. To create a Step instance using "
+        "CRDS parameters use "
+        "Step.from_config_section(Step.build_config(input)[0]) or "
+        "use Step.call which will create and use the instance in one method.",
+        NoCRDSParametersWarning
+    )
 
 
 class Step:
@@ -83,6 +99,10 @@ class Step:
     # This needs to be set to a logging formatter for any
     # log_records to be saved.
     _log_records_formatter = None
+
+    # If the expectation is that this step has a
+    # CRDS step parameters file set this flag to True
+    _warn_on_missing_crds_steppars = False
 
     @classmethod
     def get_config_reftype(cls):
@@ -427,11 +447,12 @@ class Step:
         each step type is done in the `process` method.
         """
         if (
-            not get_disable_crds_steppars()
+            self._warn_on_missing_crds_steppars
+            and not get_disable_crds_steppars()
             and self.parent is None
             and not getattr(self, "_params_from_crds", False)
         ):
-            warnings.warn("No CRDS parameters", NoCRDSParametersWarning)
+            _warn_missing_crds_pars(self)
         gc.collect()
 
         with log.record_logs(formatter=self._log_records_formatter) as log_records:

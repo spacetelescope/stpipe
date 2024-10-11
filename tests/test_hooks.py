@@ -7,6 +7,7 @@ from jwst.stpipe import Pipeline, Step  # noqa: E402
 
 class ShovelPixelsStep(Step):
     class_alias = "shovelpixels"
+    _warn_on_missing_crds_steppars = False
 
     def process(self, input_data):
         self.log.info("Shoveling...")
@@ -15,6 +16,7 @@ class ShovelPixelsStep(Step):
 
 class CancelNoiseStep(Step):
     class_alias = "cancelnoise"
+    _warn_on_missing_crds_steppars = False
 
     def process(self, input_data):
         self.log.info("De-noising...")
@@ -23,6 +25,7 @@ class CancelNoiseStep(Step):
 
 class HookStep(Step):
     class_alias = "myhook"
+    _warn_on_missing_crds_steppars = False
 
     spec = """
     param1 = string(default="bar")
@@ -37,6 +40,7 @@ class HookStep(Step):
 
 class MyPipeline(Pipeline):
     class_alias = "mypipeline"
+    _warn_on_missing_crds_steppars = False
 
     step_defs = {  # noqa: RUF012
         "shovelpixels": ShovelPixelsStep,
