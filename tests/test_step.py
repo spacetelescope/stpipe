@@ -8,7 +8,7 @@ import asdf
 import pytest
 
 import stpipe.config_parser as cp
-from stpipe import cmdline
+from stpipe import cmdline, crds_client
 from stpipe.pipeline import Pipeline
 from stpipe.step import Step
 
@@ -180,6 +180,40 @@ def _mock_step_crds(monkeypatch):
         "get_config_from_reference",
         mock_get_config_from_reference_list_arg_step,
     )
+
+
+@pytest.fixture()
+def _mock_crds_reffile(monkeypatch, config_file_step, config_file_pipe):
+    """Mock a reference file returned from CRDS."""
+
+    def mock_crds_get_reference_file(crds_parameters, reftype, crds_observatory):
+        if crds_observatory == "step":
+            return config_file_step
+        return config_file_pipe
+
+    class SimpleModel:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def get_crds_parameters(self):
+            return None
+
+    class SimpleStepModel(SimpleModel):
+        crds_observatory = "step"
+
+    class SimplePipeModel(SimpleModel):
+        crds_observatory = "pipe"
+
+    monkeypatch.setattr(crds_client, "get_reference_file", mock_crds_get_reference_file)
+
+    monkeypatch.setattr(SimpleStep, "_datamodels_open", SimpleStepModel)
+    monkeypatch.setattr(SimplePipe, "_datamodels_open", SimplePipeModel)
 
 
 # #####
@@ -411,3 +445,244 @@ def test_log_records():
     pipeline.run()
 
     assert any(r == "This step has called out a warning." for r in pipeline.log_records)
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_crds_values(step_class):
+    """Test that parameters in CRDS files are checked when run is called."""
+    step = step_class()
+    step.process = lambda *args: None
+
+    assert step.str1 == "default"
+    assert step._initialized["str1"] is False
+
+    step.run("science.fits", disable_crds_steppars=False)
+    assert step.str1 == "from config"
+    assert step._initialized["str1"] is True
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_disable_crds_explicit(step_class):
+    """Test that CRDS parameters are not checked if disabled."""
+    step = step_class()
+    step.process = lambda *args: None
+
+    assert step.str1 == "default"
+    assert step._initialized["str1"] is False
+
+    step.run("science.fits", disable_crds_steppars=True)
+    assert step.str1 == "default"
+    assert step._initialized["str1"] is False
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_disable_crds_via_environment(monkeypatch, step_class):
+    """Test that CRDS parameters are not checked if disabled."""
+    step = step_class()
+    step.process = lambda *args: None
+
+    assert step.str1 == "default"
+    assert step._initialized["str1"] is False
+
+    monkeypatch.setenv("STPIPE_DISABLE_CRDS_STEPPARS", "True")
+
+    step.run("science.fits", disable_crds_steppars=None)
+    assert step.str1 == "default"
+    assert step._initialized["str1"] is False
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_disable_crds_default(caplog, step_class):
+    """Test that CRDS parameters are not checked by default."""
+    step = step_class()
+    step.process = lambda *args: None
+
+    assert step.str1 == "default"
+    assert step._initialized["str1"] is False
+
+    step.run("science.fits")
+    assert step.str1 == "default"
+    assert step._initialized["str1"] is False
+
+    assert "CRDS parameter checks are currently disabled by default" in caplog.text
+
+
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_crds_error(caplog, step_class):
+    """Test that exception is raised if CRDS parameters cannot be checked."""
+    step = step_class()
+    step.process = lambda *args: None
+
+    assert step.str1 == "default"
+    assert step._initialized["str1"] is False
+
+    # Call run with an incomplete step implementation, on a file that does
+    # not exist, without mocking the CRDS retrieval
+    with pytest.raises(ValueError, match="Cannot retrieve CRDS keywords"):
+        step.run("science.fits", disable_crds_steppars=False)
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_initialized_values(step_class):
+    """Test that parameters pre-set are not overridden when run is called."""
+    step = step_class()
+    step.process = lambda *args: None
+
+    assert step.str1 == "default"
+    assert step._initialized["str1"] is False
+
+    step.str1 = "from user"
+    assert step._initialized["str1"] is True
+
+    step.run("science.fits", disable_crds_steppars=False)
+    assert step.str1 == "from user"
+    assert step._initialized["str1"] is True
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_initialized_values_on_instantiation(step_class):
+    """Test that parameters pre-set are not overridden when run is called."""
+    step = step_class(str1="on instantiation")
+    step.process = lambda *args: None
+
+    assert step.str1 == "on instantiation"
+    assert step._initialized["str1"] is True
+
+    step.run("science.fits", disable_crds_steppars=False)
+    assert step.str1 == "on instantiation"
+    assert step._initialized["str1"] is True
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_keyword_values(step_class):
+    """Test that parameters can be provided via keywords in run."""
+    step = step_class()
+    step.process = lambda *args: None
+
+    assert step.str1 == "default"
+    assert step._initialized["str1"] is False
+
+    step.run("science.fits", str1="from keywords", disable_crds_steppars=False)
+    assert step.str1 == "from keywords"
+    assert step._initialized["str1"] is True
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_keyword_values_after_initialize(step_class):
+    """Test that parameters can be provided via keywords in run."""
+    step = step_class()
+    step.process = lambda *args: None
+
+    assert step.str1 == "default"
+    assert step._initialized["str1"] is False
+
+    step.str1 = "from user"
+    assert step._initialized["str1"] is True
+
+    # Keyword values still override direct attribute setting
+    step.run("science.fits", str1="from keywords", disable_crds_steppars=False)
+    assert step.str1 == "from keywords"
+    assert step._initialized["str1"] is True
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_invalid_parameter(step_class):
+    """Test that parameters are validated against spec."""
+    step = step_class()
+    step.process = lambda *args: None
+
+    with pytest.raises(cp.ValidationError, match="Extra value"):
+        step.run("science.fits", bad_param="from keywords", disable_crds_steppars=False)
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+@pytest.mark.parametrize("step_class", [SimplePipe, SimpleStep])
+def test_step_run_format_bool_parameters(step_class):
+    """Test that parameters are validated against spec."""
+    step = step_class()
+    step.process = lambda *args: None
+
+    step.run("science.fits", save_results="False", disable_crds_steppars=False)
+    assert step.save_results is False
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+def test_pipe_run_step_values():
+    """Test that CRDS parameters are checked when created by a pipeline."""
+    pipe = SimplePipe()
+    pipe.process = lambda *args: None
+
+    # Step parameters are not initialized when created via the pipeline
+    # from defaults
+    assert pipe.step1.str1 == "default"
+    assert pipe.step1._initialized["str1"] is False
+
+    # Parameters are set by CRDS
+    pipe.run("science.fits", disable_crds_steppars=False)
+    assert pipe.step1.str1 == "from config"
+    assert pipe.step1._initialized["str1"] is True
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+def test_pipe_run_step_values_from_keywords():
+    """Test that CRDS parameters are checked when created by a pipeline."""
+    pipe = SimplePipe()
+    pipe.process = lambda *args: None
+
+    # Step parameters are not initialized when created via the pipeline
+    # from defaults
+    assert pipe.step1.str1 == "default"
+    assert pipe.step1._initialized["str1"] is False
+
+    # Parameters are set by user
+    pipe.run(
+        "science.fits",
+        steps={"step1": {"str1": "from keywords"}},
+        disable_crds_steppars=False,
+    )
+    assert pipe.step1.str1 == "from keywords"
+    assert pipe.step1._initialized["str1"] is True
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+def test_pipe_run_step_values_skip_initialized():
+    """Test that CRDS parameters are checked when created by a pipeline."""
+    pipe = SimplePipe()
+    pipe.process = lambda *args: None
+
+    # Step parameters are not initialized when created via the
+    # pipeline from defaults
+    assert pipe.step1.str1 == "default"
+    assert pipe.step1._initialized["str1"] is False
+
+    pipe.step1.str1 = "from user"
+    assert pipe.step1._initialized["str1"] is True
+
+    # Parameters are not overridden by CRDS
+    pipe.run("science.fits", disable_crds_steppars=False)
+    assert pipe.step1.str1 == "from user"
+    assert pipe.step1._initialized["str1"] is True
+
+
+@pytest.mark.usefixtures("_mock_crds_reffile")
+def test_pipe_run_step_values_skip_initialized_on_instantiation():
+    """Test that initialized parameters are not overridden."""
+    pipe = SimplePipe(steps={"step1": {"str1": "on instantiation"}})
+    pipe.process = lambda *args: None
+
+    assert pipe.step1.str1 == "on instantiation"
+    assert pipe.step1._initialized["str1"] is True
+
+    # Parameters are not overridden by CRDS
+    pipe.run("science.fits", disable_crds_steppars=False)
+    assert pipe.step1.str1 == "on instantiation"
+    assert pipe.step1._initialized["str1"] is True
