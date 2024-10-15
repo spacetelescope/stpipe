@@ -37,6 +37,7 @@ class FakeStep(Step):
 
 class ShovelPixelsStep(FakeStep):
     class_alias = "shovelpixels"
+    _warn_on_missing_crds_steppars = False
 
     def process(self, input_data):
         self.log.info("Shoveling...")
@@ -45,6 +46,7 @@ class ShovelPixelsStep(FakeStep):
 
 class CancelNoiseStep(FakeStep):
     class_alias = "cancelnoise"
+    _warn_on_missing_crds_steppars = False
 
     def process(self, input_data):
         self.log.info("De-noising...")
@@ -53,6 +55,7 @@ class CancelNoiseStep(FakeStep):
 
 class HookStep(FakeStep):
     class_alias = "myhook"
+    _warn_on_missing_crds_steppars = False
 
     spec = """
     param1 = string(default="bar")
@@ -68,6 +71,7 @@ class HookStep(FakeStep):
 
 class MyPipeline(Pipeline):
     class_alias = "mypipeline"
+    _warn_on_missing_crds_steppars = False
 
     spec = """
     output_ext = string(default='asdf')

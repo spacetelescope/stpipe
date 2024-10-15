@@ -5,6 +5,7 @@ Step
 import gc
 import os
 import sys
+import warnings
 from collections.abc import Sequence
 from contextlib import contextmanager, suppress
 from functools import partial
@@ -36,6 +37,26 @@ from .datamodel import AbstractDataModel
 from .format_template import FormatTemplate
 from .library import AbstractModelLibrary
 from .utilities import _not_set
+
+
+class NoCRDSParametersWarning(UserWarning):
+    """
+    Warning shown when a Step with CRDS parameters
+    is run without fetching those parameters.
+    """
+
+    pass
+
+
+def _warn_missing_crds_pars(step):
+    warnings.warn(
+        f"{step.__class__.__name__}.run was called without first getting "
+        "step parameters from CRDS. To create a Step instance using "
+        "CRDS parameters use "
+        "Step.from_config_section(Step.build_config(input)[0]) or "
+        "use Step.call which will create and use the instance.",
+        NoCRDSParametersWarning,
+    )
 
 
 class Step:
@@ -78,6 +99,10 @@ class Step:
     # This needs to be set to a logging formatter for any
     # log_records to be saved.
     _log_records_formatter = None
+
+    # If the expectation is that this step has a
+    # CRDS step parameters file set this flag to True
+    _warn_on_missing_crds_steppars = False
 
     @classmethod
     def get_config_reftype(cls):
@@ -295,13 +320,15 @@ class Step:
             else:
                 kwargs[k] = config[k]
 
-        return cls(
+        instance = cls(
             name=name,
             parent=parent,
             config_file=config_file,
             _validate_kwds=False,
             **kwargs,
         )
+        instance._params_from_crds = getattr(config, "_from_crds", False)
+        return instance
 
     def __init__(
         self,
@@ -419,6 +446,13 @@ class Step:
         the running of each step.  The real work that is unique to
         each step type is done in the `process` method.
         """
+        if (
+            self._warn_on_missing_crds_steppars
+            and not get_disable_crds_steppars()
+            and self.parent is None
+            and not getattr(self, "_params_from_crds", False)
+        ):
+            _warn_missing_crds_pars(self)
         gc.collect()
 
         with log.record_logs(formatter=self._log_records_formatter) as log_records:
@@ -899,7 +933,9 @@ class Step:
             )
         except (AttributeError, crds_client.CrdsError):
             logger.debug("%s: No parameters found", reftype.upper())
-            return config_parser.ConfigObj()
+            config = config_parser.ConfigObj()
+            config._from_crds = True
+            return config
         if ref_file != "N/A":
             logger.info("%s parameters found: %s", reftype.upper(), ref_file)
             ref = config_parser.load_config_file(ref_file)
@@ -910,11 +946,14 @@ class Step:
             logger.debug(
                 "%s parameters retrieved from CRDS: %s", reftype.upper(), ref_pars
             )
+            ref._from_crds = True
 
             return ref
 
         logger.debug("No %s reference files found.", reftype.upper())
-        return config_parser.ConfigObj()
+        config = config_parser.ConfigObj()
+        config._from_crds = True
+        return config
 
     def set_primary_input(self, obj, exclusive=True):
         """

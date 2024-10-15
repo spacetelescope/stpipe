@@ -2,15 +2,16 @@
 
 import logging
 import re
+import warnings
 from typing import ClassVar
 
 import asdf
 import pytest
 
 import stpipe.config_parser as cp
-from stpipe import cmdline
+from stpipe import cmdline, crds_client
 from stpipe.pipeline import Pipeline
-from stpipe.step import Step
+from stpipe.step import NoCRDSParametersWarning, Step
 
 
 # ######################
@@ -27,6 +28,9 @@ class SimpleStep(Step):
         output_ext = string(default='simplestep')
     """
 
+    def process(self, *args):
+        return args
+
 
 class SimplePipe(Pipeline):
     """A Pipeline with parameters and one step"""
@@ -40,6 +44,9 @@ class SimplePipe(Pipeline):
     """
 
     step_defs: ClassVar = {"step1": SimpleStep}
+
+    def process(self, *args):
+        return args
 
 
 class LoggingPipeline(Pipeline):
@@ -145,41 +152,57 @@ def config_file_list_arg_step(tmp_path):
 def _mock_step_crds(monkeypatch):
     """Mock various crds calls from Step"""
 
-    def mock_get_config_from_reference_pipe(dataset, disable=None):
-        return cp.config_from_dict(
-            {
-                "str1": "from crds",
-                "str2": "from crds",
-                "str3": "from crds",
-                "steps": {
-                    "step1": {
-                        "str1": "from crds",
-                        "str2": "from crds",
-                        "str3": "from crds",
+    class MockModel:
+        crds_observatory = "jwst"
+
+        def get_crds_parameters(self):
+            return {}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args, **kwargs):
+            pass
+
+    def mock_datamodels_open(*args, **kwargs):
+        return MockModel()
+
+    def mock_get_reference_file(crds_parameters, reftype, crds_observatory):
+        return reftype
+
+    original_load_config = cp.load_config_file
+
+    def mock_load_config_file(ref_file):
+        cfg = {
+            "pars-simplestep": cp.config_from_dict(
+                {"str1": "from crds", "str2": "from crds", "str3": "from crds"},
+            ),
+            "pars-simplepipe": cp.config_from_dict(
+                {
+                    "str1": "from crds",
+                    "str2": "from crds",
+                    "str3": "from crds",
+                    "steps": {
+                        "step1": {
+                            "str1": "from crds",
+                            "str2": "from crds",
+                            "str3": "from crds",
+                        },
                     },
-                },
-            }
-        )
+                }
+            ),
+            "pars-listargstep": cp.config_from_dict(
+                {"rotation": "15", "pixel_scale": "0.85"}
+            ),
+        }.get(ref_file, None)
+        if cfg:
+            return cfg
+        return original_load_config(ref_file)
 
-    def mock_get_config_from_reference_step(dataset, disable=None):
-        return cp.config_from_dict(
-            {"str1": "from crds", "str2": "from crds", "str3": "from crds"}
-        )
-
-    def mock_get_config_from_reference_list_arg_step(dataset, disable=None):
-        return cp.config_from_dict({"rotation": "15", "pixel_scale": "0.85"})
-
-    monkeypatch.setattr(
-        SimplePipe, "get_config_from_reference", mock_get_config_from_reference_pipe
-    )
-    monkeypatch.setattr(
-        SimpleStep, "get_config_from_reference", mock_get_config_from_reference_step
-    )
-    monkeypatch.setattr(
-        ListArgStep,
-        "get_config_from_reference",
-        mock_get_config_from_reference_list_arg_step,
-    )
+    for StepClass in (SimpleStep, SimplePipe, ListArgStep):
+        monkeypatch.setattr(StepClass, "_datamodels_open", mock_datamodels_open)
+    monkeypatch.setattr(crds_client, "get_reference_file", mock_get_reference_file)
+    monkeypatch.setattr(cp, "load_config_file", mock_load_config_file)
 
 
 # #####
@@ -411,3 +434,28 @@ def test_log_records():
     pipeline.run()
 
     assert any(r == "This step has called out a warning." for r in pipeline.log_records)
+
+
+@pytest.mark.parametrize("StepClass", (SimpleStep, SimplePipe))
+def test_warning_for_missing_crds_pars(StepClass):
+    s = StepClass()
+    s._warn_on_missing_crds_steppars = True
+    with pytest.warns(NoCRDSParametersWarning):
+        s.run()
+
+
+@pytest.mark.parametrize("StepClass", (SimpleStep, SimplePipe))
+def test_no_warning_for_call(StepClass, _mock_step_crds, monkeypatch):
+    monkeypatch.setattr(StepClass, "_warn_on_missing_crds_steppars", True)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        StepClass.call("foo")
+
+
+@pytest.mark.parametrize("StepClass", (SimpleStep, SimplePipe))
+def test_no_warning_for_build_config(StepClass, _mock_step_crds, monkeypatch):
+    s = StepClass.from_config_section(StepClass.build_config("foo")[0])
+    s._warn_on_missing_crds_steppars = True
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        s.run()
