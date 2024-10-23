@@ -1,0 +1,1 @@
+Add hook to allow ModelLibrary subclasses to override exptype.
