@@ -231,7 +231,7 @@ class AbstractModelLibrary(abc.ABC):
                 else:
                     model = model_or_filename
 
-                exptype = getattr(model.meta, "exptype", "SCIENCE")
+                exptype = self._model_to_exptype(model)
 
                 if asn_exptypes is not None and exptype.lower() not in asn_exptypes:
                     continue
@@ -612,8 +612,8 @@ class AbstractModelLibrary(abc.ABC):
                 members.append(
                     {
                         "expname": str(mfn),
-                        "exptype": model.meta.exptype,
-                        "group_id": model.meta.group_id,
+                        "exptype": self._model_to_exptype(model),
+                        "group_id": self._model_to_group_id(model),
                     }
                 )
                 self.shelve(model, i, modify=False)
@@ -626,7 +626,7 @@ class AbstractModelLibrary(abc.ABC):
     def get_crds_parameters(self):
         """
         Get the "crds_parameters" from either:
-            - the first "science" member (based on model.meta.exptype)
+            - the first "science" member (based on exptype)
             - the first model (if no "science" member is found)
 
         If no "science" members are found in the library a ``UserWarning``
@@ -780,6 +780,9 @@ class AbstractModelLibrary(abc.ABC):
             return getter(model_or_filename)
         except NoGroupID:
             return f"exposure{index + 1:04d}"
+
+    def _model_to_exptype(self, model):
+        return getattr(model.meta, "exptype", "SCIENCE")
 
     @property
     @abc.abstractmethod
