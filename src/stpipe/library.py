@@ -782,6 +782,25 @@ class AbstractModelLibrary(abc.ABC):
             return f"exposure{index + 1:04d}"
 
     def _model_to_exptype(self, model):
+        """
+        Compute "exptype" from a model using the DataModel interface.
+
+        This will be called for every model in the library:
+            - when the library is created from a list of models
+            - when _save is called
+        In both cases the models are all in memory and this method
+        can use the in memory DataModel to determine the "exptype"
+        (likely ``model.meta.exptype``).
+
+        Parameters
+        ----------
+        model : DataModel
+
+        Returns
+        -------
+        exptype : str
+            Exposure type (for example "SCIENCE").
+        """
         return getattr(model.meta, "exptype", "SCIENCE")
 
     @property
@@ -854,10 +873,12 @@ class AbstractModelLibrary(abc.ABC):
         """
         Compute a "group_id" from a model using the DataModel interface.
 
-        This will be called for every model in the library ONLY when
-        the library is created from a list of models. In this case the
-        models are all in memory and this method can use the in memory
-        DataModel to determine the "group_id" (likely `model.meta.group_id`).
+        This will be called for every model in the library:
+            - when the library is created from a list of models
+            - when _save is called
+        In both cases the models are all in memory and this method
+        can use the in memory DataModel to determine the "group_id"
+        (likely ``model.meta.group_id``).
 
         If no "group_id" can be determined `NoGroupID` should be
         raised (to allow the library to assign a unique "group_id").

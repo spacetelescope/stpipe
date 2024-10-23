@@ -393,6 +393,7 @@ Several methods are abstract and will need implementations:
 It's likely that a few other methods might require overriding:
 
 - ``_model_to_filename``
+- ``_model_to_exptype``
 - ``_assign_member_to_model``
 
 Consult the docstrings (and base implementations) for more details.
