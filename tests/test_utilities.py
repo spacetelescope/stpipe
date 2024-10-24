@@ -1,7 +1,7 @@
 import pytest
 
 from stpipe import Step
-from stpipe.utilities import import_class, import_func
+from stpipe.utilities import import_class, import_func, resolve_step_class_alias
 
 
 def what_is_your_quest():
@@ -13,6 +13,8 @@ class HovercraftFullOfEels:
 
 
 class Foo(Step):
+    class_alias = "foo_step"
+
     def process(self, input_data):
         pass
 
@@ -52,3 +54,41 @@ def test_import_class_no_module():
 def test_import_func_no_module():
     with pytest.raises(ImportError):
         import_func("foo")
+
+
+@pytest.mark.parametrize(
+    "name, resolve",
+    (
+        ("foo_step", True),
+        ("stpipe::foo_step", True),
+        ("some_other_package::foo_step", False),
+    ),
+)
+def test_class_alias_lookup(name, resolve, monkeypatch):
+    # as the test class above isn't registered via an entry point
+    # we mock the entry points here
+    class FakeDist:
+        name = "stpipe"
+        version = "dev"
+
+    class FakeEntryPoint:
+        dist = FakeDist()
+
+        def load(self):
+            def loader():
+                return [("Foo", "foo_step", False)]
+
+            return loader
+
+    def fake_entrypoints(group=None):
+        return [FakeEntryPoint()]
+
+    import importlib_metadata
+
+    monkeypatch.setattr(importlib_metadata, "entry_points", fake_entrypoints)
+
+    resolved_name = resolve_step_class_alias(name)
+    if resolve:
+        assert resolved_name == Foo.__name__
+    else:
+        assert resolved_name == name

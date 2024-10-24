@@ -19,13 +19,24 @@ def resolve_step_class_alias(name):
     Parameters
     ----------
     name : str
+        If name contains "::" only the package with
+        a name matching the characters before "::"
+        will be searched for the matching step.
 
     Returns
     -------
     str
     """
+    # check if the name contains a package name
+    if "::" in name:
+        scope, class_name = name.split("::", maxsplit=1)
+    else:
+        scope, class_name = None, name
+
     for info in entry_points.get_steps():
-        if info.class_alias is not None and name == info.class_alias:
+        if scope and info.package_name != scope:
+            continue
+        if info.class_alias is not None and class_name == info.class_alias:
             return info.class_name
 
     return name
