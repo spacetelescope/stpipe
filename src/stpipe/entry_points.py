@@ -1,7 +1,7 @@
 import warnings
 from collections import namedtuple
 
-from importlib_metadata import entry_points
+import importlib_metadata
 
 STEPS_GROUP = "stpipe.steps"
 
@@ -26,7 +26,7 @@ def get_steps():
     """
     steps = []
 
-    for entry_point in entry_points(group=STEPS_GROUP):
+    for entry_point in importlib_metadata.entry_points(group=STEPS_GROUP):
         package_name = entry_point.dist.name
         package_version = entry_point.dist.version
         package_steps = []
