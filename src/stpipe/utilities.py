@@ -19,16 +19,43 @@ def resolve_step_class_alias(name):
     Parameters
     ----------
     name : str
+        If name contains "::" only the package with
+        a name matching the characters before "::"
+        will be searched for the matching step.
 
     Returns
     -------
     str
     """
-    for info in entry_points.get_steps():
-        if info.class_alias is not None and name == info.class_alias:
-            return info.class_name
+    # check if the name contains a package name
+    if "::" in name:
+        scope, class_name = name.split("::", maxsplit=1)
+    else:
+        scope, class_name = None, name
 
-    return name
+    # track all found steps keyed by package name
+    found_class_names = {}
+    for info in entry_points.get_steps():
+        if scope and info.package_name != scope:
+            continue
+        if info.class_alias is not None and class_name == info.class_alias:
+            found_class_names[info.package_name] = info
+
+    if not found_class_names:
+        return name
+
+    if len(found_class_names) == 1:
+        return found_class_names.popitem()[1].class_name
+
+    # class alias resolved to several possible steps
+    scopes = list(found_class_names.keys())
+    msg = (
+        f"class alias {name} matched more than 1 step. Please provide "
+        "the package name along with the step name. One of:\n"
+    )
+    for scope in scopes:
+        msg += f"  {scope}::{name}\n"
+    raise ValueError(msg)
 
 
 def import_class(full_name, subclassof=object, config_file=None):
