@@ -5,6 +5,7 @@ Step
 import gc
 import os
 import sys
+import warnings
 from collections.abc import Sequence
 from contextlib import contextmanager, suppress
 from functools import partial
@@ -593,7 +594,13 @@ class Step:
 
         return step_result
 
-    __call__ = run
+    def __call__(self, *args):
+        warnings.warn(
+            "Step.__call__ is deprecated. It is equivalent to Step.run "
+            "and is not recommended.",
+            UserWarning,
+        )
+        return self.run(*args)
 
     def finalize_result(self, result, reference_files_used):
         """

@@ -83,8 +83,8 @@ class MyPipeline(Pipeline):
         return init
 
     def process(self, input_data):
-        result = self.shovelpixels(input_data)
-        result = self.cancelnoise(result)
+        result = self.shovelpixels.run(input_data)
+        result = self.cancelnoise.run(result)
 
         return result  # noqa: RET504
 
