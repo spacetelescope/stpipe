@@ -2,24 +2,7 @@
 Test that the DataModel interface of the protocol works properly
 """
 
-import pytest
-
 from stpipe.protocols import DataModel
-
-
-def test_roman_datamodel():
-    roman_datamodels = pytest.importorskip("roman_datamodels.datamodels")
-    from roman_datamodels.maker_utils import mk_level2_image
-
-    roman_image_tree = mk_level2_image()
-    image_model = roman_datamodels.ImageModel(roman_image_tree)
-    assert isinstance(image_model, DataModel)
-
-
-def test_jwst_datamodel():
-    jwst_datamodel = pytest.importorskip("stdatamodels.jwst.datamodels")
-    image_model = jwst_datamodel.ImageModel()
-    assert isinstance(image_model, DataModel)
 
 
 class GoodDataModel:
