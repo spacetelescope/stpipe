@@ -4,7 +4,7 @@ Test that the AbstractDataModel interface works properly
 
 import pytest
 
-from stpipe.datamodel import AbstractDataModel
+from stpipe.protocols import DataModel
 
 
 def test_roman_datamodel():
@@ -13,13 +13,13 @@ def test_roman_datamodel():
 
     roman_image_tree = mk_level2_image()
     image_model = roman_datamodels.ImageModel(roman_image_tree)
-    assert isinstance(image_model, AbstractDataModel)
+    assert isinstance(image_model, DataModel)
 
 
 def test_jwst_datamodel():
     jwst_datamodel = pytest.importorskip("stdatamodels.jwst.datamodels")
     image_model = jwst_datamodel.ImageModel()
-    assert isinstance(image_model, AbstractDataModel)
+    assert isinstance(image_model, DataModel)
 
 
 class GoodDataModel:
@@ -49,9 +49,9 @@ class BadDataModel:
 
 def test_good_datamodel():
     gdm = GoodDataModel()
-    assert isinstance(gdm, AbstractDataModel)
+    assert isinstance(gdm, DataModel)
 
 
 def test_bad_datamodel():
     gdm = BadDataModel()
-    assert not isinstance(gdm, AbstractDataModel)
+    assert not isinstance(gdm, DataModel)
