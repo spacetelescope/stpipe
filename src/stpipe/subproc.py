@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-from .datamodel import AbstractDataModel
+from .protocols import DataModel
 from .step import Step
 
 
@@ -28,7 +28,7 @@ class SystemCall(Step):
     def process(self, *args):
         newargs = []
         for i, arg in enumerate(args):
-            if isinstance(arg, AbstractDataModel):
+            if isinstance(arg, DataModel):
                 filename = f"{self.qualified_name}.{i:04d}.{self.output_ext}"
                 arg.save(filename)
                 newargs.append(filename)

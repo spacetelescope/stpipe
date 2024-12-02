@@ -1,50 +1,54 @@
-import abc
+from __future__ import annotations
+
+from abc import abstractmethod
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from os import PathLike
 
 
-class AbstractDataModel(abc.ABC):
+@runtime_checkable
+class DataModel(Protocol):
     """
-    This Abstract Base Class is intended to cover multiple implementations of
-    data models so that each will be considered an appropriate subclass of this
-    class without requiring that they inherit this class.
+    This is a protocol to describe the methods and properties that define a
+    DataModel for the purposes of stpipe. This is a runtime checkable protocol
+    meaning that any object can be `isinstance` checked against this protocol
+    and will succeed even if the object does not inherit from this class.
+    Moreover, this object will act as an `abc.ABC` class if it is inherited from.
 
     Any datamodel class instance that desires to be considered an instance of
-    AbstractDataModel must implement the following methods.
+    must fully implement the protocol in order to pass the `isinstance` check.
 
     In addition, although it isn't yet checked (the best approach for supporting
     this is still being considered), such instances must have a meta.filename
     attribute.
     """
 
-    @classmethod
-    def __subclasshook__(cls, c_):
-        """
-        Pseudo subclass check based on these attributes and methods
-        """
-        if cls is AbstractDataModel:
-            mro = c_.__mro__
-            if (
-                any(hasattr(CC, "crds_observatory") for CC in mro)
-                and any(hasattr(CC, "get_crds_parameters") for CC in mro)
-                and any(hasattr(CC, "save") for CC in mro)
-            ):
-                return True
-        return False
+    @property
+    @abstractmethod
+    def crds_observatory(self) -> str:
+        """This should return a string identifying the observatory as CRDS expects it"""
+        ...
 
     @property
-    @abc.abstractmethod
-    def crds_observatory(self):
-        """This should return a string identifying the observatory as CRDS expects it"""
-
-    @abc.abstractmethod
-    def get_crds_parameters(self):
+    @abstractmethod
+    def get_crds_parameters(self) -> dict[str, any]:
         """
         This should return a dictionary of key/value pairs corresponding to the
         parkey values CRDS is using to match reference files. Typically it returns
         all metadata simple values.
         """
+        ...
 
-    @abc.abstractmethod
-    def save(self, path, dir_path=None, *args, **kwargs):
+    @abstractmethod
+    def save(
+        self,
+        path: PathLike | Callable[..., PathLike],
+        dir_path: PathLike | None = None,
+        *args,
+        **kwargs,
+    ) -> PathLike:
         """
         Save to a file.
 
@@ -64,3 +68,4 @@ class AbstractDataModel(abc.ABC):
         output_path: str
             The file path the model was saved in.
         """
+        ...
