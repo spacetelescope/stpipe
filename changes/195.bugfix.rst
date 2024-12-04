@@ -1,0 +1,1 @@
+Fix cal_step setting when a step is skipped for roman datamodels.
