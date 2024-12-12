@@ -46,6 +46,9 @@ tracker = "https://github.com/spacetelescope/stpipe/issues"
 [project.entry-points."asdf.resource_mappings"]
 stpipe = "stpipe.integration:get_resource_mappings"
 
+[project.entry-points.pytest11]
+report_crds_context = "stpipe.pytest_crds.plugin"
+
 [project.scripts]
 stpipe = "stpipe.cli.main:main"
 strun = "stpipe.cli.strun:main"
