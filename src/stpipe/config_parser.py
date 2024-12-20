@@ -241,6 +241,9 @@ def merge_config(into, new):
         inline_comments = {}
         comments = {}
 
+    if hasattr(new, "_from_crds") and not hasattr(into, "_from_crds"):
+        into._from_crds = True
+
     for key, val in new.items():
         if isinstance(val, Section):
             if key not in into:
