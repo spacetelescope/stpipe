@@ -1,1 +1,0 @@
-Allow class aliases (used during strun) to contain the package name (for example "jwst::resample").
