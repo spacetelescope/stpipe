@@ -1,4 +1,5 @@
 import asdf
+import pytest
 
 from stpipe.pipeline import Pipeline
 from stpipe.step import Step
@@ -98,13 +99,14 @@ def hook_function(input_data):
     return input_data
 
 
-def test_hook_as_step_class(caplog, disable_crds_steppars):
+@pytest.mark.parametrize("hook_type", ["pre_hooks", "post_hooks"])
+def test_hook_as_step_class(hook_type, caplog, disable_crds_steppars):
     """Test an imported Step subclass can be a hook"""
     model = FakeDataModel()
 
     steps = {
         "cancelnoise": {
-            "post_hooks": [
+            hook_type: [
                 HookStep,
             ]
         }
@@ -115,13 +117,14 @@ def test_hook_as_step_class(caplog, disable_crds_steppars):
     assert "cancelnoise.myhook" in caplog.text
 
 
-def test_hook_as_step_instance(caplog, disable_crds_steppars):
+@pytest.mark.parametrize("hook_type", ["pre_hooks", "post_hooks"])
+def test_hook_as_step_instance(hook_type, caplog, disable_crds_steppars):
     """Test an imported Step subclass instance with parameters can be a hook"""
     model = FakeDataModel()
 
     steps = {
         "shovelpixels": {
-            "post_hooks": [
+            hook_type: [
                 HookStep(param1="foo", param2=3),
             ]
         }
@@ -131,13 +134,16 @@ def test_hook_as_step_instance(caplog, disable_crds_steppars):
     assert "Running HookStep with foo and 3" in caplog.text
 
 
-def test_hook_as_string_of_importable_step_class(caplog, disable_crds_steppars):
+@pytest.mark.parametrize("hook_type", ["pre_hooks", "post_hooks"])
+def test_hook_as_string_of_importable_step_class(
+    hook_type, caplog, disable_crds_steppars
+):
     """Test a string of a fully-qualified path to Step subclass can be a hook"""
     model = FakeDataModel()
 
     steps = {
         "shovelpixels": {
-            "post_hooks": [
+            hook_type: [
                 "test_hooks.HookStep",
             ]
         }
@@ -147,13 +153,14 @@ def test_hook_as_string_of_importable_step_class(caplog, disable_crds_steppars):
     assert "Running HookStep" in caplog.text
 
 
-def test_hook_as_string_of_step_instance(caplog, disable_crds_steppars):
+@pytest.mark.parametrize("hook_type", ["pre_hooks", "post_hooks"])
+def test_hook_as_string_of_step_instance(hook_type, caplog, disable_crds_steppars):
     """Test a string of a fully-qualified Step instance w/params"""
     model = FakeDataModel()
 
     steps = {
         "shovelpixels": {
-            "post_hooks": [
+            hook_type: [
                 "test_hooks.HookStep(param1='foo', param2=2)",
             ]
         }
@@ -163,14 +170,17 @@ def test_hook_as_string_of_step_instance(caplog, disable_crds_steppars):
     assert "Running HookStep with foo and 2" in caplog.text
 
 
-def test_hook_as_string_of_importable_function(caplog, disable_crds_steppars):
+@pytest.mark.parametrize("hook_type", ["pre_hooks", "post_hooks"])
+def test_hook_as_string_of_importable_function(
+    hook_type, caplog, disable_crds_steppars
+):
     """Test a string of a fully-qualified function path can be a hook"""
     data_id = 42
     model = FakeDataModel(data_id)
 
     steps = {
         "shovelpixels": {
-            "post_hooks": [
+            hook_type: [
                 "test_hooks.hook_function",
             ]
         }
@@ -180,14 +190,15 @@ def test_hook_as_string_of_importable_function(caplog, disable_crds_steppars):
     assert f"Running hook_function on data {data_id}" in caplog.text
 
 
-def test_hook_as_systemcall(caplog, tmp_cwd, disable_crds_steppars):
+@pytest.mark.parametrize("hook_type", ["pre_hooks", "post_hooks"])
+def test_hook_as_systemcall(hook_type, caplog, tmp_cwd, disable_crds_steppars):
     """Test a string of a terminal command"""
     model = FakeDataModel()
 
     # Run post_hook CLI scripts
     steps = {
         "shovelpixels": {
-            "post_hooks": [
+            hook_type: [
                 "asdftool info {0}",
             ]
         }
@@ -196,7 +207,4 @@ def test_hook_as_systemcall(caplog, tmp_cwd, disable_crds_steppars):
 
     # Logs from fitsinfo
     assert "SystemCall instance created" in caplog.text
-    assert (
-        "Spawning 'asdftool info stpipe.MyPipeline.shovelpixels.post_hook0"
-        in caplog.text
-    )
+    assert "Spawning 'asdftool info stpipe.MyPipeline.shovelpixels" in caplog.text

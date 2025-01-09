@@ -465,7 +465,7 @@ class Step:
                 for pre_hook in self._pre_hooks:
                     hook_results = pre_hook.run(*hook_args)
                     if hook_results is not None:
-                        hook_args = hook_results
+                        hook_args = (hook_results,)
                 args = hook_args
 
                 self._reference_files_used = []
