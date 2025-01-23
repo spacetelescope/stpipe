@@ -1,0 +1,1 @@
+Allow hooks to save to non-fits files.
