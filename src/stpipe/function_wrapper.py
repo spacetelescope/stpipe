@@ -11,7 +11,6 @@ class FunctionWrapper(Step):
     """
 
     spec = """
-    output_ext = string(default="fits")
     """
 
     def __init__(self, func, *args, **kwargs):

@@ -32,6 +32,9 @@ def hook_from_string(step, hooktype, num, command):
     step_class = None
     step_func = None
 
+    # transfer output_ext to hooks
+    kwargs = dict(output_ext=step.output_ext)
+
     # hook is a string of the fully-qualified name of a class or function
     if isinstance(command, str):
         try:
@@ -52,7 +55,9 @@ def hook_from_string(step, hooktype, num, command):
             # Then convert rest of string to args and instantiate the class
             kwargs_string = params.strip(")")
             expr = ast.parse(f"dict({kwargs_string}\n)", mode="eval")
-            kwargs = {kw.arg: ast.literal_eval(kw.value) for kw in expr.body.keywords}
+            kwargs.update(
+                {kw.arg: ast.literal_eval(kw.value) for kw in expr.body.keywords}
+            )
             return step_class(**kwargs)
         except TypeError:
             # String points to a function
@@ -60,12 +65,12 @@ def hook_from_string(step, hooktype, num, command):
         else:
             if step_class.class_alias is not None:
                 name = step_class.class_alias
-            return step_class(name, parent=step, config_file=step.config_file)
+            return step_class(name, parent=step, config_file=step.config_file, **kwargs)
 
         # hook is a string of the fully-qualified name of a function
         if step_func is not None:
             return function_wrapper.FunctionWrapper(
-                step_func, parent=step, config_file=step.config_file
+                step_func, parent=step, config_file=step.config_file, **kwargs
             )
 
     # hook is an already-imported Step subclass
@@ -73,7 +78,7 @@ def hook_from_string(step, hooktype, num, command):
         step_class = command
         if step_class.class_alias is not None:
             name = step_class.class_alias
-        return step_class(name, parent=step, config_file=step.config_file)
+        return step_class(name, parent=step, config_file=step.config_file, **kwargs)
 
     # hook is an instance of a Step subclass
     if isinstance(command, Step):
@@ -86,7 +91,7 @@ def hook_from_string(step, hooktype, num, command):
     # hook is a command-line script or system call
     from .subproc import SystemCall
 
-    return SystemCall(name, parent=step, command=command)
+    return SystemCall(name, parent=step, command=command, **kwargs)
 
 
 def get_hook_objects(step, hooktype, hooks):
