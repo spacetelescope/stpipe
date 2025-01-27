@@ -1,3 +1,40 @@
+0.8.0 (2024-12-20)
+==================
+
+Bug Fixes
+---------
+
+- Fix cal_step setting when a step is skipped for roman datamodels. (`#195
+  <https://github.com/spacetelescope/stpipe/issues/195>`_)
+- Add hook to allow ModelLibrary subclasses to override exptype. (`#201
+  <https://github.com/spacetelescope/stpipe/issues/201>`_)
+
+
+Documentation
+-------------
+
+- use ``towncrier`` to handle change log entries (`#187
+  <https://github.com/spacetelescope/stpipe/issues/187>`_)
+
+
+New Features
+------------
+
+- test with Python 3.13 (`#193
+  <https://github.com/spacetelescope/stpipe/issues/193>`_)
+- Allow class aliases (used during strun) to contain the package name (for
+  example "jwst::resample"). (`#202
+  <https://github.com/spacetelescope/stpipe/issues/202>`_)
+
+
+Deprecations and Removals
+-------------------------
+
+- Deprecate Step.__call__. For users that do not want to use CRDS parameters
+  please use Step.run. (`#204
+  <https://github.com/spacetelescope/stpipe/issues/204>`_)
+
+
 0.7.0 (2024-08-13)
 ==================
 

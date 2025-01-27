@@ -5,6 +5,7 @@ Step
 import gc
 import os
 import sys
+import warnings
 from collections.abc import Sequence
 from contextlib import contextmanager, suppress
 from functools import partial
@@ -464,7 +465,7 @@ class Step:
                 for pre_hook in self._pre_hooks:
                     hook_results = pre_hook.run(*hook_args)
                     if hook_results is not None:
-                        hook_args = hook_results
+                        hook_args = (hook_results,)
                 args = hook_args
 
                 self._reference_files_used = []
@@ -476,46 +477,28 @@ class Step:
                 # Run the Step-specific code.
                 if self.skip:
                     self.log.info("Step skipped.")
-                    if isinstance(args[0], AbstractModelLibrary):
-                        library = args[0]
-                        with library:
-                            for i, model in enumerate(library):
-                                try:
-                                    setattr(
-                                        model.meta.cal_step, self.class_alias, "SKIPPED"
-                                    )
-                                except AttributeError as e:
-                                    self.log.info(
-                                        "Could not record skip into DataModel "
-                                        "header: %s",
-                                        e,
-                                    )
-                                library.shelve(model, i)
-                    elif isinstance(args[0], AbstractDataModel):
-                        if self.class_alias is not None:
+
+                    if self.class_alias is not None:
+
+                        def set_skipped(model):
+                            try:
+                                setattr(
+                                    model.meta.cal_step, self.class_alias, "SKIPPED"
+                                )
+                            except AttributeError as e:
+                                self.log.info(
+                                    "Could not record skip into DataModel "
+                                    "header: %s",
+                                    e,
+                                )
+
+                        if isinstance(args[0], AbstractModelLibrary):
+                            list(args[0].map_function(lambda m, i: set_skipped(m)))
+                        elif isinstance(args[0], AbstractDataModel):
                             if isinstance(args[0], Sequence):
-                                for model in args[0]:
-                                    try:
-                                        model[f"meta.cal_step.{self.class_alias}"] = (
-                                            "SKIPPED"
-                                        )
-                                    except AttributeError as e:  # noqa: PERF203
-                                        self.log.info(
-                                            "Could not record skip into DataModel "
-                                            "header: %s",
-                                            e,
-                                        )
-                            elif isinstance(args[0], AbstractDataModel):
-                                try:
-                                    args[0][
-                                        f"meta.cal_step.{self.class_alias}"
-                                    ] = "SKIPPED"
-                                except AttributeError as e:
-                                    self.log.info(
-                                        "Could not record skip into DataModel"
-                                        " header: %s",
-                                        e,
-                                    )
+                                [set_skipped(m) for m in args[0]]
+                            else:
+                                set_skipped(args[0])
                     step_result = args[0]
                 else:
                     if self.prefetch_references:
@@ -593,7 +576,13 @@ class Step:
 
         return step_result
 
-    __call__ = run
+    def __call__(self, *args):
+        warnings.warn(
+            "Step.__call__ is deprecated. It is equivalent to Step.run "
+            "and is not recommended.",
+            UserWarning,
+        )
+        return self.run(*args)
 
     def finalize_result(self, result, reference_files_used):
         """

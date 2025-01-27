@@ -13,3 +13,12 @@ def tmp_cwd(tmp_path):
         yield tmp_path
     finally:
         os.chdir(old_dir)
+
+
+@pytest.fixture()
+def disable_crds_steppars(monkeypatch):
+    """
+    Disable crds steppars (by setting the environment variable)
+    """
+    monkeypatch.setitem(os.environ, "STPIPE_DISABLE_CRDS_STEPPARS", "True")
+    yield
