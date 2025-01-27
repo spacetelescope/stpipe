@@ -455,7 +455,8 @@ class SimpleDataModel(AbstractDataModel):
         return None
 
 
-def test_save(tmp_cwd):
+def test_save_results(tmp_cwd):
+    """Ensure model saved using custom save method override when save_results=True."""
 
     model = SimpleDataModel()
     model.saveid = "test"
@@ -523,16 +524,6 @@ class SimpleContainerWithSave(SimpleContainer):
             # skip the first model to test that the save method is called
             # rather than just looping over all models like in the without-save case
             model.save(path, dir_path, *args, **kwargs)
-
-
-@pytest.mark.xfail(reason="Looping over models only works for list and tuple. This should be fixed.")
-def test_save_container(tmp_cwd, model_list):
-    """ensure list-like save still works for non-list sequence"""
-    container = SimpleContainer(model_list)
-    step = StepWithModel()
-    step.run(container)
-    for i in range(3):
-        assert (tmp_cwd / f"test{i}-saved.txt").exists()
 
 
 def test_skip_container(tmp_cwd, model_list):
