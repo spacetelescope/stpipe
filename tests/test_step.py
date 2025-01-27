@@ -448,7 +448,7 @@ class SimpleDataModel(AbstractDataModel):
     def save(self, path, dir_path=None, *args, **kwargs):
         saveid = getattr(self, "saveid", None)
         if saveid is not None:
-            fname = saveid+"-saved.txt"
+            fname = saveid + "-saved.txt"
             with open(fname, "w") as f:
                 f.write(f"{path}")
             return fname
