@@ -22,7 +22,6 @@ class SystemCall(Step):
     log_stderr = boolean(default=True) # Do we want to log STDERR?
     exitcode_as_exception = boolean(default=True) # Should a non-zero exit code be converted into an exception?
     failure_as_exception = boolean(default=True) # If subprocess fails to run at all, should that be an exception?
-    output_ext = string(default="fits")
     """  # noqa: E501
 
     def process(self, *args):
