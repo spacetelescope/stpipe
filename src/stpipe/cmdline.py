@@ -347,9 +347,6 @@ def just_the_step_from_cmdline(args, cls=None):
         step.set_primary_input(positional[0])
         step.save_results = True
 
-    log.log.info(f"Hostname: {os.uname()[1]}")
-    log.log.info(f"OS: {os.uname()[0]}")
-
     # Save the step configuration
     if known.save_parameters:
         step.export_config(known.save_parameters, include_metadata=True)
