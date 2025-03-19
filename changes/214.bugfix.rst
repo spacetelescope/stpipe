@@ -1,1 +1,0 @@
-Fix pre-hooks by wrapping hook results in a tuple.

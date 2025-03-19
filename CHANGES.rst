@@ -1,3 +1,22 @@
+0.8.1 (2025-03-19)
+==================
+
+Bug Fixes
+---------
+
+- Fix pre-hooks by wrapping hook results in a tuple. (`#214
+  <https://github.com/spacetelescope/stpipe/issues/214>`_)
+- Allow hooks to save to non-fits files. (`#217
+  <https://github.com/spacetelescope/stpipe/issues/217>`_)
+
+
+Misc
+----
+
+- test with latest supported Python version (`#222
+  <https://github.com/spacetelescope/stpipe/issues/222>`_)
+
+
 0.8.0 (2024-12-20)
 ==================
 
