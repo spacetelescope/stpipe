@@ -304,6 +304,33 @@ class Step:
             **kwargs,
         )
 
+    @classmethod
+    def _get_crds_parameters(cls, dataset):
+        if isinstance(dataset, AbstractDataModel):
+            return (
+                dataset.meta.filename,
+                dataset.get_crds_parameters(),
+                dataset.crds_observatory,
+            )
+
+        # TODO asn_exptypes breaks roman_datamodels
+        with cls._datamodels_open(dataset, asn_n_members=1) as model:
+            # ModelContainer is a Sequence, use the first model
+            if isinstance(model, Sequence):
+                model = model[0]
+
+            if isinstance(model, AbstractDataModel):
+                return cls._get_crds_parameters(model)
+
+            # TODO for ModelLibrary we lose a log message
+            # here for precache_references since this is
+            # a class method
+            return (
+                None,
+                model.get_crds_parameters(),
+                model.crds_observatory,
+            )
+
     def __init__(
         self,
         name=None,
@@ -806,12 +833,12 @@ class Step:
             else:
                 return ""
         else:
-            with self.open_model(input_file) as model:
-                reference_name = crds_client.get_reference_file(
-                    model.get_crds_parameters(),
-                    reference_file_type,
-                    model.crds_observatory,
-                )
+            _, parameters, observatory = self._get_crds_parameters(input_file)
+            reference_name = crds_client.get_reference_file(
+                parameters,
+                reference_file_type,
+                observatory,
+            )
             if reference_name != "N/A":
                 hdr_name = "crds://" + basename(reference_name)
             else:
@@ -859,12 +886,7 @@ class Step:
             # If the dataset is not an operable instance of AbstractDataModel,
             # log as such and return an empty config object
             try:
-                with cls._datamodels_open(dataset, asn_n_members=1) as model:
-                    if isinstance(model, Sequence):
-                        # Pull out first model in ModelContainer
-                        model = model[0]
-                    crds_parameters = model.get_crds_parameters()
-                    crds_observatory = model.crds_observatory
+                _, crds_parameters, crds_observatory = cls._get_crds_parameters(dataset)
             except (OSError, TypeError, ValueError):
                 logger.warning("Input dataset is not an instance of AbstractDataModel.")
                 disable = True
