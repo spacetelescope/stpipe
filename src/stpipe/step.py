@@ -325,28 +325,29 @@ class Step:
 
     @classmethod
     def _get_crds_parameters(cls, dataset):
-        if isinstance(dataset, AbstractDataModel) and not isinstance(dataset, Sequence):
+        if isinstance(dataset, AbstractModelLibrary) or (
+            isinstance(dataset, AbstractDataModel) and not isinstance(dataset, Sequence)
+        ):
             return (
                 dataset.get_crds_parameters(),
                 dataset.crds_observatory,
             )
 
-        # TODO asn_exptypes breaks roman_datamodels
-        with cls._datamodels_open(dataset, asn_n_members=1) as model:
+        if isinstance(dataset, str):
+            dataset = Path(dataset)
+
+        # for associations, only open the first science member
+        if isinstance(dataset, Path) and dataset.suffix.lower() == ".json":
+            open_kwargs = {"asn_n_members": 1, "asn_exptypes": ["science"]}
+        else:
+            open_kwargs = {}
+
+        with cls._datamodels_open(dataset, **open_kwargs) as model:
             # ModelContainer is a Sequence, use the first model
             if isinstance(model, Sequence):
                 model = model[0]
 
-            if isinstance(model, AbstractDataModel):
-                return cls._get_crds_parameters(model)
-
-            # TODO for ModelLibrary we lose a log message
-            # here for precache_references since this is
-            # a class method
-            return (
-                model.get_crds_parameters(),
-                model.crds_observatory,
-            )
+            return cls._get_crds_parameters(model)
 
     def __init__(
         self,
