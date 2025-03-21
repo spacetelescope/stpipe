@@ -182,7 +182,7 @@ class Pipeline(Step):
         logger.debug("Retrieving all substep parameters from CRDS")
         #
         # Iterate over the steps in the pipeline
-        _, crds_parameters, crds_observatory = cls._get_crds_parameters(dataset)
+        crds_parameters, crds_observatory = cls._get_crds_parameters(dataset)
 
         for cal_step in cls.step_defs.keys():
             cal_step_class = cls.step_defs[cal_step]
@@ -252,9 +252,7 @@ class Pipeline(Step):
         None
         """
         try:
-            filename, crds_parameters, observatory = self._get_crds_parameters(
-                input_file
-            )
+            crds_parameters, observatory = self._get_crds_parameters(input_file)
         except (ValueError, TypeError, OSError):
             self.log.info("First argument %s does not appear to be a model", input_file)
             return
@@ -269,7 +267,7 @@ class Pipeline(Step):
 
         self.log.info(
             "Prefetching reference files for dataset: %r reftypes = %r",
-            filename,
+            self._get_filename(input_file),
             fetch_types,
         )
         crds_refs = crds_client.get_multiple_reference_paths(

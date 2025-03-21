@@ -305,10 +305,28 @@ class Step:
         )
 
     @classmethod
-    def _get_crds_parameters(cls, dataset):
+    def _get_filename(cls, dataset):
+        if isinstance(dataset, str):
+            dataset = Path(dataset)
+
+        if isinstance(dataset, Path):
+            return dataset.name
+
+        if isinstance(dataset, Sequence):
+            dataset = dataset[0]
+
         if isinstance(dataset, AbstractDataModel):
+            return dataset.meta.filename
+
+        if isinstance(dataset, AbstractModelLibrary):
+            return dataset.asn.get("table_name", None)
+
+        return None
+
+    @classmethod
+    def _get_crds_parameters(cls, dataset):
+        if isinstance(dataset, AbstractDataModel) and not isinstance(dataset, Sequence):
             return (
-                dataset.meta.filename,
                 dataset.get_crds_parameters(),
                 dataset.crds_observatory,
             )
@@ -326,7 +344,6 @@ class Step:
             # here for precache_references since this is
             # a class method
             return (
-                None,
                 model.get_crds_parameters(),
                 model.crds_observatory,
             )
@@ -833,7 +850,7 @@ class Step:
             else:
                 return ""
         else:
-            _, parameters, observatory = self._get_crds_parameters(input_file)
+            parameters, observatory = self._get_crds_parameters(input_file)
             reference_name = crds_client.get_reference_file(
                 parameters,
                 reference_file_type,
@@ -886,7 +903,7 @@ class Step:
             # If the dataset is not an operable instance of AbstractDataModel,
             # log as such and return an empty config object
             try:
-                _, crds_parameters, crds_observatory = cls._get_crds_parameters(dataset)
+                crds_parameters, crds_observatory = cls._get_crds_parameters(dataset)
             except (OSError, TypeError, ValueError):
                 logger.warning("Input dataset is not an instance of AbstractDataModel.")
                 disable = True
