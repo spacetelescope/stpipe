@@ -304,6 +304,51 @@ class Step:
             **kwargs,
         )
 
+    @classmethod
+    def _get_filename(cls, dataset):
+        if isinstance(dataset, str):
+            dataset = Path(dataset)
+
+        if isinstance(dataset, Path):
+            return dataset.name
+
+        if isinstance(dataset, Sequence):
+            dataset = dataset[0]
+
+        if isinstance(dataset, AbstractDataModel):
+            return dataset.meta.filename
+
+        if isinstance(dataset, AbstractModelLibrary):
+            return dataset.asn.get("table_name", None)
+
+        return None
+
+    @classmethod
+    def _get_crds_parameters(cls, dataset):
+        if isinstance(dataset, AbstractModelLibrary) or (
+            isinstance(dataset, AbstractDataModel) and not isinstance(dataset, Sequence)
+        ):
+            return (
+                dataset.get_crds_parameters(),
+                dataset.crds_observatory,
+            )
+
+        if isinstance(dataset, str):
+            dataset = Path(dataset)
+
+        # for associations, only open the first science member
+        if isinstance(dataset, Path) and dataset.suffix.lower() == ".json":
+            open_kwargs = {"asn_n_members": 1, "asn_exptypes": ["science"]}
+        else:
+            open_kwargs = {}
+
+        with cls._datamodels_open(dataset, **open_kwargs) as model:
+            # ModelContainer is a Sequence, use the first model
+            if isinstance(model, Sequence):
+                model = model[0]
+
+            return cls._get_crds_parameters(model)
+
     def __init__(
         self,
         name=None,
@@ -806,12 +851,12 @@ class Step:
             else:
                 return ""
         else:
-            with self.open_model(input_file) as model:
-                reference_name = crds_client.get_reference_file(
-                    model.get_crds_parameters(),
-                    reference_file_type,
-                    model.crds_observatory,
-                )
+            parameters, observatory = self._get_crds_parameters(input_file)
+            reference_name = crds_client.get_reference_file(
+                parameters,
+                reference_file_type,
+                observatory,
+            )
             if reference_name != "N/A":
                 hdr_name = "crds://" + basename(reference_name)
             else:
@@ -859,12 +904,7 @@ class Step:
             # If the dataset is not an operable instance of AbstractDataModel,
             # log as such and return an empty config object
             try:
-                with cls._datamodels_open(dataset, asn_n_members=1) as model:
-                    if isinstance(model, Sequence):
-                        # Pull out first model in ModelContainer
-                        model = model[0]
-                    crds_parameters = model.get_crds_parameters()
-                    crds_observatory = model.crds_observatory
+                crds_parameters, crds_observatory = cls._get_crds_parameters(dataset)
             except (OSError, TypeError, ValueError):
                 logger.warning("Input dataset is not an instance of AbstractDataModel.")
                 disable = True
