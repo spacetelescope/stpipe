@@ -473,7 +473,10 @@ class Step:
                 # Warn if passing in objects that should be
                 # discouraged.
                 self._check_args(args, DISCOURAGED_TYPES, "Passed")
-
+                if self.parent is None:
+                    if self.skip:
+                        self.log.info("Step run as standalone, so skip set to False")
+                        self.skip = False
                 # Run the Step-specific code.
                 if self.skip:
                     self.log.info("Step skipped.")
