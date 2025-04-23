@@ -149,10 +149,10 @@ class Pipeline(Step):
             Either a class or instance of a class derived
             from `Step`.
 
-        dataset : `stpipe.datamodel.AbstractDataModel`
+        dataset : `stpipe.datamodel.AbstractDataModel` or dict
             A model of the input file.  Metadata on this input file will
             be used by the CRDS "bestref" algorithm to obtain a reference
-            file.
+            file. If  dict crds_observatory must be a non-None value.
 
         disable: bool or None
             Do not retrieve parameters from CRDS. If None, check global settings.
@@ -182,7 +182,13 @@ class Pipeline(Step):
         logger.debug("Retrieving all substep parameters from CRDS")
         #
         # Iterate over the steps in the pipeline
-        crds_parameters, crds_observatory = cls._get_crds_parameters(dataset)
+        if isinstance(dataset, dict):
+            # crds_parameters was passed as input from pipeline.py
+            crds_parameters = dataset
+            if crds_observatory is None:
+                raise ValueError("Need a valid name for crds_observatory.")
+        else:
+            crds_parameters, crds_observatory = cls._get_crds_parameters(dataset)
 
         for cal_step in cls.step_defs.keys():
             cal_step_class = cls.step_defs[cal_step]

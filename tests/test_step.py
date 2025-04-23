@@ -4,6 +4,7 @@ import copy
 import logging
 import re
 from collections.abc import Sequence
+from contextlib import nullcontext
 from pathlib import Path
 from typing import ClassVar
 
@@ -44,6 +45,16 @@ class SimplePipe(Pipeline):
     """
 
     step_defs: ClassVar = {"step1": SimpleStep}
+
+
+class PipeWithPipe(Pipeline):
+    """A Pipeline with a pipeline as a step"""
+
+    spec = """
+        output_ext = string(default='pipewithpipe')
+    """
+
+    step_defs: ClassVar = {"step1": SimpleStep, "pipe1": SimplePipe}
 
 
 class LoggingPipeline(Pipeline):
@@ -632,3 +643,35 @@ def test_subclass_get_crds_parameters(monkeypatch):
 )
 def test_get_filename(dataset, filename):
     assert SimpleStep._get_filename(dataset) == filename
+
+
+@pytest.mark.parametrize("klass", (SimpleStep, SimplePipe, PipeWithPipe))
+@pytest.mark.parametrize(
+    "observatory, error",
+    [
+        (None, True),
+        (None, True),
+        ("foo", False),
+        ("foo", False),
+    ],
+)
+def test_get_config_from_reference_dict(monkeypatch, klass, observatory, error):
+    """Test that config_from_reference accepts a dict"""
+    called = False
+
+    def always_na(*args):
+        nonlocal called
+        called = True
+        return "N/A"
+
+    monkeypatch.setattr(crds_client, "get_reference_file", always_na)
+    if error:
+        ctx = pytest.raises(ValueError, match="Need a valid name for crds_observatory")
+    else:
+        ctx = nullcontext()
+
+    with ctx:
+        klass.get_config_from_reference({}, crds_observatory=observatory)
+
+    if not error:
+        assert called
