@@ -306,6 +306,19 @@ class Step:
 
     @classmethod
     def _get_filename(cls, dataset):
+        """
+        Class method to get a filename for a dataset.
+
+        Parameters
+        ----------
+        dataset : str, Path, DataModel, ModelLibrary, Sequence
+            Dataset to be inspected for a filename.
+
+        Returns
+        -------
+        filename : str or None
+            Filename as a string or None if no filename could be determined.
+        """
         if isinstance(dataset, str):
             dataset = Path(dataset)
 
@@ -313,18 +326,35 @@ class Step:
             return dataset.name
 
         if isinstance(dataset, Sequence):
+            if not len(dataset):
+                return None
             dataset = dataset[0]
 
         if isinstance(dataset, AbstractDataModel):
-            return dataset.meta.filename
+            return cls._get_filename(dataset.meta.filename)
 
         if isinstance(dataset, AbstractModelLibrary):
-            return dataset.asn.get("table_name", None)
+            return cls._get_filename(dataset.asn.get("table_name", None))
 
         return None
 
     @classmethod
     def _get_crds_parameters(cls, dataset):
+        """
+        Class method to get the CRDS parameters and observatory for a given dataset.
+
+        Parameters
+        ----------
+        dataset : str, Path, DataModel, ModelLibrary, Sequence
+            Dataset to use for determining CRDS parameters.
+
+        Returns
+        -------
+        parameters : dict
+            Dictionary of parameters to pass to CRDS.
+        observatory : str
+            Observatory to pass to CRDS.
+        """
         if isinstance(dataset, AbstractModelLibrary) or (
             isinstance(dataset, AbstractDataModel) and not isinstance(dataset, Sequence)
         ):
