@@ -906,7 +906,7 @@ class Step:
         dataset : AbstractDataModel or dict
             A model of the input file.  Metadata on this input file will
             be used by the CRDS "bestref" algorithm to obtain a reference
-            file. If a dict crds_observatory must be a non-None value.
+            file. If a dict, crds_observatory must be a non-None value.
         disable: bool or None
             Do not retrieve parameters from CRDS. If None, check global settings.
         crds_observatory : str
