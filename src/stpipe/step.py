@@ -1388,7 +1388,7 @@ def _get_suffix(suffix, step=None, default_suffix=None):
         Suffix to use if specified.
 
     step : Step or None
-        The step to retrieve the suffux.
+        The step to retrieve the suffix.
 
     default_suffix : str
         If the pipeline does not supply a suffix,
