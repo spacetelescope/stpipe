@@ -16,6 +16,7 @@ from stpipe.library import (
     NoGroupID,
     _Ledger,
 )
+from stpipe.step import Step
 
 _GROUP_IDS = ["1", "1", "2"]
 _N_MODELS = len(_GROUP_IDS)
@@ -785,3 +786,18 @@ def test_library_is_not_sequence():
     a Sequence (like is ModelContainer).
     """
     assert not issubclass(AbstractModelLibrary, Sequence)
+
+
+@pytest.mark.parametrize(
+    "table_name, filename",
+    [
+        ("foo.json", "foo.json"),
+        (None, None),
+        ("MISSING", None),  # special value for "missing" below"
+    ],
+)
+def test_get_filename(table_name, filename):
+    lib = ModelLibrary([])
+    if table_name != "MISSING":
+        lib._asn["table_name"] = table_name
+    assert Step._get_filename(lib) == filename

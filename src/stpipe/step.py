@@ -304,6 +304,81 @@ class Step:
             **kwargs,
         )
 
+    @classmethod
+    def _get_filename(cls, dataset):
+        """
+        Class method to get a filename for a dataset.
+
+        Parameters
+        ----------
+        dataset : str, Path, DataModel, ModelLibrary, Sequence
+            Dataset to be inspected for a filename.
+
+        Returns
+        -------
+        filename : str or None
+            Filename as a string or None if no filename could be determined.
+        """
+        if isinstance(dataset, str):
+            dataset = Path(dataset)
+
+        if isinstance(dataset, Path):
+            return dataset.name
+
+        if isinstance(dataset, Sequence):
+            if not len(dataset):
+                return None
+            dataset = dataset[0]
+
+        if isinstance(dataset, AbstractDataModel):
+            return cls._get_filename(dataset.meta.filename)
+
+        if isinstance(dataset, AbstractModelLibrary):
+            return cls._get_filename(dataset.asn.get("table_name", None))
+
+        return None
+
+    @classmethod
+    def _get_crds_parameters(cls, dataset):
+        """
+        Class method to get the CRDS parameters and observatory for a given dataset.
+
+        Parameters
+        ----------
+        dataset : str, Path, DataModel, ModelLibrary, Sequence
+            Dataset to use for determining CRDS parameters.
+
+        Returns
+        -------
+        parameters : dict
+            Dictionary of parameters to pass to CRDS.
+        observatory : str
+            Observatory to pass to CRDS.
+        """
+        if isinstance(dataset, AbstractModelLibrary) or (
+            isinstance(dataset, AbstractDataModel) and not isinstance(dataset, Sequence)
+        ):
+            return (
+                dataset.get_crds_parameters(),
+                dataset.crds_observatory,
+            )
+
+        if isinstance(dataset, str):
+            dataset = Path(dataset)
+
+        # for associations, only open the first science member
+        if isinstance(dataset, Path) and dataset.suffix.lower() == ".json":
+            open_kwargs = {"asn_n_members": 1, "asn_exptypes": ["science"]}
+        else:
+            open_kwargs = {}
+
+        with cls._datamodels_open(dataset, **open_kwargs) as model:
+            # ModelContainer is a Sequence, use the first model
+            if isinstance(model, Sequence):
+                model = model[0]
+
+            return cls._get_crds_parameters(model)
+
     def __init__(
         self,
         name=None,
@@ -809,12 +884,12 @@ class Step:
             else:
                 return ""
         else:
-            with self.open_model(input_file) as model:
-                reference_name = crds_client.get_reference_file(
-                    model.get_crds_parameters(),
-                    reference_file_type,
-                    model.crds_observatory,
-                )
+            parameters, observatory = self._get_crds_parameters(input_file)
+            reference_name = crds_client.get_reference_file(
+                parameters,
+                reference_file_type,
+                observatory,
+            )
             if reference_name != "N/A":
                 hdr_name = "crds://" + basename(reference_name)
             else:
@@ -831,10 +906,10 @@ class Step:
         cls : stpipe.Step
             Either a class or instance of a class derived
             from `Step`.
-        dataset : A datamodel that is an instance of AbstractDataModel
+        dataset : AbstractDataModel or dict
             A model of the input file.  Metadata on this input file will
             be used by the CRDS "bestref" algorithm to obtain a reference
-            file.
+            file. If a dict, crds_observatory must be a non-None value.
         disable: bool or None
             Do not retrieve parameters from CRDS. If None, check global settings.
         crds_observatory : str
@@ -855,19 +930,13 @@ class Step:
         if isinstance(dataset, dict):
             # crds_parameters was passed as input from pipeline.py
             crds_parameters = dataset
-            crds_observatory = crds_observatory
             if crds_observatory is None:
                 raise ValueError("Need a valid name for crds_observatory.")
         else:
             # If the dataset is not an operable instance of AbstractDataModel,
             # log as such and return an empty config object
             try:
-                with cls._datamodels_open(dataset, asn_n_members=1) as model:
-                    if isinstance(model, Sequence):
-                        # Pull out first model in ModelContainer
-                        model = model[0]
-                    crds_parameters = model.get_crds_parameters()
-                    crds_observatory = model.crds_observatory
+                crds_parameters, crds_observatory = cls._get_crds_parameters(dataset)
             except (OSError, TypeError, ValueError):
                 logger.warning("Input dataset is not an instance of AbstractDataModel.")
                 disable = True

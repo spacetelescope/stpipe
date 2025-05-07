@@ -2,14 +2,12 @@
 Pipeline
 """
 
-from collections.abc import Sequence
 from os.path import dirname, join
 from typing import ClassVar
 
 from astropy.extern.configobj.configobj import ConfigObj, Section
 
 from . import config_parser, crds_client, log
-from .library import AbstractModelLibrary
 from .step import Step, get_disable_crds_steppars
 from .utilities import _not_set
 
@@ -151,10 +149,10 @@ class Pipeline(Step):
             Either a class or instance of a class derived
             from `Step`.
 
-        dataset : `stpipe.datamodel.AbstractDataModel`
+        dataset : `stpipe.datamodel.AbstractDataModel` or dict
             A model of the input file.  Metadata on this input file will
             be used by the CRDS "bestref" algorithm to obtain a reference
-            file.
+            file. If dict, crds_observatory must be a non-None value.
 
         disable: bool or None
             Do not retrieve parameters from CRDS. If None, check global settings.
@@ -184,13 +182,13 @@ class Pipeline(Step):
         logger.debug("Retrieving all substep parameters from CRDS")
         #
         # Iterate over the steps in the pipeline
-        with cls._datamodels_open(dataset, asn_n_members=1) as model:
-            if isinstance(model, Sequence):
-                crds_parameters = model._models[0].get_crds_parameters()
-                crds_observatory = model.crds_observatory
-            else:
-                crds_parameters = model.get_crds_parameters()
-                crds_observatory = model.crds_observatory
+        if isinstance(dataset, dict):
+            # crds_parameters was passed as input from pipeline.py
+            crds_parameters = dataset
+            if crds_observatory is None:
+                raise ValueError("Need a valid name for crds_observatory.")
+        else:
+            crds_parameters, crds_observatory = cls._get_crds_parameters(dataset)
 
         for cal_step in cls.step_defs.keys():
             cal_step_class = cls.step_defs[cal_step]
@@ -260,49 +258,11 @@ class Pipeline(Step):
         None
         """
         try:
-            with self.open_model(
-                input_file, asn_n_members=1, asn_exptypes=["science"]
-            ) as model:
-                self._precache_references_opened(model)
+            crds_parameters, observatory = self._get_crds_parameters(input_file)
         except (ValueError, TypeError, OSError):
             self.log.info("First argument %s does not appear to be a model", input_file)
+            return
 
-    def _precache_references_opened(self, model_or_container):
-        """Pre-fetches references for `model_or_container`.
-
-        Handles recursive pre-fetches for any models inside a container,
-        or just a single model.
-
-        Assumes model_or_container is an open model or container object,
-        not a filename.
-
-        No garbage collection.
-        """
-        if isinstance(model_or_container, Sequence):
-            # recurse on each contained model
-            for contained_model in model_or_container:
-                self._precache_references_opened(contained_model)
-        elif isinstance(model_or_container, AbstractModelLibrary):
-            with model_or_container:
-                for i, model in enumerate(model_or_container):
-                    self._precache_references_impl(model)
-                    model_or_container.shelve(model, i, modify=False)
-        else:
-            # precache a single model object
-            self._precache_references_impl(model_or_container)
-
-    def _precache_references_impl(self, model):
-        """Given open data `model`,  determine and cache reference files for
-        any reference types which are not overridden on the command line.
-
-        Verify that all CRDS and overridden reference files are readable.
-
-        Parameters
-        ----------
-        model :  `DataModel`
-            Only a `DataModel` instance is allowed.
-            Cannot be a filename, Sequence, etc.
-        """
         ovr_refs = {
             reftype: self.get_ref_override(reftype)
             for reftype in self.reference_file_types
@@ -313,11 +273,11 @@ class Pipeline(Step):
 
         self.log.info(
             "Prefetching reference files for dataset: %r reftypes = %r",
-            model.meta.filename,
+            self._get_filename(input_file),
             fetch_types,
         )
         crds_refs = crds_client.get_multiple_reference_paths(
-            model.get_crds_parameters(), fetch_types, model.crds_observatory
+            crds_parameters, fetch_types, observatory
         )
 
         ref_path_map = dict(list(crds_refs.items()) + list(ovr_refs.items()))

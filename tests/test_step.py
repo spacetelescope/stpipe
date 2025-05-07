@@ -4,13 +4,15 @@ import copy
 import logging
 import re
 from collections.abc import Sequence
+from contextlib import nullcontext
+from pathlib import Path
 from typing import ClassVar
 
 import asdf
 import pytest
 
 import stpipe.config_parser as cp
-from stpipe import cmdline
+from stpipe import cmdline, crds_client
 from stpipe.datamodel import AbstractDataModel
 from stpipe.pipeline import Pipeline
 from stpipe.step import Step
@@ -43,6 +45,16 @@ class SimplePipe(Pipeline):
     """
 
     step_defs: ClassVar = {"step1": SimpleStep}
+
+
+class PipeWithPipe(Pipeline):
+    """A Pipeline with a pipeline as a step"""
+
+    spec = """
+        output_ext = string(default='pipewithpipe')
+    """
+
+    step_defs: ClassVar = {"step1": SimpleStep, "pipe1": SimplePipe}
 
 
 class LoggingPipeline(Pipeline):
@@ -435,8 +447,41 @@ class StepWithModel(Step):
         return input_model
 
 
+class StepWithGetCRDSParameters(Step):
+    """A step that immediately saves the model it gets passed in"""
+
+    spec = """
+    output_ext = string(default='simplestep')
+    save_results = boolean(default=True)
+    """
+
+    _TEST_PARAMETERS = {"test_parameters": 123}
+
+    @classmethod
+    def _get_crds_parameters(cls, dataset):
+        return cls._TEST_PARAMETERS, "fake"
+
+    def process(self, input_model):
+        # make a change to ensure step skip is working
+        # without having to define SimpleDataModel.meta.stepname
+        if isinstance(input_model, SimpleDataModel):
+            input_model.stepstatus = "COMPLETED"
+        elif isinstance(input_model, SimpleContainer):
+            for model in input_model:
+                model.stepstatus = "COMPLETED"
+        return input_model
+
+
+class Meta:
+    pass
+
+
 class SimpleDataModel(AbstractDataModel):
     """A simple data model"""
+
+    def __init__(self, filename="foo.asdf"):
+        self.meta = Meta()
+        self.meta.filename = filename
 
     @property
     def crds_observatory(self):
@@ -563,3 +608,71 @@ def test_save_tuple_with_nested_list(tmp_cwd, model_list):
     assert (tmp_cwd / "test-saved.txt").exists()
     for i in range(3):
         assert not (tmp_cwd / f"test{i}-saved.txt").exists()
+
+
+def test_subclass_get_crds_parameters(monkeypatch):
+    """Test that _get_crds_parameters for a subclass is called"""
+    step = StepWithGetCRDSParameters()
+
+    called = False
+
+    def get_reference_file(parameters, reference_file_type, observatory):
+        nonlocal called
+        called = True
+        return "N/A"
+
+    monkeypatch.setattr(crds_client, "get_reference_file", get_reference_file)
+    step.get_reference_file("foo", "bar")
+    assert called
+
+
+@pytest.mark.parametrize(
+    "dataset, filename",
+    [
+        (SimpleDataModel(filename="foo.asdf"), "foo.asdf"),
+        (SimpleDataModel(filename=Path("bar") / "foo.asdf"), "foo.asdf"),
+        ("bar/foo.asdf", "foo.asdf"),
+        (Path("bar") / "foo.asdf", "foo.asdf"),
+        ([SimpleDataModel(filename="foo.asdf")], "foo.asdf"),
+        ([SimpleDataModel(filename=Path("bar") / "foo.asdf")], "foo.asdf"),
+        (SimpleDataModel(filename=None), None),
+        ([SimpleDataModel(filename=None)], None),
+        ([SimpleDataModel(filename=None)], None),
+        ([], None),
+        (None, None),
+    ],
+)
+def test_get_filename(dataset, filename):
+    assert SimpleStep._get_filename(dataset) == filename
+
+
+@pytest.mark.parametrize("klass", (SimpleStep, SimplePipe, PipeWithPipe))
+@pytest.mark.parametrize(
+    "observatory, error",
+    [
+        (None, True),
+        (None, True),
+        ("foo", False),
+        ("foo", False),
+    ],
+)
+def test_get_config_from_reference_dict(monkeypatch, klass, observatory, error):
+    """Test that config_from_reference accepts a dict"""
+    called = False
+
+    def always_na(*args):
+        nonlocal called
+        called = True
+        return "N/A"
+
+    monkeypatch.setattr(crds_client, "get_reference_file", always_na)
+    if error:
+        ctx = pytest.raises(ValueError, match="Need a valid name for crds_observatory")
+    else:
+        ctx = nullcontext()
+
+    with ctx:
+        klass.get_config_from_reference({}, crds_observatory=observatory)
+
+    if not error:
+        assert called
