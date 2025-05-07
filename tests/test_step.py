@@ -511,11 +511,12 @@ def test_save_results(tmp_cwd):
 
 
 def test_skip():
+    """Ensure that standalone step runs even when skip=True"""
     model = SimpleDataModel()
     step = StepWithModel()
     step.skip = True
     out = step.run(model)
-    assert not hasattr(out, "stepstatus")
+    assert hasattr(out, "stepstatus")
     assert out is model
 
 

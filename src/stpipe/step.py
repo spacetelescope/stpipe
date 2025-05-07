@@ -548,7 +548,10 @@ class Step:
                 # Warn if passing in objects that should be
                 # discouraged.
                 self._check_args(args, DISCOURAGED_TYPES, "Passed")
-
+                if self.parent is None:
+                    if self.skip:
+                        self.log.info("Step run as standalone, so skip set to False")
+                        self.skip = False
                 # Run the Step-specific code.
                 if self.skip:
                     self.log.info("Step skipped.")
@@ -1454,7 +1457,7 @@ def _get_suffix(suffix, step=None, default_suffix=None):
         Suffix to use if specified.
 
     step : Step or None
-        The step to retrieve the suffux.
+        The step to retrieve the suffix.
 
     default_suffix : str
         If the pipeline does not supply a suffix,
