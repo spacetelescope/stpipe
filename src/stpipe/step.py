@@ -878,7 +878,7 @@ class Step:
 
             if override.strip() != "":
                 self._reference_files_used.append(
-                    (reference_file_type, basename(override))
+                    (reference_file_type, abspath(override))#basename(override))
                 )
                 reference_name = override
             else:
