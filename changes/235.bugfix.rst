@@ -1,0 +1,1 @@
+Fixed non-deterministic ordering of unused keys passed into ``FormatTemplate`` that manifested when user-provided output template was incomplete.
