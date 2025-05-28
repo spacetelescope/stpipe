@@ -172,7 +172,7 @@ class FormatTemplate(Formatter):
         result = super().format(format_string, **formatted_kwargs)
 
         # Get any unused arguments and simply do the appending
-        unused_keys = set(formatted_kwargs).difference(self._used_keys)
+        unused_keys = sorted(set(formatted_kwargs).difference(self._used_keys))
         unused_values = [
             formatted_kwargs[unused]
             for unused in unused_keys
