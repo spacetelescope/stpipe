@@ -676,3 +676,14 @@ def test_get_config_from_reference_dict(monkeypatch, klass, observatory, error):
 
     if not error:
         assert called
+
+
+@pytest.mark.parametrize("klass", (SimpleStep, SimplePipe, PipeWithPipe))
+def test_ref_file_override(klass, tmp_path):
+    override_path = tmp_path / "ref.asdf"
+    override_path.touch()
+    step = SimpleStep()
+    step.override_dark = override_path
+    ref_path = step.get_reference_file("foo.asdf", "dark")
+    assert ref_path == str(override_path)
+    assert ("dark", ref_path) in step._reference_files_used
