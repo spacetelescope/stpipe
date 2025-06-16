@@ -654,14 +654,6 @@ class Step:
 
         return step_result
 
-    def __call__(self, *args):
-        warnings.warn(
-            "Step.__call__ is deprecated. It is equivalent to Step.run "
-            "and is not recommended.",
-            UserWarning,
-        )
-        return self.run(*args)
-
     def finalize_result(self, result, reference_files_used):
         """
         Hook that allows subclasses to set mission-specific metadata on each
