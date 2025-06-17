@@ -3,6 +3,7 @@ import logging
 
 import pytest
 
+from stpipe import Step
 from stpipe import log as stpipe_log
 from stpipe.pipeline import Pipeline
 
@@ -17,6 +18,31 @@ def _clean_up_logging():
     stpipe_log.load_configuration(io.BytesIO(stpipe_log.DEFAULT_CONFIGURATION))
 
 
+STEP_WARNING = "This step has called out a warning."
+PIPELINE_WARNING = "This pipeline has called out a warning."
+EXTERNAL_WARNING = "This external package has called out a warning."
+
+
+class LoggingStep(Step):
+    """A Step that utilizes self.log
+    to log a warning
+    """
+
+    spec = """
+        str1 = string(default='default')
+        output_ext = string(default='simplestep')
+    """
+    _log_records_formatter = logging.Formatter("%(message)s")
+
+    def process(self):
+        self.log.warning(STEP_WARNING)
+        self.log.warning("%s  %s", self.log, self.log.handlers)
+        logging.getLogger("external.logger").warning(EXTERNAL_WARNING)
+
+    def _datamodels_open(self, **kwargs):
+        pass
+
+
 class LoggingPipeline(Pipeline):
     """A Pipeline that utilizes self.log
     to log a warning
@@ -28,10 +54,12 @@ class LoggingPipeline(Pipeline):
     """
     _log_records_formatter = logging.Formatter("%(message)s")
 
-    def process(self):
-        self.log.warning("This step has called out a warning.")
+    step_defs = {"simplestep": LoggingStep}
 
+    def process(self):
+        self.log.warning(PIPELINE_WARNING)
         self.log.warning("%s  %s", self.log, self.log.handlers)
+        self.simplestep.run()
 
     def _datamodels_open(self, **kwargs):
         pass
@@ -116,11 +144,14 @@ def test_logcfg_routing(tmp_path):
     with open(tmp_path / "myrun.log") as f:
         fulltext = "\n".join(list(f))
 
-    assert "called out a warning" in fulltext
+    for w in [STEP_WARNING, PIPELINE_WARNING, EXTERNAL_WARNING]:
+        assert w in fulltext
 
 
 def test_log_records():
     pipeline = LoggingPipeline()
     pipeline.run()
 
-    assert any(r == "This step has called out a warning." for r in pipeline.log_records)
+    assert STEP_WARNING in pipeline.log_records
+    assert PIPELINE_WARNING in pipeline.log_records
+    assert EXTERNAL_WARNING in pipeline.log_records
