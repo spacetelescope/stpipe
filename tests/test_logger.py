@@ -100,15 +100,16 @@ format = '%(message)s'
     with io.StringIO() as fd:
         fd.write(configuration)
         fd.seek(0)
-        stpipe_log.load_configuration(fd)
+        log_cfg = stpipe_log.load_configuration(fd)
 
-    log = logging.getLogger(stpipe_log.STPIPE_ROOT_LOGGER)
+    with log_cfg.context():
+        log = logging.getLogger(stpipe_log.STPIPE_ROOT_LOGGER)
 
-    log.info("Hidden")
-    log.warning("Shown")
+        log.info("Hidden")
+        log.warning("Shown")
 
-    with pytest.raises(stpipe_log.LoggedException):
-        log.critical("Breaking")
+        with pytest.raises(stpipe_log.LoggedException):
+            log.critical("Breaking")
 
     logging.shutdown()
 

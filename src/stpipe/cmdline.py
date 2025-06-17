@@ -250,7 +250,6 @@ def just_the_step_from_cmdline(args, cls=None):
             )
             step_class = cls
 
-        log_config = None
         if known.verbose:
             if known.logcfg is not None:
                 raise ValueError(
@@ -262,14 +261,17 @@ def just_the_step_from_cmdline(args, cls=None):
             if not os.path.exists(known.logcfg):
                 raise OSError(f"Logging config {known.logcfg!r} not found")
             log_config = known.logcfg
+        else:
+            log_config = log._find_logging_config_file()
 
-        if log_config is not None:
-            try:
-                log.load_configuration(log_config)
-            except Exception as e:
-                raise ValueError(
-                    f"Error parsing logging config {log_config!r}:\n{e}"
-                ) from e
+        try:
+            log_cfg = log.load_configuration(log_config)
+        except Exception as e:
+            raise ValueError(
+                f"Error parsing logging config {log_config!r}:\n{e}"
+            ) from e
+        # globally apply the logging configuration since we're in cmdline mode
+        log_cfg.apply()
     except Exception as e:
         _print_important_message("ERROR PARSING CONFIGURATION:", str(e))
         parser1.print_help()
