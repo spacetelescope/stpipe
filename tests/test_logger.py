@@ -4,16 +4,43 @@ import logging
 import pytest
 
 from stpipe import log as stpipe_log
+from stpipe.pipeline import Pipeline
 
 
 @pytest.fixture(autouse=True)
 def _clean_up_logging():
+    """
+    Reset logging configuration to DEFAULT_CONFIGURATION
+    """
     yield
     logging.shutdown()
     stpipe_log.load_configuration(io.BytesIO(stpipe_log.DEFAULT_CONFIGURATION))
 
 
+class LoggingPipeline(Pipeline):
+    """A Pipeline that utilizes self.log
+    to log a warning
+    """
+
+    spec = """
+        str1 = string(default='default')
+        output_ext = string(default='simplestep')
+    """
+    _log_records_formatter = logging.Formatter("%(message)s")
+
+    def process(self):
+        self.log.warning("This step has called out a warning.")
+
+        self.log.warning("%s  %s", self.log, self.log.handlers)
+
+    def _datamodels_open(self, **kwargs):
+        pass
+
+
 def test_configuration(tmp_path):
+    """
+    Test that load_configuration configures the stpipe root logger
+    """
     logfilename = tmp_path / "output.log"
 
     configuration = f"""
@@ -46,6 +73,9 @@ format = '%(message)s'
 
 
 def test_record_logs():
+    """
+    Test that record_logs respects the default configuration
+    """
     stpipe_logger = stpipe_log.getLogger(stpipe_log.STPIPE_ROOT_LOGGER)
     root_logger = stpipe_log.getLogger()
 
@@ -71,3 +101,26 @@ def test_record_logs():
     assert len(log_records) == 2
     assert log_records[0] == "Error from stpipe"
     assert log_records[1] == "Error from root"
+
+
+def test_logcfg_routing(tmp_path):
+    cfg = f"""[*]\nlevel = INFO\nhandler = file:{tmp_path}/myrun.log"""
+
+    logcfg_file = tmp_path / "stpipe-log.cfg"
+
+    with open(logcfg_file, "w") as f:
+        f.write(cfg)
+
+    LoggingPipeline.call(logcfg=logcfg_file)
+
+    with open(tmp_path / "myrun.log") as f:
+        fulltext = "\n".join(list(f))
+
+    assert "called out a warning" in fulltext
+
+
+def test_log_records():
+    pipeline = LoggingPipeline()
+    pipeline.run()
+
+    assert any(r == "This step has called out a warning." for r in pipeline.log_records)
