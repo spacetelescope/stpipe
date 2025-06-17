@@ -8,7 +8,6 @@ import logging
 import os
 import pathlib
 import sys
-import threading
 import warnings
 from contextlib import contextmanager
 
@@ -223,45 +222,6 @@ def _find_logging_config_file():
             return os.path.abspath(file)
 
     return io.BytesIO(DEFAULT_CONFIGURATION)
-
-
-###########################################################################
-# LOGGING DELEGATION
-
-
-class DelegationHandler(logging.Handler):
-    """
-    A handler that delegates messages along to the currently active
-    `Step` logger.  It only delegates messages that come from outside
-    of the `stpipe` hierarchy, in order to prevent infinite recursion.
-
-    Since we could be multi-threaded and each thread may be running a
-    different thread, we need to manage a dictionary mapping the
-    current thread to the Step's logger on that thread.
-    """
-
-    def __init__(self, *args, **kwargs):
-        self._logs = {}
-        logging.Handler.__init__(self, *args, **kwargs)
-
-    def emit(self, record):
-        log = self.log
-        if log is not None and not record.name.startswith(STPIPE_ROOT_LOGGER):
-            record.name = log.name
-            log.handle(record)
-
-    @property
-    def log(self):
-        return self._logs.get(threading.current_thread(), None)
-
-    @log.setter
-    def log(self, log):
-        if log is not None and not (
-            isinstance(log, logging.Logger) and log.name.startswith(STPIPE_ROOT_LOGGER)
-        ):
-            raise AssertionError("Can't set the log to a root logger")
-
-        self._logs[threading.current_thread()] = log
 
 
 class RecordingHandler(logging.Handler):
