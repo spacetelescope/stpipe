@@ -22,8 +22,8 @@ def _clean_up_logging():
     # resulting in log clobbering. In practice no one is likely doing this
     # (they're configuring the log prior to creation of any stpipe step
     # loggers) so we work around the issue in these tests.
-    logging.Logger.manager.loggerDict.pop("stpipe.LoggingPipeline")
-    logging.Logger.manager.loggerDict.pop("stpipe.LoggingPipeline.simplestep")
+    logging.Logger.manager.loggerDict.pop("stpipe.LoggingPipeline", None)
+    logging.Logger.manager.loggerDict.pop("stpipe.LoggingPipeline.simplestep", None)
     stpipe_log.load_configuration(io.BytesIO(stpipe_log.DEFAULT_CONFIGURATION))
 
 

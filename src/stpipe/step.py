@@ -3,6 +3,7 @@ Step
 """
 
 import gc
+import logging
 import os
 import sys
 from collections.abc import Sequence
@@ -36,6 +37,8 @@ from .datamodel import AbstractDataModel
 from .format_template import FormatTemplate
 from .library import AbstractModelLibrary
 from .utilities import _not_set
+
+logger = logging.getLogger(log.STPIPE_ROOT_LOGGER)
 
 
 class Step:
@@ -500,8 +503,8 @@ class Step:
             self._log_records = log_records
 
             # Make generic log messages go to this step's logger
-            orig_log = log.delegator.log
-            log.delegator.log = self.log
+            # orig_log = log.delegator.log
+            # log.delegator.log = self.log
 
             step_result = None
 
@@ -649,7 +652,8 @@ class Step:
                 if not self.skip:
                     self.log.info("Step %s done", self.name)
             finally:
-                log.delegator.log = orig_log
+                # log.delegator.log = orig_log
+                pass
 
         return step_result
 
@@ -915,7 +919,7 @@ class Step:
 
         # Get the root logger, since the following operations
         # are happening in the surrounding architecture.
-        logger = log.delegator.log
+        # logger = log.delegator.log
         reftype = cls.get_config_reftype()
 
         if isinstance(dataset, dict):

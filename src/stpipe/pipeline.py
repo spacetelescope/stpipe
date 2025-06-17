@@ -2,6 +2,7 @@
 Pipeline
 """
 
+import logging
 from os.path import dirname, join
 from typing import ClassVar
 
@@ -13,7 +14,8 @@ from .utilities import _not_set
 
 # For classmethods, the logger to use is the
 # delegator, since the pipeline has not yet been instantiated.
-logger = log.delegator.log
+# logger = log.delegator.log
+logger = logging.getLogger(log.STPIPE_ROOT_LOGGER)
 
 
 class Pipeline(Step):

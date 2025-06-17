@@ -9,6 +9,7 @@ import os
 import pathlib
 import sys
 import threading
+import warnings
 from contextlib import contextmanager
 
 from astropy.extern.configobj import validate
@@ -24,6 +25,7 @@ handler = stderr
 level = INFO
 """
 
+# used by cmdline "verbose"
 MAX_CONFIGURATION = b"""
 [*]
 handler = stderr
@@ -205,11 +207,18 @@ def load_configuration(config_file):
 
     for key, val in config.items():
         log_config[key] = LogConfig(key, **val)
+        if key in ("", ".", "root", "*"):
+            log_config[key].apply(logging.getLogger())
+        else:
+            msg = "non-* log configuration never worked and will be removed"
+            warnings.warn(msg, UserWarning)
 
-    for log in logging.Logger.manager.loggerDict.values():
-        if isinstance(log, logging.Logger):
-            for cfg in log_config.values():
-                cfg.match_and_apply(log)
+    # for log in logging.Logger.manager.loggerDict.values():
+    #    if isinstance(log, logging.Logger):
+    #        for cfg in log_config.values():
+    #            cfg.match_and_apply(log)
+    #            if cfg.name == "*":
+    #                cfg.apply(logging.getLogger())
 
 
 def getLogger(name=None):  # noqa: N802
@@ -291,7 +300,7 @@ def record_logs(level=logging.NOTSET, formatter=None):
     else:
         handler = RecordingHandler(level=level)
         handler.setFormatter(formatter)
-        logger = getLogger(STPIPE_ROOT_LOGGER)
+        logger = getLogger()
         logger.addHandler(handler)
         try:
             yield handler.log_records
@@ -303,9 +312,9 @@ def record_logs(level=logging.NOTSET, formatter=None):
 # uses the `delegator` instance to change what the current Step logger
 # is.
 log = getLogger()
-delegator = DelegationHandler()
-delegator.log = getLogger(STPIPE_ROOT_LOGGER)
-log.addHandler(delegator)
+# delegator = DelegationHandler()
+# delegator.log = getLogger(STPIPE_ROOT_LOGGER)
+# log.addHandler(delegator)
 
 logging_config_file = _find_logging_config_file()
 if logging_config_file is not None:
