@@ -12,9 +12,7 @@ from . import config_parser, crds_client, log
 from .step import Step, get_disable_crds_steppars
 from .utilities import _not_set
 
-# For classmethods, the logger to use is the
-# delegator, since the pipeline has not yet been instantiated.
-# logger = log.delegator.log
+# For classmethods, use the STPIPE_ROOT_LOGGER
 logger = logging.getLogger(log.STPIPE_ROOT_LOGGER)
 
 

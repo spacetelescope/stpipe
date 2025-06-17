@@ -102,7 +102,7 @@ format = '%(message)s'
         fd.seek(0)
         stpipe_log.load_configuration(fd)
 
-    log = stpipe_log.getLogger(stpipe_log.STPIPE_ROOT_LOGGER)
+    log = logging.getLogger(stpipe_log.STPIPE_ROOT_LOGGER)
 
     log.info("Hidden")
     log.warning("Shown")
@@ -122,8 +122,8 @@ def test_record_logs():
     """
     Test that record_logs respects the default configuration
     """
-    stpipe_logger = stpipe_log.getLogger(stpipe_log.STPIPE_ROOT_LOGGER)
-    root_logger = stpipe_log.getLogger()
+    stpipe_logger = logging.getLogger(stpipe_log.STPIPE_ROOT_LOGGER)
+    root_logger = logging.getLogger()
 
     assert not any(
         isinstance(h, stpipe_log.RecordingHandler) for h in root_logger.handlers

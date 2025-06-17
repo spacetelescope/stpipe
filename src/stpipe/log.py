@@ -213,15 +213,11 @@ def load_configuration(config_file):
             msg = "non-* log configuration never worked and will be removed"
             warnings.warn(msg, UserWarning)
 
-    # for log in logging.Logger.manager.loggerDict.values():
-    #    if isinstance(log, logging.Logger):
-    #        for cfg in log_config.values():
-    #            cfg.match_and_apply(log)
-    #            if cfg.name == "*":
-    #                cfg.apply(logging.getLogger())
-
 
 def getLogger(name=None):  # noqa: N802
+    warnings.warn(
+        "getLogger is deprecated. Use logging.getLogger instead.", UserWarning
+    )
     return logging.getLogger(name)
 
 
@@ -300,21 +296,13 @@ def record_logs(level=logging.NOTSET, formatter=None):
     else:
         handler = RecordingHandler(level=level)
         handler.setFormatter(formatter)
-        logger = getLogger()
+        logger = logging.getLogger()
         logger.addHandler(handler)
         try:
             yield handler.log_records
         finally:
             logger.removeHandler(handler)
 
-
-# Install the delegation handler on the root logger.  The Step class
-# uses the `delegator` instance to change what the current Step logger
-# is.
-log = getLogger()
-# delegator = DelegationHandler()
-# delegator.log = getLogger(STPIPE_ROOT_LOGGER)
-# log.addHandler(delegator)
 
 logging_config_file = _find_logging_config_file()
 if logging_config_file is not None:
