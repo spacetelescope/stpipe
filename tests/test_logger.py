@@ -15,12 +15,29 @@ def _clean_up_logging():
     """
     yield
     logging.shutdown()
+    # remove the test loggers added below
+    # This is to work around a bug that configuring the logging
+    # with a file: handler after logs have been created will add multiple
+    # FileHandlers all pointing to the same file to different loggers
+    # resulting in log clobbering. In practice no one is likely doing this
+    # (they're configuring the log prior to creation of any stpipe step
+    # loggers) so we work around the issue in these tests.
+    logging.Logger.manager.loggerDict.pop("stpipe.LoggingPipeline")
+    logging.Logger.manager.loggerDict.pop("stpipe.LoggingPipeline.simplestep")
     stpipe_log.load_configuration(io.BytesIO(stpipe_log.DEFAULT_CONFIGURATION))
 
+
+STEP_INFO = "This step has called out an info message."
+PIPELINE_INFO = "This pipeline has called out an info message."
+EXTERNAL_INFO = "This external package has called out an info message."
+ALL_INFO = [STEP_INFO, PIPELINE_INFO, EXTERNAL_INFO]
 
 STEP_WARNING = "This step has called out a warning."
 PIPELINE_WARNING = "This pipeline has called out a warning."
 EXTERNAL_WARNING = "This external package has called out a warning."
+ALL_WARNINGS = [STEP_WARNING, PIPELINE_WARNING, EXTERNAL_WARNING]
+
+ALL_MESSAGES = ALL_INFO + ALL_WARNINGS
 
 
 class LoggingStep(Step):
@@ -35,9 +52,10 @@ class LoggingStep(Step):
     _log_records_formatter = logging.Formatter("%(message)s")
 
     def process(self):
+        self.log.info(STEP_INFO)
         self.log.warning(STEP_WARNING)
-        self.log.warning("%s  %s", self.log, self.log.handlers)
         logging.getLogger("external.logger").warning(EXTERNAL_WARNING)
+        logging.getLogger("external.logger").info(EXTERNAL_INFO)
 
     def _datamodels_open(self, **kwargs):
         pass
@@ -58,7 +76,7 @@ class LoggingPipeline(Pipeline):
 
     def process(self):
         self.log.warning(PIPELINE_WARNING)
-        self.log.warning("%s  %s", self.log, self.log.handlers)
+        self.log.info(PIPELINE_INFO)
         self.simplestep.run()
 
     def _datamodels_open(self, **kwargs):
@@ -131,8 +149,20 @@ def test_record_logs():
     assert log_records[1] == "Error from root"
 
 
-def test_logcfg_routing(tmp_path):
-    cfg = f"""[*]\nlevel = INFO\nhandler = file:{tmp_path}/myrun.log"""
+# this test requires a workaround (see _cleanup_logging above)
+@pytest.mark.parametrize(
+    "regex, level, expected",
+    (
+        ("*", "INFO", ALL_MESSAGES),
+        ("*", "WARNING", ALL_WARNINGS),
+        # these should work and don't due to configuration occurring
+        # before the loggers are created
+        # ("*.LoggingPipeline", "WARNING", ALL_WARNINGS),
+        # ("*.simplestep", "WARNING", (STEP_WARNING, EXTERNAL_WARNING)),
+    ),
+)
+def test_logcfg_routing(tmp_path, regex, level, expected):
+    cfg = f"[{regex}]\nlevel = {level}\nhandler = file:{tmp_path}/myrun.log"
 
     logcfg_file = tmp_path / "stpipe-log.cfg"
 
@@ -144,14 +174,19 @@ def test_logcfg_routing(tmp_path):
     with open(tmp_path / "myrun.log") as f:
         fulltext = "\n".join(list(f))
 
-    for w in [STEP_WARNING, PIPELINE_WARNING, EXTERNAL_WARNING]:
-        assert w in fulltext
+    for msg in ALL_MESSAGES:
+        if msg in expected:
+            assert msg in fulltext
+        else:
+            assert msg not in fulltext
 
 
 def test_log_records():
     pipeline = LoggingPipeline()
     pipeline.run()
 
-    assert STEP_WARNING in pipeline.log_records
-    assert PIPELINE_WARNING in pipeline.log_records
-    assert EXTERNAL_WARNING in pipeline.log_records
+    for msg in ALL_MESSAGES:
+        assert msg in pipeline.log_records
+    # assert STEP_WARNING in pipeline.log_records
+    # assert PIPELINE_WARNING in pipeline.log_records
+    # assert EXTERNAL_WARNING in pipeline.log_records
