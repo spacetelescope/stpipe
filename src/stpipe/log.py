@@ -214,13 +214,6 @@ def load_configuration(config_file):
             warnings.warn(msg, UserWarning)
 
 
-def getLogger(name=None):  # noqa: N802
-    warnings.warn(
-        "getLogger is deprecated. Use logging.getLogger instead.", UserWarning
-    )
-    return logging.getLogger(name)
-
-
 def _find_logging_config_file():
     files = ["stpipe-log.cfg", "~/.stpipe-log.cfg", "/etc/stpipe-log.cfg"]
 
