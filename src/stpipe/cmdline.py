@@ -3,6 +3,7 @@ Various utilities to handle running Steps from the commandline.
 """
 
 import io
+import logging
 import os
 import os.path
 import textwrap
@@ -15,6 +16,8 @@ built_in_configuration_parameters = [
     "logcfg",
     "verbose",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 def _print_important_message(header, message, no_wrap=None):
@@ -318,15 +321,13 @@ def just_the_step_from_cmdline(args, cls=None):
                 input_file, disable=disable_crds_steppars
             )
         except (FileNotFoundError, OSError):
-            log.log.warning(
-                "Unable to open input file, cannot get parameters from CRDS"
-            )
+            logger.warning("Unable to open input file, cannot get parameters from CRDS")
         else:
             if config:
                 config_parser.merge_config(parameter_cfg, config)
             config = parameter_cfg
     else:
-        log.log.info("No input file specified, unable to retrieve parameters from CRDS")
+        logger.info("No input file specified, unable to retrieve parameters from CRDS")
 
     # This is where the step is instantiated
     try:
@@ -350,7 +351,7 @@ def just_the_step_from_cmdline(args, cls=None):
     # Save the step configuration
     if known.save_parameters:
         step.export_config(known.save_parameters, include_metadata=True)
-        log.log.info(f"Step/Pipeline parameters saved to '{known.save_parameters}'")
+        logger.info(f"Step/Pipeline parameters saved to '{known.save_parameters}'")
 
     return step, step_class, positional, debug_on_exception
 
