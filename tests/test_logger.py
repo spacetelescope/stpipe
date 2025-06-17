@@ -187,6 +187,3 @@ def test_log_records():
 
     for msg in ALL_MESSAGES:
         assert msg in pipeline.log_records
-    # assert STEP_WARNING in pipeline.log_records
-    # assert PIPELINE_WARNING in pipeline.log_records
-    # assert EXTERNAL_WARNING in pipeline.log_records
