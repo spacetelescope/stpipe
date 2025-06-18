@@ -15,16 +15,6 @@ def _clean_up_logging():
     """
     yield
     logging.shutdown()
-    # remove the test loggers added below
-    # This is to work around a bug that configuring the logging
-    # with a file: handler after logs have been created will add multiple
-    # FileHandlers all pointing to the same file to different loggers
-    # resulting in log clobbering. In practice no one is likely doing this
-    # (they're configuring the log prior to creation of any stpipe step
-    # loggers) so we work around the issue in these tests.
-    logging.Logger.manager.loggerDict.pop("stpipe.LoggingPipeline", None)
-    logging.Logger.manager.loggerDict.pop("stpipe.LoggingPipeline.simplestep", None)
-    stpipe_log.load_configuration(io.BytesIO(stpipe_log.DEFAULT_CONFIGURATION))
 
 
 STEP_INFO = "This step has called out an info message."
@@ -150,20 +140,15 @@ def test_record_logs():
     assert log_records[1] == "Error from root"
 
 
-# this test requires a workaround (see _cleanup_logging above)
 @pytest.mark.parametrize(
-    "regex, level, expected",
+    "level, expected",
     (
-        ("*", "INFO", ALL_MESSAGES),
-        ("*", "WARNING", ALL_WARNINGS),
-        # these should work and don't due to configuration occurring
-        # before the loggers are created
-        # ("*.LoggingPipeline", "WARNING", ALL_WARNINGS),
-        # ("*.simplestep", "WARNING", (STEP_WARNING, EXTERNAL_WARNING)),
+        ("INFO", ALL_MESSAGES),
+        ("WARNING", ALL_WARNINGS),
     ),
 )
-def test_logcfg_routing(tmp_path, regex, level, expected):
-    cfg = f"[{regex}]\nlevel = {level}\nhandler = file:{tmp_path}/myrun.log"
+def test_logcfg_routing(tmp_path, level, expected):
+    cfg = f"[*]\nlevel = {level}\nhandler = file:{tmp_path}/myrun.log"
 
     logcfg_file = tmp_path / "stpipe-log.cfg"
 
@@ -188,3 +173,63 @@ def test_log_records():
 
     for msg in ALL_MESSAGES:
         assert msg in pipeline.log_records
+
+
+@pytest.fixture
+def root_logger():
+    """
+    Fixture to restore the root logger level
+    """
+    root_logger = logging.getLogger()
+    original_level = root_logger.level
+    yield root_logger
+    root_logger.setLevel(original_level)
+
+
+@pytest.mark.parametrize(
+    "logging_level",
+    (
+        logging.CRITICAL,
+        logging.ERROR,
+        logging.WARNING,
+        logging.INFO,
+        logging.DEBUG,
+    ),
+)
+def test_no_root_logger_changes(tmp_path, logging_level, root_logger):
+    """
+    Test that the root logger is not changed.
+    """
+    config_level = logging.CRITICAL - logging_level
+    cfg = f"[*]\nlevel = {config_level}\nhandler = file:{tmp_path}/myrun.log, stderr"
+
+    logcfg_file = tmp_path / "stpipe-log.cfg"
+
+    with open(logcfg_file, "w") as f:
+        f.write(cfg)
+
+    # set the root logger level, this shouldn't be changed by the configuration
+    root_logger.setLevel(logging_level)
+    assert root_logger.level != config_level
+
+    def no_stpipe_loggers():
+        for h in root_logger.handlers:
+            if isinstance(h, logging.FileHandler):
+                if h.baseFilename == "/dev/null":
+                    continue
+                return False
+            elif isinstance(h, logging.StreamHandler):
+                if h.__class__.__name__ == "LogCaptureHandler":
+                    # this is added by pytest
+                    continue
+                return False
+        return True
+
+    assert no_stpipe_loggers(), root_logger.handlers
+
+    LoggingPipeline.call(logcfg=logcfg_file)
+
+    # check that the level was as it was set above
+    assert root_logger.level == logging_level
+
+    assert no_stpipe_loggers(), root_logger.handlers
