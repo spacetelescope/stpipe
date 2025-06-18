@@ -1,3 +1,33 @@
+0.9.0 (2025-06-18)
+==================
+
+Bug Fixes
+---------
+
+- Record the full path to custom reference files (`#234
+  <https://github.com/spacetelescope/stpipe/issues/234>`_)
+- Fixed non-deterministic ordering of unused keys passed into
+  ``FormatTemplate`` that manifested when user-provided output template was
+  incomplete. (`#235 <https://github.com/spacetelescope/stpipe/issues/235>`_)
+
+
+New Features
+------------
+
+- Add ``Step._get_crds_parameters`` to allow subclasses to override parameter
+  determination. (`#229
+  <https://github.com/spacetelescope/stpipe/issues/229>`_)
+- Force skip=False when step is run standalone (`#230
+  <https://github.com/spacetelescope/stpipe/issues/230>`_)
+
+
+Deprecations and Removals
+-------------------------
+
+- Remove the deprecated ``Step.__call__`` method. (`#239
+  <https://github.com/spacetelescope/stpipe/issues/239>`_)
+
+
 0.8.1 (2025-03-19)
 ==================
 
