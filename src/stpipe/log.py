@@ -137,6 +137,8 @@ class LogConfig:
         """
         log = logging.getLogger()
         for handler in self.handlers:
+            handler.flush()
+            handler.close()
             log.removeHandler(handler)
         if LogConfig.applied is self:
             LogConfig.applied = None
