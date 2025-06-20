@@ -3,6 +3,7 @@ Step
 """
 
 import gc
+import logging
 import os
 import sys
 from collections.abc import Sequence
@@ -31,11 +32,13 @@ try:
 except ImportError:
     DISCOURAGED_TYPES = None
 
-from . import config, config_parser, crds_client, log, utilities
+from . import config, config_parser, crds_client, log_config, utilities
 from .datamodel import AbstractDataModel
 from .format_template import FormatTemplate
 from .library import AbstractModelLibrary
 from .utilities import _not_set
+
+log = logging.getLogger("stpipe.step")
 
 
 class Step:
@@ -428,7 +431,7 @@ class Step:
             name = self.__class__.__name__
         self.name = name
         if parent is None:
-            self.qualified_name = f"{log.STPIPE_ROOT_LOGGER}.{self.name}"
+            self.qualified_name = f"stpipe.{self.name}"
         else:
             self.qualified_name = f"{parent.qualified_name}.{self.name}"
         self.parent = parent
@@ -437,13 +440,8 @@ class Step:
         for key, val in kws.items():
             setattr(self, key, val)
 
-        # Create a new logger for this step
-        self.log = log.getLogger(self.qualified_name)
-
-        self.log.setLevel(log.logging.DEBUG)
-
         # Log the fact that we have been init-ed.
-        self.log.info(
+        log.info(
             "%s instance created.",
             self.__class__.__name__,
         )
@@ -471,7 +469,7 @@ class Step:
 
         for i, arg in enumerate(args):
             if isinstance(arg, discouraged_types):
-                self.log.error(
+                log.error(
                     "%s %s object.  Use an instance of AbstractDataModel instead.",
                     msg,
                     i,
@@ -496,19 +494,17 @@ class Step:
         """
         gc.collect()
 
-        with log.record_logs(formatter=self._log_records_formatter) as log_records:
+        with log_config.record_logs(
+            formatter=self._log_records_formatter
+        ) as log_records:
             self._log_records = log_records
-
-            # Make generic log messages go to this step's logger
-            orig_log = log.delegator.log
-            log.delegator.log = self.log
 
             step_result = None
 
-            self.log.info("Step %s running with args %s.", self.name, args)
+            log.info("Step %s running with args %s.", self.name, args)
             # log Step or Pipeline parameters from top level only
             if self.parent is None:
-                self.log.info(
+                log.info(
                     "Step %s parameters are:%s",
                     self.name,
                     # Add an indent to each line of the YAML output
@@ -527,129 +523,119 @@ class Step:
             if len(args):
                 self.set_primary_input(args[0])
 
-            try:
-                # Default output file configuration
-                if self.output_file is not None:
-                    self.save_results = True
+            # Default output file configuration
+            if self.output_file is not None:
+                self.save_results = True
 
-                if self.suffix is None:
-                    self.suffix = self.default_suffix()
+            if self.suffix is None:
+                self.suffix = self.default_suffix()
 
-                hook_args = args
-                for pre_hook in self._pre_hooks:
-                    hook_results = pre_hook.run(*hook_args)
-                    if hook_results is not None:
-                        hook_args = (hook_results,)
-                args = hook_args
+            hook_args = args
+            for pre_hook in self._pre_hooks:
+                hook_results = pre_hook.run(*hook_args)
+                if hook_results is not None:
+                    hook_args = (hook_results,)
+            args = hook_args
 
-                self._reference_files_used = []
+            self._reference_files_used = []
 
-                # Warn if passing in objects that should be
-                # discouraged.
-                self._check_args(args, DISCOURAGED_TYPES, "Passed")
-                if self.parent is None:
-                    if self.skip:
-                        self.log.info("Step run as standalone, so skip set to False")
-                        self.skip = False
-                # Run the Step-specific code.
+            # Warn if passing in objects that should be
+            # discouraged.
+            self._check_args(args, DISCOURAGED_TYPES, "Passed")
+            if self.parent is None:
                 if self.skip:
-                    self.log.info("Step skipped.")
+                    log.info("Step run as standalone, so skip set to False")
+                    self.skip = False
+            # Run the Step-specific code.
+            if self.skip:
+                log.info("Step skipped.")
 
-                    if self.class_alias is not None:
+                if self.class_alias is not None:
 
-                        def set_skipped(model):
-                            try:
-                                setattr(
-                                    model.meta.cal_step, self.class_alias, "SKIPPED"
-                                )
-                            except AttributeError as e:
-                                self.log.info(
-                                    "Could not record skip into DataModel "
-                                    "header: %s",
-                                    e,
-                                )
+                    def set_skipped(model):
+                        try:
+                            setattr(model.meta.cal_step, self.class_alias, "SKIPPED")
+                        except AttributeError as e:
+                            log.info(
+                                "Could not record skip into DataModel " "header: %s",
+                                e,
+                            )
 
-                        if isinstance(args[0], AbstractModelLibrary):
-                            list(args[0].map_function(lambda m, i: set_skipped(m)))
-                        elif isinstance(args[0], AbstractDataModel):
-                            if isinstance(args[0], Sequence):
-                                [set_skipped(m) for m in args[0]]
-                            else:
-                                set_skipped(args[0])
-                    step_result = args[0]
+                    if isinstance(args[0], AbstractModelLibrary):
+                        list(args[0].map_function(lambda m, i: set_skipped(m)))
+                    elif isinstance(args[0], AbstractDataModel):
+                        if isinstance(args[0], Sequence):
+                            [set_skipped(m) for m in args[0]]
+                        else:
+                            set_skipped(args[0])
+                step_result = args[0]
+            else:
+                if self.prefetch_references:
+                    self.prefetch(*args)
+                try:
+                    step_result = self.process(*args)
+                except TypeError as e:
+                    if "process() takes exactly" in str(e):
+                        raise TypeError("Incorrect number of arguments to step") from e
+                    raise
+
+            # Warn if returning a discouraged object
+            self._check_args(step_result, DISCOURAGED_TYPES, "Returned")
+
+            # Run the post hooks
+            for post_hook in self._post_hooks:
+                hook_results = post_hook.run(step_result)
+                if hook_results is not None:
+                    step_result = hook_results
+
+            # Update meta information
+            if isinstance(step_result, AbstractModelLibrary):
+                step_result.finalize_result(self, self._reference_files_used)
+            else:
+                if not isinstance(step_result, Sequence):
+                    results = [step_result]
                 else:
-                    if self.prefetch_references:
-                        self.prefetch(*args)
-                    try:
-                        step_result = self.process(*args)
-                    except TypeError as e:
-                        if "process() takes exactly" in str(e):
-                            raise TypeError(
-                                "Incorrect number of arguments to step"
-                            ) from e
-                        raise
+                    results = step_result
 
-                # Warn if returning a discouraged object
-                self._check_args(step_result, DISCOURAGED_TYPES, "Returned")
+                # The finalize_result hook allows subclasses to add
+                # metadata (like the cal code package version) before
+                # the result is saved.
+                for result in results:
+                    self.finalize_result(result, self._reference_files_used)
 
-                # Run the post hooks
-                for post_hook in self._post_hooks:
-                    hook_results = post_hook.run(step_result)
-                    if hook_results is not None:
-                        step_result = hook_results
+            self._reference_files_used = []
 
-                # Update meta information
-                if isinstance(step_result, AbstractModelLibrary):
-                    step_result.finalize_result(self, self._reference_files_used)
+            # Save the output file if one was specified
+            if not self.skip and self.save_results:
+                # Setup the save list.
+                if not isinstance(step_result, list | tuple):
+                    results_to_save = [step_result]
                 else:
-                    if not isinstance(step_result, Sequence):
-                        results = [step_result]
-                    else:
-                        results = step_result
+                    results_to_save = step_result
 
-                    # The finalize_result hook allows subclasses to add
-                    # metadata (like the cal code package version) before
-                    # the result is saved.
-                    for result in results:
-                        self.finalize_result(result, self._reference_files_used)
+                for idx, result in enumerate(results_to_save):
+                    if len(results_to_save) <= 1:
+                        idx = None
+                    if isinstance(result, (AbstractDataModel | AbstractModelLibrary)):
+                        self.save_model(result, idx=idx)
+                    elif hasattr(result, "save"):
+                        try:
+                            output_path = self.make_output_path(idx=idx)
+                        except AttributeError:
+                            log.warning(
+                                "`save_results` has been requested, but cannot"
+                                " determine filename."
+                            )
+                            log.warning(
+                                "Specify an output file with `--output_file` or set"
+                                " `--save_results=false`"
+                            )
+                        else:
+                            log.info("Saving file %s", output_path)
+                            result.save(output_path, overwrite=True)
 
-                self._reference_files_used = []
-
-                # Save the output file if one was specified
-                if not self.skip and self.save_results:
-                    # Setup the save list.
-                    if not isinstance(step_result, list | tuple):
-                        results_to_save = [step_result]
-                    else:
-                        results_to_save = step_result
-
-                    for idx, result in enumerate(results_to_save):
-                        if len(results_to_save) <= 1:
-                            idx = None
-                        if isinstance(
-                            result, (AbstractDataModel | AbstractModelLibrary)
-                        ):
-                            self.save_model(result, idx=idx)
-                        elif hasattr(result, "save"):
-                            try:
-                                output_path = self.make_output_path(idx=idx)
-                            except AttributeError:
-                                self.log.warning(
-                                    "`save_results` has been requested, but cannot"
-                                    " determine filename."
-                                )
-                                self.log.warning(
-                                    "Specify an output file with `--output_file` or set"
-                                    " `--save_results=false`"
-                                )
-                            else:
-                                self.log.info("Saving file %s", output_path)
-                                result.save(output_path, overwrite=True)
-
-                if not self.skip:
-                    self.log.info("Step %s done", self.name)
-            finally:
-                log.delegator.log = orig_log
+            if not self.skip:
+                log.info("Step %s done", self.name)
 
         return step_result
 
@@ -726,33 +712,38 @@ class Step:
         this ``call()`` method, it will ignore previously-set parameters, as
         it creates a new instance of the class with only the ``config_file``,
         ``*args`` and ``**kwargs`` passed to the ``call()`` method.
-
-        If not used with a ``config_file`` or specific ``*args`` and ``**kwargs``,
-        it would be better to use the `run` method, which does not create
-        a new instance but simply runs the existing instance of the `Step`
-        class.
         """
-        filename = None
-        if len(args) > 0:
-            filename = args[0]
-        config, config_file = cls.build_config(filename, **kwargs)
+        # Check for an existing log format for stpipe and initialize
+        # with a default setting if not already done
+        configure_log = kwargs.pop("configure_log", True)
+        stpipe_log = logging.getLogger("stpipe")
+        log_handlers = []
+        if configure_log:
+            if len(stpipe_log.handlers) == 0:
+                if stpipe_log.level != logging.NOTSET:
+                    log_level = stpipe_log.level
+                else:
+                    log_level = None
+                log_handlers = log_config.set_log_configuration(log_level=log_level)
 
-        if "class" in config:
-            del config["class"]
+        try:
+            filename = None
+            if len(args) > 0:
+                filename = args[0]
+            config, config_file = cls.build_config(filename, **kwargs)
 
-        if "logcfg" in config:
-            try:
-                log.load_configuration(config["logcfg"])
-            except Exception as e:
-                raise RuntimeError(
-                    f"Error parsing logging config {config['logcfg']}"
-                ) from e
-            del config["logcfg"]
+            if "class" in config:
+                del config["class"]
 
-        name = config.get("name", None)
-        instance = cls.from_config_section(config, name=name, config_file=config_file)
+            name = config.get("name", None)
+            instance = cls.from_config_section(
+                config, name=name, config_file=config_file
+            )
 
-        return instance.run(*args)
+            return instance.run(*args)
+        finally:
+            for handler in log_handlers:
+                stpipe_log.removeHandler(handler)
 
     @property
     def input_dir(self):
@@ -912,10 +903,6 @@ class Step:
             The parameters as retrieved from CRDS. If there is an issue, log as such
             and return an empty config obj.
         """
-
-        # Get the root logger, since the following operations
-        # are happening in the surrounding architecture.
-        logger = log.delegator.log
         reftype = cls.get_config_reftype()
 
         if isinstance(dataset, dict):
@@ -929,20 +916,20 @@ class Step:
             try:
                 crds_parameters, crds_observatory = cls._get_crds_parameters(dataset)
             except (OSError, TypeError, ValueError):
-                logger.warning("Input dataset is not an instance of AbstractDataModel.")
+                log.warning("Input dataset is not an instance of AbstractDataModel.")
                 disable = True
 
         # Check if retrieval should be attempted.
         if disable is None:
             disable = get_disable_crds_steppars()
         if disable:
-            logger.info(
+            log.info(
                 "%s: CRDS parameter reference retrieval disabled.", reftype.upper()
             )
             return config_parser.ConfigObj()
 
         # Retrieve step parameters from CRDS
-        logger.debug("Retrieving step %s parameters from CRDS", reftype.upper())
+        log.debug("Retrieving step %s parameters from CRDS", reftype.upper())
         try:
             ref_file = crds_client.get_reference_file(
                 crds_parameters,
@@ -950,22 +937,22 @@ class Step:
                 crds_observatory,
             )
         except (AttributeError, crds_client.CrdsError):
-            logger.debug("%s: No parameters found", reftype.upper())
+            log.debug("%s: No parameters found", reftype.upper())
             return config_parser.ConfigObj()
         if ref_file != "N/A":
-            logger.info("%s parameters found: %s", reftype.upper(), ref_file)
+            log.info("%s parameters found: %s", reftype.upper(), ref_file)
             ref = config_parser.load_config_file(ref_file)
 
             ref_pars = {
                 par: value for par, value in ref.items() if par not in ["class", "name"]
             }
-            logger.debug(
+            log.debug(
                 "%s parameters retrieved from CRDS: %s", reftype.upper(), ref_pars
             )
 
             return ref
 
-        logger.debug("No %s reference files found.", reftype.upper())
+        log.debug("No %s reference files found.", reftype.upper())
         return config_parser.ConfigObj()
 
     def set_primary_input(self, obj, exclusive=True):
@@ -994,9 +981,9 @@ class Step:
                 try:
                     self._input_filename = obj.meta.filename
                 except AttributeError:
-                    self.log.debug(err_message)
+                    log.debug(err_message)
             else:
-                self.log.debug(err_message)
+                log.debug(err_message)
 
     def save_model(
         self,
@@ -1086,7 +1073,7 @@ class Step:
                     **components,
                 )
             )
-            self.log.info("Saved model in %s", output_path)
+            log.info("Saved model in %s", output_path)
 
         return output_path
 
@@ -1356,7 +1343,7 @@ class Step:
                     for step_name, step_parameters in value.items():
                         getattr(self, step_name).update_pars(step_parameters)
             else:
-                self.log.debug(
+                log.debug(
                     "Parameter %s is not valid for step %s. Ignoring.", parameter, self
                 )
 
@@ -1383,12 +1370,10 @@ class Step:
         config, config_file : ConfigObj, str
             The configuration and the config filename.
         """
-        logger_name = cls.__name__
-        log_cls = log.getLogger(logger_name)
         if input:
             config = cls.get_config_from_reference(input)
         else:
-            log_cls.info("No filename given, cannot retrieve config from CRDS")
+            log.info("No filename given, cannot retrieve config from CRDS")
             config = config_parser.ConfigObj()
 
         if "config_file" in kwargs:

@@ -2,18 +2,17 @@
 Pipeline
 """
 
+import logging
 from os.path import dirname, join
 from typing import ClassVar
 
 from astropy.extern.configobj.configobj import ConfigObj, Section
 
-from . import config_parser, crds_client, log
+from . import config_parser, crds_client
 from .step import Step, get_disable_crds_steppars
 from .utilities import _not_set
 
-# For classmethods, the logger to use is the
-# delegator, since the pipeline has not yet been instantiated.
-logger = log.delegator.log
+log = logging.getLogger("stpipe.pipeline")
 
 
 class Pipeline(Step):
@@ -174,12 +173,12 @@ class Pipeline(Step):
         if disable is None:
             disable = get_disable_crds_steppars()
         if disable:
-            logger.debug(
+            log.debug(
                 "%s: CRDS parameter reference retrieval disabled.", reftype.upper()
             )
             return refcfg
 
-        logger.debug("Retrieving all substep parameters from CRDS")
+        log.debug("Retrieving all substep parameters from CRDS")
         #
         # Iterate over the steps in the pipeline
         if isinstance(dataset, dict):
@@ -198,7 +197,7 @@ class Pipeline(Step):
             )
         #
         # Now merge any config parameters from the step cfg file
-        logger.debug("Retrieving pipeline %s parameters from CRDS", reftype.upper())
+        log.debug("Retrieving pipeline %s parameters from CRDS", reftype.upper())
         try:
             ref_file = crds_client.get_reference_file(
                 crds_parameters,
@@ -206,13 +205,13 @@ class Pipeline(Step):
                 crds_observatory,
             )
         except (AttributeError, crds_client.CrdsError):
-            logger.debug("%s: No parameters found", reftype.upper())
+            log.debug("%s: No parameters found", reftype.upper())
         else:
             if ref_file != "N/A":
-                logger.info("%s parameters found: %s", reftype.upper(), ref_file)
+                log.info("%s parameters found: %s", reftype.upper(), ref_file)
                 refcfg = cls.merge_pipeline_config(refcfg, ref_file)
             else:
-                logger.debug("No %s reference files found.", reftype.upper())
+                log.debug("No %s reference files found.", reftype.upper())
 
         return refcfg
 
@@ -260,7 +259,7 @@ class Pipeline(Step):
         try:
             crds_parameters, observatory = self._get_crds_parameters(input_file)
         except (ValueError, TypeError, OSError):
-            self.log.info("First argument %s does not appear to be a model", input_file)
+            log.info("First argument %s does not appear to be a model", input_file)
             return
 
         ovr_refs = {
@@ -271,7 +270,7 @@ class Pipeline(Step):
 
         fetch_types = sorted(set(self.reference_file_types) - set(ovr_refs.keys()))
 
-        self.log.info(
+        log.info(
             "Prefetching reference files for dataset: %r reftypes = %r",
             self._get_filename(input_file),
             fetch_types,
@@ -284,9 +283,7 @@ class Pipeline(Step):
 
         for reftype, refpath in sorted(ref_path_map.items()):
             how = "Override" if reftype in ovr_refs else "Prefetch"
-            self.log.info(
-                "%s for %s reference file is '%s'.", how, reftype.upper(), refpath
-            )
+            log.info("%s for %s reference file is '%s'.", how, reftype.upper(), refpath)
             crds_client.check_reference_open(refpath)
 
     def get_pars(self, full_spec=True):

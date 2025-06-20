@@ -1,53 +1,11 @@
-import io
 import logging
 
-import pytest
-
-from stpipe import log as stpipe_log
-
-
-@pytest.fixture(autouse=True)
-def _clean_up_logging():
-    yield
-    logging.shutdown()
-    stpipe_log.load_configuration(io.BytesIO(stpipe_log.DEFAULT_CONFIGURATION))
-
-
-def test_configuration(tmp_path):
-    logfilename = tmp_path / "output.log"
-
-    configuration = f"""
-[.]
-handler = file:{logfilename}
-break_level = ERROR
-level = WARNING
-format = '%(message)s'
-"""
-
-    with io.StringIO() as fd:
-        fd.write(configuration)
-        fd.seek(0)
-        stpipe_log.load_configuration(fd)
-
-    log = stpipe_log.getLogger(stpipe_log.STPIPE_ROOT_LOGGER)
-
-    log.info("Hidden")
-    log.warning("Shown")
-
-    with pytest.raises(stpipe_log.LoggedException):
-        log.critical("Breaking")
-
-    logging.shutdown()
-
-    with open(logfilename) as fd:
-        lines = [x.strip() for x in fd.readlines()]
-
-    assert lines == ["Shown", "Breaking"]
+from stpipe import log_config as stpipe_log
 
 
 def test_record_logs():
-    stpipe_logger = stpipe_log.getLogger(stpipe_log.STPIPE_ROOT_LOGGER)
-    root_logger = stpipe_log.getLogger()
+    stpipe_logger = logging.getLogger("stpipe")
+    root_logger = logging.getLogger()
 
     assert not any(
         isinstance(h, stpipe_log.RecordingHandler) for h in root_logger.handlers
@@ -68,6 +26,6 @@ def test_record_logs():
     stpipe_logger.error("Additional error from stpipe")
     root_logger.error("Additional error from root")
 
-    assert len(log_records) == 2
+    # Only the stpipe error message is expected
+    assert len(log_records) == 1
     assert log_records[0] == "Error from stpipe"
-    assert log_records[1] == "Error from root"

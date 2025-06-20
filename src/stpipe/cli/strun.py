@@ -21,7 +21,7 @@ def main():
         sys.exit(0)
 
     try:
-        cmdline.step_from_cmdline(sys.argv[1:])
+        cmdline.step_from_cmdline(sys.argv[1:], configure_log=True)
     except StpipeExitException as e:
         sys.exit(e.exit_status)
     except Exception:
@@ -29,3 +29,5 @@ def main():
 
         traceback.print_exc()
         sys.exit(1)
+    finally:
+        cmdline.close_log()
