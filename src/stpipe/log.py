@@ -150,13 +150,11 @@ class LogConfig:
         """
         Context manager that applies the configuration to the root logger
         """
-        previous_level = logging.getLogger().level
         self.apply()
         try:
             yield
         finally:
             self.undo()
-            logging.getLogger().setLevel(previous_level)
 
 
 def load_configuration(config_file):

@@ -386,11 +386,17 @@ def step_from_cmdline(args, cls=None):
         will be set as member variables on the returned `Step`
         instance.
     """
-    step, step_class, positional, debug_on_exception = just_the_step_from_cmdline(
-        args,
-        cls,
-        apply_log_cfg=True,
-    )
+    try:
+        step, step_class, positional, debug_on_exception = just_the_step_from_cmdline(
+            args,
+            cls,
+            apply_log_cfg=True,
+        )
+    except Exception as e:
+        # since we applied a log config above, undo it
+        if log.LogConfig.applied is not None:
+            log.LogConfig.applied.undo()
+        raise e
 
     try:
         profile_path = os.environ.pop("STPIPE_PROFILE", None)

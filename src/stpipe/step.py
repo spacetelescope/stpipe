@@ -724,26 +724,37 @@ class Step:
         filename = None
         if len(args) > 0:
             filename = args[0]
-        config, config_file = cls.build_config(filename, **kwargs)
 
-        if "class" in config:
-            del config["class"]
-
-        if "logcfg" in config:
+        # set up the log configuration here (although we might undo it
+        # below) as log messages are generated before the config is
+        # fully loaded
+        if "logcfg" in kwargs:
             try:
-                log_cfg = log.load_configuration(config["logcfg"])
+                log_cfg = log.load_configuration(kwargs["logcfg"])
             except Exception as e:
                 raise RuntimeError(
-                    f"Error parsing logging config {config['logcfg']}"
+                    f"Error parsing logging config {kwargs['logcfg']}"
                 ) from e
-            del config["logcfg"]
+            del kwargs["logcfg"]
         elif log.LogConfig.applied is None:
             log_cfg = log.load_configuration(log._find_logging_config_file())
         else:
             log_cfg = None
-
         ctx = nullcontext if log_cfg is None else log_cfg.context
+
         with ctx():
+            config, config_file = cls.build_config(filename, **kwargs)
+
+            if "logcfg" in config:
+                # a logcfg is in the configuration file
+                if log_cfg is not None:
+                    log_cfg.undo()
+                log_cfg = log.load_configuration(config["logcfg"])
+                log_cfg.apply()
+
+            if "class" in config:
+                del config["class"]
+
             name = config.get("name", None)
             instance = cls.from_config_section(
                 config, name=name, config_file=config_file
