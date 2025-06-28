@@ -3,6 +3,7 @@ import logging
 
 import pytest
 
+import stpipe.cmdline
 from stpipe import Step
 from stpipe import log as stpipe_log
 from stpipe.pipeline import Pipeline
@@ -176,60 +177,66 @@ def test_log_records():
 
 
 @pytest.fixture
-def root_logger():
+def root_logger_unchanged():
     """
-    Fixture to restore the root logger level
+    Fixture to make sure the root logger is unchanged
     """
     root_logger = logging.getLogger()
     original_level = root_logger.level
-    yield root_logger
-    root_logger.setLevel(original_level)
+    yield
+    assert root_logger.level == original_level
+    for h in root_logger.handlers:
+        # these are added by pytest
+        if h.__class__.__name__ in ("LogCaptureHandler", "_LiveLoggingNullHandler"):
+            continue
+        if isinstance(h, logging.FileHandler) and h.baseFilename == "/dev/null":
+            continue
+        raise AssertionError(f"Unexpected handler {h} in root logger")
 
 
 @pytest.mark.parametrize(
     "logging_level",
-    (
+)
+@pytest.fixture(
+    params=(
         logging.CRITICAL,
         logging.ERROR,
         logging.WARNING,
         logging.INFO,
         logging.DEBUG,
-    ),
+    )
 )
-def test_no_root_logger_changes(tmp_path, logging_level, root_logger):
-    """
-    Test that the root logger is not changed.
-    """
-    config_level = logging.CRITICAL - logging_level
+def log_cfg_path(request, tmp_path):
+    config_level = logging.CRITICAL - request.param
     cfg = f"[*]\nlevel = {config_level}\nhandler = file:{tmp_path}/myrun.log, stderr"
 
-    logcfg_file = tmp_path / "stpipe-log.cfg"
+    log_cfg_path = tmp_path / "stpipe-log.cfg"
 
-    with open(logcfg_file, "w") as f:
+    with log_cfg_path.open("w") as f:
         f.write(cfg)
 
-    # set the root logger level, this shouldn't be changed by the configuration
-    root_logger.setLevel(logging_level)
-    assert root_logger.level != config_level
+    yield log_cfg_path
 
-    def no_stpipe_loggers():
-        for h in root_logger.handlers:
-            if isinstance(h, logging.FileHandler):
-                if h.baseFilename == "/dev/null":
-                    continue
-                return False
-            elif isinstance(h, logging.StreamHandler):
-                if h.__class__.__name__ == "LogCaptureHandler":
-                    # this is added by pytest
-                    continue
-                return False
-        return True
 
-    assert no_stpipe_loggers(), root_logger.handlers
+def test_call_no_root_logger_changes(log_cfg_path, root_logger_unchanged):
+    LoggingPipeline.call(logcfg=str(log_cfg_path))
 
-    LoggingPipeline.call(logcfg=logcfg_file)
 
-    # check that the level was as it was set above
-    assert root_logger.level == logging_level
+def test_from_cmdline_no_root_logger_changes(log_cfg_path, root_logger_unchanged):
+    LoggingPipeline.from_cmdline(
+        ["test_logger.LoggingPipeline", f"--logcfg={log_cfg_path!s}"]
+    )
 
-    assert no_stpipe_loggers(), root_logger.handlers
+
+def test_step_from_cmdline_no_root_logger_changes(log_cfg_path, root_logger_unchanged):
+    stpipe.cmdline.step_from_cmdline(
+        ["test_logger.LoggingPipeline", "--logcfg", str(log_cfg_path)]
+    )
+
+
+def test_just_the_step_from_cmdline_no_root_logger_changes(
+    log_cfg_path, root_logger_unchanged
+):
+    stpipe.cmdline.just_the_step_from_cmdline(
+        ["test_logger.LoggingPipeline", "--logcfg", str(log_cfg_path)]
+    )

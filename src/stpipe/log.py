@@ -128,6 +128,7 @@ class LogConfig:
             log.addHandler(handler)
 
         # Set the log level
+        self._previous_level = log.level
         log.setLevel(self.level)
         LogConfig.applied = self
 
@@ -141,6 +142,7 @@ class LogConfig:
             handler.close()
             log.removeHandler(handler)
         if LogConfig.applied is self:
+            log.setLevel(self._previous_level)
             LogConfig.applied = None
 
     @contextmanager

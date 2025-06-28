@@ -159,7 +159,7 @@ def _override_config_from_args(config, args):
             set_value(config, key, val)
 
 
-def just_the_step_from_cmdline(args, cls=None):
+def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
     """
     Create a step from a configuration file and return it.  Don't run it.
 
@@ -170,6 +170,10 @@ def just_the_step_from_cmdline(args, cls=None):
 
     cls : Step class
         The step class to use.  If none is provided, the step
+
+    apply_log_cfg : bool
+        If True, apply the logging configuration. If False,
+        any provided log configuration will be ignored.
 
     Returns
     -------
@@ -271,7 +275,8 @@ def just_the_step_from_cmdline(args, cls=None):
                 f"Error parsing logging config {log_config!r}:\n{e}"
             ) from e
         # globally apply the logging configuration since we're in cmdline mode
-        log_cfg.apply()
+        if apply_log_cfg:
+            log_cfg.apply()
     except Exception as e:
         _print_important_message("ERROR PARSING CONFIGURATION:", str(e))
         parser1.print_help()
@@ -382,7 +387,9 @@ def step_from_cmdline(args, cls=None):
         instance.
     """
     step, step_class, positional, debug_on_exception = just_the_step_from_cmdline(
-        args, cls
+        args,
+        cls,
+        apply_log_cfg=True,
     )
 
     try:
@@ -402,6 +409,10 @@ def step_from_cmdline(args, cls=None):
             pdb.post_mortem()
         else:
             raise
+    finally:
+        # since we applied a log config above, undo it
+        if log.LogConfig.applied is not None:
+            log.LogConfig.applied.undo()
 
     return step
 
