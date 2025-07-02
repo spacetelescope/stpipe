@@ -240,3 +240,34 @@ def test_just_the_step_from_cmdline_no_root_logger_changes(
     stpipe.cmdline.just_the_step_from_cmdline(
         ["test_logger.LoggingPipeline", "--logcfg", str(log_cfg_path)]
     )
+
+
+def test_logging_delegation(capsys, root_logger_unchanged):
+    """
+    Python 3.13.3 and 3.13.4 have a bug where logging within a logger
+    is ignored. See https://github.com/python/cpython/pull/135858
+    for where this bug was fixed.
+    For stpipe this resulted in the DelegationHandler failing
+    to delegate log records from the root logger to the step logger.
+    This is a minimal reproducer for that issue
+    """
+
+    # make a non-step-specific logger
+    other_library_logger = logging.getLogger("other_library.logger")
+    MSG = "warning from other logger"
+
+    class StepThatLogs(Step):
+        spec = """
+           output_ext = string(default='step')
+        """
+
+        def process(self):
+            other_library_logger.warning(MSG)
+
+        def _datamodels_open(self, **kwargs):
+            pass
+
+    StepThatLogs.call()
+
+    captured = capsys.readouterr()
+    assert MSG in captured.err
