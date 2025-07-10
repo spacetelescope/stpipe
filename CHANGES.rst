@@ -1,3 +1,13 @@
+0.10.0 (2025-07-10)
+===================
+
+Bug Fixes
+---------
+
+- Fix logging for python 3.13.4 and 3.13.5 by removing delegation. (`#240
+  <https://github.com/spacetelescope/stpipe/issues/240>`_)
+
+
 0.9.0 (2025-06-18)
 ==================
 
