@@ -41,6 +41,6 @@ jobs:
         CRDS_CLIENT_RETRY_COUNT: 3
         CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
       envs: |
-        - linux: py311-jwst-cov-xdist
-        - linux: py311-romancal-cov-xdist
+        - linux: py311-jwst-cov
+        - linux: py311-romancal-cov
       coverage: codecov

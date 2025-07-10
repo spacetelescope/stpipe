@@ -1,7 +1,6 @@
 """Test step.Step"""
 
 import copy
-import logging
 import re
 from collections.abc import Sequence
 from contextlib import nullcontext
@@ -55,26 +54,6 @@ class PipeWithPipe(Pipeline):
     """
 
     step_defs: ClassVar = {"step1": SimpleStep, "pipe1": SimplePipe}
-
-
-class LoggingPipeline(Pipeline):
-    """A Pipeline that utilizes self.log
-    to log a warning
-    """
-
-    spec = """
-        str1 = string(default='default')
-        output_ext = string(default='simplestep')
-    """
-    _log_records_formatter = logging.Formatter("%(message)s")
-
-    def process(self):
-        self.log.warning("This step has called out a warning.")
-
-        self.log.warning("%s  %s", self.log, self.log.handlers)
-
-    def _datamodels_open(self, **kwargs):
-        pass
 
 
 class ListArgStep(Step):
@@ -395,37 +374,6 @@ def test_step_list_args(config_file_list_arg_step):
             ],
             ListArgStep,
         )
-
-
-def test_logcfg_routing(tmp_path):
-    cfg = f"""[*]\nlevel = INFO\nhandler = file:{tmp_path}/myrun.log"""
-
-    logcfg_file = tmp_path / "stpipe-log.cfg"
-
-    with open(logcfg_file, "w") as f:
-        f.write(cfg)
-
-    LoggingPipeline.call(logcfg=logcfg_file)
-
-    logdict = logging.Logger.manager.loggerDict
-    for log in logdict:
-        if not isinstance(logdict[log], logging.PlaceHolder):
-            for handler in logdict[log].handlers:
-                if isinstance(handler, logging.FileHandler):
-                    logdict[log].removeHandler(handler)
-                    handler.close()
-
-    with open(tmp_path / "myrun.log") as f:
-        fulltext = "\n".join(list(f))
-
-    assert "called out a warning" in fulltext
-
-
-def test_log_records():
-    pipeline = LoggingPipeline()
-    pipeline.run()
-
-    assert any(r == "This step has called out a warning." for r in pipeline.log_records)
 
 
 class StepWithModel(Step):

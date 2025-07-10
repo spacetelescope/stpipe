@@ -3,10 +3,11 @@ Step
 """
 
 import gc
+import logging
 import os
 import sys
 from collections.abc import Sequence
-from contextlib import contextmanager, suppress
+from contextlib import contextmanager, nullcontext, suppress
 from functools import partial
 from os.path import (
     abspath,
@@ -36,6 +37,8 @@ from .datamodel import AbstractDataModel
 from .format_template import FormatTemplate
 from .library import AbstractModelLibrary
 from .utilities import _not_set
+
+logger = logging.getLogger(log.STPIPE_ROOT_LOGGER)
 
 
 class Step:
@@ -438,7 +441,7 @@ class Step:
             setattr(self, key, val)
 
         # Create a new logger for this step
-        self.log = log.getLogger(self.qualified_name)
+        self.log = logging.getLogger(self.qualified_name)
 
         self.log.setLevel(log.logging.DEBUG)
 
@@ -499,10 +502,6 @@ class Step:
         with log.record_logs(formatter=self._log_records_formatter) as log_records:
             self._log_records = log_records
 
-            # Make generic log messages go to this step's logger
-            orig_log = log.delegator.log
-            log.delegator.log = self.log
-
             step_result = None
 
             self.log.info("Step %s running with args %s.", self.name, args)
@@ -527,129 +526,119 @@ class Step:
             if len(args):
                 self.set_primary_input(args[0])
 
-            try:
-                # Default output file configuration
-                if self.output_file is not None:
-                    self.save_results = True
+            # Default output file configuration
+            if self.output_file is not None:
+                self.save_results = True
 
-                if self.suffix is None:
-                    self.suffix = self.default_suffix()
+            if self.suffix is None:
+                self.suffix = self.default_suffix()
 
-                hook_args = args
-                for pre_hook in self._pre_hooks:
-                    hook_results = pre_hook.run(*hook_args)
-                    if hook_results is not None:
-                        hook_args = (hook_results,)
-                args = hook_args
+            hook_args = args
+            for pre_hook in self._pre_hooks:
+                hook_results = pre_hook.run(*hook_args)
+                if hook_results is not None:
+                    hook_args = (hook_results,)
+            args = hook_args
 
-                self._reference_files_used = []
+            self._reference_files_used = []
 
-                # Warn if passing in objects that should be
-                # discouraged.
-                self._check_args(args, DISCOURAGED_TYPES, "Passed")
-                if self.parent is None:
-                    if self.skip:
-                        self.log.info("Step run as standalone, so skip set to False")
-                        self.skip = False
-                # Run the Step-specific code.
+            # Warn if passing in objects that should be
+            # discouraged.
+            self._check_args(args, DISCOURAGED_TYPES, "Passed")
+            if self.parent is None:
                 if self.skip:
-                    self.log.info("Step skipped.")
+                    self.log.info("Step run as standalone, so skip set to False")
+                    self.skip = False
+            # Run the Step-specific code.
+            if self.skip:
+                self.log.info("Step skipped.")
 
-                    if self.class_alias is not None:
+                if self.class_alias is not None:
 
-                        def set_skipped(model):
-                            try:
-                                setattr(
-                                    model.meta.cal_step, self.class_alias, "SKIPPED"
-                                )
-                            except AttributeError as e:
-                                self.log.info(
-                                    "Could not record skip into DataModel "
-                                    "header: %s",
-                                    e,
-                                )
+                    def set_skipped(model):
+                        try:
+                            setattr(model.meta.cal_step, self.class_alias, "SKIPPED")
+                        except AttributeError as e:
+                            self.log.info(
+                                "Could not record skip into DataModel " "header: %s",
+                                e,
+                            )
 
-                        if isinstance(args[0], AbstractModelLibrary):
-                            list(args[0].map_function(lambda m, i: set_skipped(m)))
-                        elif isinstance(args[0], AbstractDataModel):
-                            if isinstance(args[0], Sequence):
-                                [set_skipped(m) for m in args[0]]
-                            else:
-                                set_skipped(args[0])
-                    step_result = args[0]
+                    if isinstance(args[0], AbstractModelLibrary):
+                        list(args[0].map_function(lambda m, i: set_skipped(m)))
+                    elif isinstance(args[0], AbstractDataModel):
+                        if isinstance(args[0], Sequence):
+                            [set_skipped(m) for m in args[0]]
+                        else:
+                            set_skipped(args[0])
+                step_result = args[0]
+            else:
+                if self.prefetch_references:
+                    self.prefetch(*args)
+                try:
+                    step_result = self.process(*args)
+                except TypeError as e:
+                    if "process() takes exactly" in str(e):
+                        raise TypeError("Incorrect number of arguments to step") from e
+                    raise
+
+            # Warn if returning a discouraged object
+            self._check_args(step_result, DISCOURAGED_TYPES, "Returned")
+
+            # Run the post hooks
+            for post_hook in self._post_hooks:
+                hook_results = post_hook.run(step_result)
+                if hook_results is not None:
+                    step_result = hook_results
+
+            # Update meta information
+            if isinstance(step_result, AbstractModelLibrary):
+                step_result.finalize_result(self, self._reference_files_used)
+            else:
+                if not isinstance(step_result, Sequence):
+                    results = [step_result]
                 else:
-                    if self.prefetch_references:
-                        self.prefetch(*args)
-                    try:
-                        step_result = self.process(*args)
-                    except TypeError as e:
-                        if "process() takes exactly" in str(e):
-                            raise TypeError(
-                                "Incorrect number of arguments to step"
-                            ) from e
-                        raise
+                    results = step_result
 
-                # Warn if returning a discouraged object
-                self._check_args(step_result, DISCOURAGED_TYPES, "Returned")
+                # The finalize_result hook allows subclasses to add
+                # metadata (like the cal code package version) before
+                # the result is saved.
+                for result in results:
+                    self.finalize_result(result, self._reference_files_used)
 
-                # Run the post hooks
-                for post_hook in self._post_hooks:
-                    hook_results = post_hook.run(step_result)
-                    if hook_results is not None:
-                        step_result = hook_results
+            self._reference_files_used = []
 
-                # Update meta information
-                if isinstance(step_result, AbstractModelLibrary):
-                    step_result.finalize_result(self, self._reference_files_used)
+            # Save the output file if one was specified
+            if not self.skip and self.save_results:
+                # Setup the save list.
+                if not isinstance(step_result, list | tuple):
+                    results_to_save = [step_result]
                 else:
-                    if not isinstance(step_result, Sequence):
-                        results = [step_result]
-                    else:
-                        results = step_result
+                    results_to_save = step_result
 
-                    # The finalize_result hook allows subclasses to add
-                    # metadata (like the cal code package version) before
-                    # the result is saved.
-                    for result in results:
-                        self.finalize_result(result, self._reference_files_used)
+                for idx, result in enumerate(results_to_save):
+                    if len(results_to_save) <= 1:
+                        idx = None
+                    if isinstance(result, (AbstractDataModel | AbstractModelLibrary)):
+                        self.save_model(result, idx=idx)
+                    elif hasattr(result, "save"):
+                        try:
+                            output_path = self.make_output_path(idx=idx)
+                        except AttributeError:
+                            self.log.warning(
+                                "`save_results` has been requested, but cannot"
+                                " determine filename."
+                            )
+                            self.log.warning(
+                                "Specify an output file with `--output_file` or set"
+                                " `--save_results=false`"
+                            )
+                        else:
+                            self.log.info("Saving file %s", output_path)
+                            result.save(output_path, overwrite=True)
 
-                self._reference_files_used = []
-
-                # Save the output file if one was specified
-                if not self.skip and self.save_results:
-                    # Setup the save list.
-                    if not isinstance(step_result, list | tuple):
-                        results_to_save = [step_result]
-                    else:
-                        results_to_save = step_result
-
-                    for idx, result in enumerate(results_to_save):
-                        if len(results_to_save) <= 1:
-                            idx = None
-                        if isinstance(
-                            result, (AbstractDataModel | AbstractModelLibrary)
-                        ):
-                            self.save_model(result, idx=idx)
-                        elif hasattr(result, "save"):
-                            try:
-                                output_path = self.make_output_path(idx=idx)
-                            except AttributeError:
-                                self.log.warning(
-                                    "`save_results` has been requested, but cannot"
-                                    " determine filename."
-                                )
-                                self.log.warning(
-                                    "Specify an output file with `--output_file` or set"
-                                    " `--save_results=false`"
-                                )
-                            else:
-                                self.log.info("Saving file %s", output_path)
-                                result.save(output_path, overwrite=True)
-
-                if not self.skip:
-                    self.log.info("Step %s done", self.name)
-            finally:
-                log.delegator.log = orig_log
+            if not self.skip:
+                self.log.info("Step %s done", self.name)
 
         return step_result
 
@@ -735,24 +724,43 @@ class Step:
         filename = None
         if len(args) > 0:
             filename = args[0]
-        config, config_file = cls.build_config(filename, **kwargs)
 
-        if "class" in config:
-            del config["class"]
-
-        if "logcfg" in config:
+        # set up the log configuration here (although we might undo it
+        # below) as log messages are generated before the config is
+        # fully loaded
+        if "logcfg" in kwargs:
             try:
-                log.load_configuration(config["logcfg"])
+                log_cfg = log.load_configuration(kwargs["logcfg"])
             except Exception as e:
                 raise RuntimeError(
-                    f"Error parsing logging config {config['logcfg']}"
+                    f"Error parsing logging config {kwargs['logcfg']}"
                 ) from e
-            del config["logcfg"]
+            del kwargs["logcfg"]
+        elif log.LogConfig.applied is None:
+            log_cfg = log.load_configuration(log._find_logging_config_file())
+        else:
+            log_cfg = None
+        ctx = nullcontext if log_cfg is None else log_cfg.context
 
-        name = config.get("name", None)
-        instance = cls.from_config_section(config, name=name, config_file=config_file)
+        with ctx():
+            config, config_file = cls.build_config(filename, **kwargs)
 
-        return instance.run(*args)
+            if "logcfg" in config:
+                # a logcfg is in the configuration file
+                if log_cfg is not None:
+                    log_cfg.undo()
+                log_cfg = log.load_configuration(config["logcfg"])
+                log_cfg.apply()
+
+            if "class" in config:
+                del config["class"]
+
+            name = config.get("name", None)
+            instance = cls.from_config_section(
+                config, name=name, config_file=config_file
+            )
+
+            return instance.run(*args)
 
     @property
     def input_dir(self):
@@ -913,9 +921,6 @@ class Step:
             and return an empty config obj.
         """
 
-        # Get the root logger, since the following operations
-        # are happening in the surrounding architecture.
-        logger = log.delegator.log
         reftype = cls.get_config_reftype()
 
         if isinstance(dataset, dict):
@@ -1384,7 +1389,7 @@ class Step:
             The configuration and the config filename.
         """
         logger_name = cls.__name__
-        log_cls = log.getLogger(logger_name)
+        log_cls = logging.getLogger(logger_name)
         if input:
             config = cls.get_config_from_reference(input)
         else:

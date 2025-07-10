@@ -3,6 +3,7 @@ Various utilities to handle running Steps from the commandline.
 """
 
 import io
+import logging
 import os
 import os.path
 import textwrap
@@ -15,6 +16,8 @@ built_in_configuration_parameters = [
     "logcfg",
     "verbose",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 def _print_important_message(header, message, no_wrap=None):
@@ -156,7 +159,7 @@ def _override_config_from_args(config, args):
             set_value(config, key, val)
 
 
-def just_the_step_from_cmdline(args, cls=None):
+def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
     """
     Create a step from a configuration file and return it.  Don't run it.
 
@@ -167,6 +170,10 @@ def just_the_step_from_cmdline(args, cls=None):
 
     cls : Step class
         The step class to use.  If none is provided, the step
+
+    apply_log_cfg : bool
+        If True, apply the logging configuration. If False,
+        any provided log configuration will be ignored.
 
     Returns
     -------
@@ -247,7 +254,6 @@ def just_the_step_from_cmdline(args, cls=None):
             )
             step_class = cls
 
-        log_config = None
         if known.verbose:
             if known.logcfg is not None:
                 raise ValueError(
@@ -259,14 +265,18 @@ def just_the_step_from_cmdline(args, cls=None):
             if not os.path.exists(known.logcfg):
                 raise OSError(f"Logging config {known.logcfg!r} not found")
             log_config = known.logcfg
+        else:
+            log_config = log._find_logging_config_file()
 
-        if log_config is not None:
-            try:
-                log.load_configuration(log_config)
-            except Exception as e:
-                raise ValueError(
-                    f"Error parsing logging config {log_config!r}:\n{e}"
-                ) from e
+        try:
+            log_cfg = log.load_configuration(log_config)
+        except Exception as e:
+            raise ValueError(
+                f"Error parsing logging config {log_config!r}:\n{e}"
+            ) from e
+        # globally apply the logging configuration since we're in cmdline mode
+        if apply_log_cfg:
+            log_cfg.apply()
     except Exception as e:
         _print_important_message("ERROR PARSING CONFIGURATION:", str(e))
         parser1.print_help()
@@ -318,15 +328,13 @@ def just_the_step_from_cmdline(args, cls=None):
                 input_file, disable=disable_crds_steppars
             )
         except (FileNotFoundError, OSError):
-            log.log.warning(
-                "Unable to open input file, cannot get parameters from CRDS"
-            )
+            logger.warning("Unable to open input file, cannot get parameters from CRDS")
         else:
             if config:
                 config_parser.merge_config(parameter_cfg, config)
             config = parameter_cfg
     else:
-        log.log.info("No input file specified, unable to retrieve parameters from CRDS")
+        logger.info("No input file specified, unable to retrieve parameters from CRDS")
 
     # This is where the step is instantiated
     try:
@@ -350,7 +358,7 @@ def just_the_step_from_cmdline(args, cls=None):
     # Save the step configuration
     if known.save_parameters:
         step.export_config(known.save_parameters, include_metadata=True)
-        log.log.info(f"Step/Pipeline parameters saved to '{known.save_parameters}'")
+        logger.info(f"Step/Pipeline parameters saved to '{known.save_parameters}'")
 
     return step, step_class, positional, debug_on_exception
 
@@ -378,9 +386,17 @@ def step_from_cmdline(args, cls=None):
         will be set as member variables on the returned `Step`
         instance.
     """
-    step, step_class, positional, debug_on_exception = just_the_step_from_cmdline(
-        args, cls
-    )
+    try:
+        step, step_class, positional, debug_on_exception = just_the_step_from_cmdline(
+            args,
+            cls,
+            apply_log_cfg=True,
+        )
+    except Exception as e:
+        # since we applied a log config above, undo it
+        if log.LogConfig.applied is not None:
+            log.LogConfig.applied.undo()
+        raise e
 
     try:
         profile_path = os.environ.pop("STPIPE_PROFILE", None)
@@ -399,6 +415,10 @@ def step_from_cmdline(args, cls=None):
             pdb.post_mortem()
         else:
             raise
+    finally:
+        # since we applied a log config above, undo it
+        if log.LogConfig.applied is not None:
+            log.LogConfig.applied.undo()
 
     return step
 

@@ -2,13 +2,12 @@
 Logging setup etc.
 """
 
-import fnmatch
 import io
 import logging
 import os
 import pathlib
 import sys
-import threading
+import warnings
 from contextlib import contextmanager
 
 from astropy.extern.configobj import validate
@@ -24,6 +23,7 @@ handler = stderr
 level = INFO
 """
 
+# used by cmdline "verbose"
 MAX_CONFIGURATION = b"""
 [*]
 handler = stderr
@@ -63,9 +63,6 @@ class BreakHandler(logging.Handler):
 #########################################################################
 # LOGGING CONFIGURATION
 
-# A dictionary mapping patterns to
-log_config = {}
-
 
 class LogConfig:
     """
@@ -80,39 +77,29 @@ class LogConfig:
         See LogConfig.spec for a description of these values.
     """
 
+    applied = None
+
     def __init__(
         self,
-        name,
-        handler=None,
+        handler,
         level=logging.NOTSET,
         break_level=logging.NOTSET,
         format=None,  # noqa: A002
     ):
-        if name in ("", ".", "root"):
-            name = "*"
-        self.name = name
-        self.handler = handler
-        if not isinstance(self.handler, list):
-            if self.handler.strip() == "":
-                self.handler = []
-            else:
-                self.handler = [x.strip() for x in self.handler.split(",")]
+        if isinstance(handler, str):
+            handler = handler.strip().split(",")
+        self.handlers = [self.get_handler(x.strip()) for x in handler]
         self.level = level
-        self.break_level = break_level
         if format is None:
             format = DEFAULT_FORMAT  # noqa: A001
-        self.format = format
+        self.format = logging.Formatter(format)
+        for handler in self.handlers:
+            handler.setLevel(self.level)
+            handler.setFormatter(self.format)
 
-    def match(self, log_name):
-        """
-        Returns `True` if `log_name` matches the pattern of this
-        configuration.
-        """
-        if log_name.startswith(STPIPE_ROOT_LOGGER):
-            log_name = log_name[len(STPIPE_ROOT_LOGGER) + 1 :]
-            if fnmatch.fnmatchcase(log_name, self.name):
-                return True
-        return False
+        self.break_level = break_level
+        if self.break_level != logging.NOTSET:
+            self.handlers.append(BreakHandler(self.break_level))
 
     def get_handler(self, handler_str):
         """
@@ -132,43 +119,42 @@ class LogConfig:
 
         raise ValueError(f"Can't parse handler {handler_str!r}")
 
-    def apply(self, log):
+    def apply(self):
         """
-        Applies the configuration to the given `logging.Logger`
-        object.
+        Applies the configuration to the root logger.
         """
-        for handler in log.handlers[:]:
-            if hasattr(handler, "_from_config"):
-                log.handlers.remove(handler)
-
-        # Set a handler
-        for handler_str in self.handler:
-            handler = self.get_handler(handler_str)
-            handler._from_config = True
-            handler.setLevel(self.level)
+        log = logging.getLogger()
+        for handler in self.handlers:
             log.addHandler(handler)
 
         # Set the log level
+        self._previous_level = log.level
         log.setLevel(self.level)
+        LogConfig.applied = self
 
-        # Set the break level
-        if self.break_level != logging.NOTSET:
-            log.addHandler(BreakHandler(self.break_level))
-
-        formatter = logging.Formatter(self.format)
-        for handler in log.handlers:
-            if isinstance(handler, logging.Handler) and hasattr(
-                handler, "_from_config"
-            ):
-                handler.setFormatter(formatter)
-
-    def match_and_apply(self, log):
+    def undo(self):
         """
-        If the given `logging.Logger` object matches the pattern of
-        this configuration, it applies the configuration to it.
+        Removes the configuration from the root logger.
         """
-        if self.match(log.name):
-            self.apply(log)
+        log = logging.getLogger()
+        for handler in self.handlers:
+            handler.flush()
+            handler.close()
+            log.removeHandler(handler)
+        if LogConfig.applied is self:
+            log.setLevel(self._previous_level)
+            LogConfig.applied = None
+
+    @contextmanager
+    def context(self):
+        """
+        Context manager that applies the configuration to the root logger
+        """
+        self.apply()
+        try:
+            yield
+        finally:
+            self.undo()
 
 
 def load_configuration(config_file):
@@ -179,6 +165,11 @@ def load_configuration(config_file):
     Parameters
     ----------
     config_file : str, pathlib.Path instance or readable file-like object
+
+    Returns
+    -------
+    LogConfig
+        The configuration object or None if no valid config is found.
     """
 
     def _level_check(value):
@@ -201,19 +192,13 @@ def load_configuration(config_file):
     val.functions["level"] = _level_check
     config_parser.validate(config, spec, validator=val)
 
-    log_config.clear()
-
     for key, val in config.items():
-        log_config[key] = LogConfig(key, **val)
-
-    for log in logging.Logger.manager.loggerDict.values():
-        if isinstance(log, logging.Logger):
-            for cfg in log_config.values():
-                cfg.match_and_apply(log)
-
-
-def getLogger(name=None):  # noqa: N802
-    return logging.getLogger(name)
+        if key in ("", ".", "root", "*"):
+            return LogConfig(**val)
+        else:
+            msg = "non-* log configuration never worked and will be removed"
+            warnings.warn(msg, UserWarning)
+    return None
 
 
 def _find_logging_config_file():
@@ -225,45 +210,6 @@ def _find_logging_config_file():
             return os.path.abspath(file)
 
     return io.BytesIO(DEFAULT_CONFIGURATION)
-
-
-###########################################################################
-# LOGGING DELEGATION
-
-
-class DelegationHandler(logging.Handler):
-    """
-    A handler that delegates messages along to the currently active
-    `Step` logger.  It only delegates messages that come from outside
-    of the `stpipe` hierarchy, in order to prevent infinite recursion.
-
-    Since we could be multi-threaded and each thread may be running a
-    different thread, we need to manage a dictionary mapping the
-    current thread to the Step's logger on that thread.
-    """
-
-    def __init__(self, *args, **kwargs):
-        self._logs = {}
-        logging.Handler.__init__(self, *args, **kwargs)
-
-    def emit(self, record):
-        log = self.log
-        if log is not None and not record.name.startswith(STPIPE_ROOT_LOGGER):
-            record.name = log.name
-            log.handle(record)
-
-    @property
-    def log(self):
-        return self._logs.get(threading.current_thread(), None)
-
-    @log.setter
-    def log(self, log):
-        if log is not None and not (
-            isinstance(log, logging.Logger) and log.name.startswith(STPIPE_ROOT_LOGGER)
-        ):
-            raise AssertionError("Can't set the log to a root logger")
-
-        self._logs[threading.current_thread()] = log
 
 
 class RecordingHandler(logging.Handler):
@@ -291,24 +237,12 @@ def record_logs(level=logging.NOTSET, formatter=None):
     else:
         handler = RecordingHandler(level=level)
         handler.setFormatter(formatter)
-        logger = getLogger(STPIPE_ROOT_LOGGER)
+        logger = logging.getLogger()
         logger.addHandler(handler)
         try:
             yield handler.log_records
         finally:
             logger.removeHandler(handler)
 
-
-# Install the delegation handler on the root logger.  The Step class
-# uses the `delegator` instance to change what the current Step logger
-# is.
-log = getLogger()
-delegator = DelegationHandler()
-delegator.log = getLogger(STPIPE_ROOT_LOGGER)
-log.addHandler(delegator)
-
-logging_config_file = _find_logging_config_file()
-if logging_config_file is not None:
-    load_configuration(logging_config_file)
 
 logging.captureWarnings(True)
