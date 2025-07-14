@@ -101,6 +101,8 @@ class LogConfig:
         if self.break_level != logging.NOTSET:
             self.handlers.append(BreakHandler(self.break_level))
 
+        self._previous_level = {}
+
     def get_handler(self, handler_str):
         """
         Given a handler string, returns a `logging.Handler` object.
@@ -119,42 +121,80 @@ class LogConfig:
 
         raise ValueError(f"Can't parse handler {handler_str!r}")
 
-    def apply(self):
+    def apply(self, log_names=None):
         """
-        Applies the configuration to the root logger.
-        """
-        log = logging.getLogger()
-        for handler in self.handlers:
-            log.addHandler(handler)
+        Applies the configuration to known loggers.
 
-        # Set the log level
-        self._previous_level = log.level
-        log.setLevel(self.level)
+        If a logger has already been configured and not undone,
+        it will be skipped.
+
+        Parameters
+        ----------
+        log_names : list of str or None, optional
+            Log names to configure.  If not provided, only the
+            STPIPE_ROOT_LOGGER is configured.
+        """
+        if log_names is None:
+            log_names = [STPIPE_ROOT_LOGGER]
+        for log_name in log_names:
+            # Don't reapply configuration, to avoid attaching duplicate handlers
+            if log_name in self._previous_level:
+                continue
+
+            log = logging.getLogger(log_name)
+            for handler in self.handlers:
+                log.addHandler(handler)
+
+            # Set the log level
+            self._previous_level[log_name] = log.level
+            log.setLevel(self.level)
         LogConfig.applied = self
 
-    def undo(self):
+    def undo(self, log_names=None):
         """
-        Removes the configuration from the root logger.
+        Removes the configuration from known loggers.
+
+        Parameters
+        ----------
+        log_names : list of str or None, optional
+            If provided, handlers stored in this configuration
+            will be removed from each specified log name. If not
+            provided, they are removed from the STPIPE_ROOT_LOGGER.
+            This parameter is ignored if log configuration has been
+            previously applied by this instance: in that case,
+            only the previously affected logs are unconfigured.
         """
-        log = logging.getLogger()
-        for handler in self.handlers:
-            handler.flush()
-            handler.close()
-            log.removeHandler(handler)
         if LogConfig.applied is self:
-            log.setLevel(self._previous_level)
+            log_names = list(self._previous_level.keys())
+        elif log_names is None:
+            log_names = [STPIPE_ROOT_LOGGER]
+        for log_name in log_names:
+            log = logging.getLogger(log_name)
+            for handler in self.handlers:
+                handler.flush()
+                handler.close()
+                log.removeHandler(handler)
+            if LogConfig.applied is self and log_name in self._previous_level:
+                log.setLevel(self._previous_level[log_name])
+        if LogConfig.applied is self:
+            self._previous_level = {}
             LogConfig.applied = None
 
     @contextmanager
-    def context(self):
+    def context(self, log_names=None):
         """
-        Context manager that applies the configuration to the root logger
+        Context manager that applies the configuration to the known loggers.
+
+        Parameters
+        ----------
+        log_names : list of str or None, optional
+            Log names to pass to `apply` and `undo` methods.
         """
-        self.apply()
+        self.apply(log_names)
         try:
             yield
         finally:
-            self.undo()
+            self.undo(log_names)
 
 
 def load_configuration(config_file):
@@ -231,18 +271,21 @@ class RecordingHandler(logging.Handler):
 
 
 @contextmanager
-def record_logs(level=logging.NOTSET, formatter=None):
+def record_logs(log_names, level=logging.NOTSET, formatter=None):
     if formatter is None:
         yield []
     else:
         handler = RecordingHandler(level=level)
         handler.setFormatter(formatter)
-        logger = logging.getLogger()
-        logger.addHandler(handler)
+        for log_name in log_names:
+            logger = logging.getLogger(log_name)
+            logger.addHandler(handler)
         try:
             yield handler.log_records
         finally:
-            logger.removeHandler(handler)
+            for log_name in log_names:
+                logger = logging.getLogger(log_name)
+                logger.removeHandler(handler)
 
 
 logging.captureWarnings(True)

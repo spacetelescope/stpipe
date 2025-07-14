@@ -35,6 +35,10 @@ class FakeStep(Step):
     def _datamodels_open(cls, init, **kwargs):
         return init
 
+    @staticmethod
+    def get_known_loggers():
+        return ["stpipe"]
+
 
 class ShovelPixelsStep(FakeStep):
     class_alias = "shovelpixels"
@@ -82,6 +86,10 @@ class MyPipeline(Pipeline):
     @classmethod
     def _datamodels_open(cls, init, **kwargs):
         return init
+
+    @staticmethod
+    def get_known_loggers():
+        return ["stpipe"]
 
     def process(self, input_data):
         result = self.shovelpixels.run(input_data)
@@ -185,7 +193,8 @@ def test_hook_as_string_of_importable_function(
             ]
         }
     }
-    MyPipeline.call(model, steps=steps)
+    with pytest.warns(DeprecationWarning, match="root logger"):
+        MyPipeline.call(model, steps=steps)
 
     assert f"Running hook_function on data {data_id}" in caplog.text
 
@@ -203,7 +212,8 @@ def test_hook_as_systemcall(hook_type, caplog, tmp_cwd, disable_crds_steppars):
             ]
         }
     }
-    MyPipeline.call(model, steps=steps)
+    with pytest.warns(DeprecationWarning, match="root logger"):
+        MyPipeline.call(model, steps=steps)
 
     # Logs from fitsinfo
     assert "SystemCall instance created" in caplog.text

@@ -384,6 +384,10 @@ class StepWithModel(Step):
     save_results = boolean(default=True)
     """
 
+    @staticmethod
+    def get_known_loggers():
+        return ["stpipe"]
+
     def process(self, input_model):
         # make a change to ensure step skip is working
         # without having to define SimpleDataModel.meta.stepname
