@@ -119,6 +119,9 @@ class LogConfig:
         if handler_str == "stderr":
             return logging.StreamHandler(sys.stderr)
 
+        if handler_str == "null":
+            return logging.NullHandler()
+
         raise ValueError(f"Can't parse handler {handler_str!r}")
 
     def apply(self, log_names=None):
@@ -202,14 +205,29 @@ class LogConfig:
             self.undo(log_names)
 
 
-def load_configuration(config_file):
+def load_configuration(
+    config_file=None, log_level=None, log_format=None, log_file=None, log_stream=None
+):
     """
     Loads a logging configuration file.  The format of this file is
     defined in LogConfig.spec.
 
     Parameters
     ----------
-    config_file : str, pathlib.Path instance or readable file-like object
+    config_file : str, pathlib.Path instance, file-like object, or None, optional
+        DEPRECATED. Log configuration file. Ignored if log_level, log_format,
+        or log_file are provided.
+    log_level : str, int, or None, optional
+        Logging level.  If None, and config_file is not provided, will default
+        to INFO level.
+    log_format : str or None, optional
+        Log format to apply.  If None, and config_file is not provided, will default
+        to DEFAULT_FORMAT.
+    log_file : str or None, optional
+        Full path to a file name to write log messages to, if desired.
+    log_stream : {"stdout", "stderr", "null", None}
+        Stream for terminal messages.  If "null", no stream handler is added.
+        If None, and config_file is not provided, will default to "stderr".
 
     Returns
     -------
@@ -229,13 +247,40 @@ def load_configuration(config_file):
             raise validate.VdtTypeError(value) from err
         return value
 
-    spec = config_parser.load_spec_file(LogConfig)
-    if isinstance(config_file, pathlib.Path):
-        config_file = str(config_file)
-    config = ConfigObj(config_file, raise_errors=True, interpolation=False)
-    val = validate.Validator()
-    val.functions["level"] = _level_check
-    config_parser.validate(config, spec, validator=val)
+    # Ignore config file if other arguments are provided
+    if log_level is not None or log_format is not None or log_file is not None:
+        config_file = None
+
+    if config_file is not None:
+        # Load the config file
+        spec = config_parser.load_spec_file(LogConfig)
+        if isinstance(config_file, pathlib.Path):
+            config_file = str(config_file)
+        config = ConfigObj(config_file, raise_errors=True, interpolation=False)
+        val = validate.Validator()
+        val.functions["level"] = _level_check
+        config_parser.validate(config, spec, validator=val)
+    else:
+        # Provide appropriate defaults for level and format
+        if log_level is None:
+            log_level = "INFO"
+        if log_format is None:
+            log_format = DEFAULT_FORMAT
+        if log_stream is None:
+            log_stream = "stderr"
+
+        # Add stream or log handlers
+        handlers = [log_stream]
+        if log_file is not None:
+            handlers.append(f"file:{log_file}")
+
+        config = {
+            "*": {
+                "handler": ",".join(handlers),
+                "level": _level_check(log_level),
+                "format": log_format,
+            }
+        }
 
     for key, val in config.items():
         if key in ("", ".", "root", "*"):
@@ -252,9 +297,43 @@ def _find_logging_config_file():
     for file in files:
         file = os.path.expanduser(file)
         if os.path.exists(file):
+            msg = (
+                "The logcfg configuration file is deprecated. "
+                "In future releases, the configuration file at "
+                f"{os.path.abspath(file)} will be ignored."
+            )
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
             return os.path.abspath(file)
 
     return io.BytesIO(DEFAULT_CONFIGURATION)
+
+
+def is_configured(logger):
+    """
+    Quick check for likely user log configuration.
+
+    Since stpipe may attach handlers to the root logger,
+    we have to check for handlers commonly added by pytest.
+
+    Parameters
+    ----------
+    logger : logging.Logger
+        Logger to check
+    """
+    for handler in logger.handlers:
+        if handler.__class__.__name__ in (
+            "LogCaptureHandler",
+            "_LiveLoggingNullHandler",
+        ):
+            continue
+        elif (
+            isinstance(handler, logging.FileHandler)
+            and handler.baseFilename == "/dev/null"
+        ):
+            continue
+        else:
+            return True
+    return False
 
 
 class RecordingHandler(logging.Handler):

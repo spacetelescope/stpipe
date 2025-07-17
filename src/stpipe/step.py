@@ -713,9 +713,14 @@ class Step:
     @classmethod
     def call(cls, *args, **kwargs):
         """
-        Creates and runs a new instance of the class.
+        Create and run a new instance of the class.
 
-        Gets a config file from CRDS if one is available
+        Gets a config file from CRDS if one is available.
+
+        By default, log handlers are added for the duration of the
+        run, if there are no handlers already present in the root
+        logger.  To avoid configuring the log, specify ``configure_log=False``
+        in the keyword arguments.
 
         To set configuration parameters, pass a ``config_file`` path or
         keyword arguments.  Keyword arguments override those in the
@@ -730,11 +735,6 @@ class Step:
         this ``call()`` method, it will ignore previously-set parameters, as
         it creates a new instance of the class with only the ``config_file``,
         ``*args`` and ``**kwargs`` passed to the ``call()`` method.
-
-        If not used with a ``config_file`` or specific ``*args`` and ``**kwargs``,
-        it would be better to use the `run` method, which does not create
-        a new instance but simply runs the existing instance of the `Step`
-        class.
         """
         filename = None
         if len(args) > 0:
@@ -743,7 +743,15 @@ class Step:
         # set up the log configuration here (although we might undo it
         # below) as log messages are generated before the config is
         # fully loaded
+        configure_log = kwargs.pop("configure_log", True)
+        deprecation_msg = (
+            "The 'logcfg' configuration option is deprecated. "
+            "In future releases, it will be ignored, and logging "
+            "should be directly configured via command line arguments "
+            "or the logging module."
+        )
         if "logcfg" in kwargs:
+            warnings.warn(deprecation_msg, DeprecationWarning, stacklevel=2)
             try:
                 log_cfg = log.load_configuration(kwargs["logcfg"])
             except Exception as e:
@@ -751,8 +759,20 @@ class Step:
                     f"Error parsing logging config {kwargs['logcfg']}"
                 ) from e
             del kwargs["logcfg"]
-        elif log.LogConfig.applied is None:
-            log_cfg = log.load_configuration(log._find_logging_config_file())
+        elif configure_log and log.LogConfig.applied is None:
+            # Check for existing configuration on the root logger:
+            # if any handlers are present, don't add the default config
+            # Note: if we move to configuring known loggers instead
+            # of always configuring the root logger, we should
+            # check all known loggers here as well.
+            root_logger = logging.getLogger()
+            if not log.is_configured(root_logger):
+                # Load a default configuration
+                log_cfg = log.load_configuration(
+                    config_file=log._find_logging_config_file()
+                )
+            else:
+                log_cfg = None
         else:
             log_cfg = None
         ctx = nullcontext if log_cfg is None else log_cfg.context
@@ -763,6 +783,8 @@ class Step:
 
             if "logcfg" in config:
                 # a logcfg is in the configuration file
+                warnings.warn(deprecation_msg, DeprecationWarning, stacklevel=2)
+
                 if log_cfg is not None:
                     log_cfg.undo(log_names)
                 log_cfg = log.load_configuration(config["logcfg"])
