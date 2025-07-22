@@ -390,23 +390,26 @@ class Step:
         **kws,
     ):
         """
-        Create a `Step` instance.
+        Create a `~stpipe.step.Step` instance.
 
         Parameters
         ----------
-        name : str, optional
+        name : str
             The name of the Step instance.  Used in logging messages
             and in cache filenames.  If not provided, one will be
             generated based on the class name.
 
-        parent : Step instance, optional
+        parent : `~stpipe.step.Step`
             The parent step of this step.  Used to determine a
             fully-qualified name for this step, and to determine
             the mode in which to run this step.
 
-        config_file : str or pathlib.Path, optional
+        config_file : str or pathlib.Path
             The path to the config file that this step was initialized
             with.  Use to determine relative path names of other config files.
+
+        _validate_kwds : bool
+            Validate given ``kws`` against specs/config.
 
         **kws : dict
             Additional parameters to set.  These will be set as member
