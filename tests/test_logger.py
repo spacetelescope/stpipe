@@ -1,5 +1,6 @@
 import io
 import logging
+import warnings
 
 import pytest
 
@@ -30,11 +31,11 @@ ALL_WARNINGS = [STEP_WARNING, PIPELINE_WARNING, EXTERNAL_WARNING]
 
 ALL_MESSAGES = ALL_INFO + ALL_WARNINGS
 
+logger = logging.getLogger("stpipe.tests.test_logger")
+
 
 class LoggingStep(Step):
-    """A Step that utilizes self.log
-    to log a warning
-    """
+    """A Step that utilizes a local logger to log a warning."""
 
     spec = """
         str1 = string(default='default')
@@ -43,8 +44,8 @@ class LoggingStep(Step):
     _log_records_formatter = logging.Formatter("%(message)s")
 
     def process(self):
-        self.log.info(STEP_INFO)
-        self.log.warning(STEP_WARNING)
+        logger.info(STEP_INFO)
+        logger.warning(STEP_WARNING)
         logging.getLogger("external.logger").warning(EXTERNAL_WARNING)
         logging.getLogger("external.logger").info(EXTERNAL_INFO)
 
@@ -53,9 +54,7 @@ class LoggingStep(Step):
 
 
 class LoggingPipeline(Pipeline):
-    """A Pipeline that utilizes self.log
-    to log a warning
-    """
+    """A Pipeline that utilizes a local logger to log a warning."""
 
     spec = """
         str1 = string(default='default')
@@ -66,8 +65,8 @@ class LoggingPipeline(Pipeline):
     step_defs = {"simplestep": LoggingStep}
 
     def process(self):
-        self.log.warning(PIPELINE_WARNING)
-        self.log.info(PIPELINE_INFO)
+        logger.warning(PIPELINE_WARNING)
+        logger.info(PIPELINE_INFO)
         self.simplestep.run()
 
     def _datamodels_open(self, **kwargs):
@@ -271,3 +270,24 @@ def test_logging_delegation(capsys, root_logger_unchanged):
 
     captured = capsys.readouterr()
     assert MSG in captured.err
+
+
+def test_self_log_deprecation(caplog):
+    class SelfLoggingStep(LoggingStep):
+        def process(self):
+            self.log.info(STEP_INFO)
+            self.log.warning(STEP_WARNING)
+
+    # No deprecation when step is created
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        step = SelfLoggingStep()
+
+    # Deprecation warning when self.log is used
+    with pytest.warns(DeprecationWarning, match="Step.log"):
+        step.process()
+
+    # Messages are still emitted
+    assert STEP_INFO in caplog.text
+    assert STEP_WARNING in caplog.text
+    assert "stpipe.SelfLoggingStep" in caplog.text
