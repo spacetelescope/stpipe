@@ -196,8 +196,7 @@ def test_hook_as_string_of_importable_function(
             ]
         }
     }
-    with pytest.warns(DeprecationWarning, match="root logger"):
-        MyPipeline.call(model, steps=steps)
+    MyPipeline.call(model, steps=steps)
 
     assert f"Running hook_function on data {data_id}" in caplog.text
 
@@ -215,8 +214,7 @@ def test_hook_as_systemcall(hook_type, caplog, tmp_cwd, disable_crds_steppars):
             ]
         }
     }
-    with pytest.warns(DeprecationWarning, match="root logger"):
-        MyPipeline.call(model, steps=steps)
+    MyPipeline.call(model, steps=steps)
 
     # Logs from fitsinfo
     assert "SystemCall instance created" in caplog.text

@@ -6,7 +6,6 @@ import gc
 import logging
 import os
 import sys
-import warnings
 from collections.abc import Sequence
 from contextlib import contextmanager, nullcontext, suppress
 from functools import partial
@@ -1004,12 +1003,16 @@ class Step:
         loggers : list
             List of log names to configure.
         """
-        msg = (
-            "The default for `get_known_loggers` is currently the root logger. "
-            "This method should be overridden in downstream packages. "
-            "The default logger will change to 'stpipe' only in future builds."
-        )
-        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        # Raising a deprecation warning is deferred until the next
+        # release, for easier integration.
+
+        # msg = (
+        #     "The default for `get_known_loggers` is currently the root logger. "
+        #     "This method should be overridden in downstream packages. "
+        #     "The default logger will change to 'stpipe' only in future builds."
+        # )
+        # warnings.warn(msg, DeprecationWarning, stacklevel=2)
+
         return [""]
 
     def set_primary_input(self, obj, exclusive=True):
