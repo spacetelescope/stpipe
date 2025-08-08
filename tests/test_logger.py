@@ -51,6 +51,10 @@ class LoggingStep(Step):
     def _datamodels_open(self, **kwargs):
         pass
 
+    @staticmethod
+    def get_known_loggers():
+        return ["stpipe", "external"]
+
 
 class LoggingPipeline(Pipeline):
     """A Pipeline that utilizes self.log
@@ -72,6 +76,10 @@ class LoggingPipeline(Pipeline):
 
     def _datamodels_open(self, **kwargs):
         pass
+
+    @staticmethod
+    def get_known_loggers():
+        return ["stpipe", "external"]
 
 
 def test_configuration(tmp_path):
@@ -110,6 +118,66 @@ format = '%(message)s'
     assert lines == ["Shown", "Breaking"]
 
 
+def test_configuration_apply(capsys):
+    log_cfg = stpipe_log.LogConfig(["stderr"], level="INFO")
+    stpipe_logger = logging.getLogger("stpipe")
+    other_logger = logging.getLogger("other")
+    stpipe_msg = "stpipe message"
+    other_msg = "other message"
+
+    # By default, only stpipe is configured
+    log_cfg.apply()
+    stpipe_logger.info(stpipe_msg)
+    other_logger.info(other_msg)
+    capt = capsys.readouterr()
+    assert capt.err.count(stpipe_msg) == 1
+    assert capt.err.count(other_msg) == 0
+
+    # Calling again does not attach a duplicate handler
+    log_cfg.apply()
+    stpipe_logger.info(stpipe_msg)
+    other_logger.info(other_msg)
+    capt = capsys.readouterr()
+    assert capt.err.count(stpipe_msg) == 1
+    assert capt.err.count(other_msg) == 0
+
+    # Other logger can be added to the configuration
+    log_cfg.apply(log_names=["other"])
+    stpipe_logger.info(stpipe_msg)
+    other_logger.info(other_msg)
+    capt = capsys.readouterr()
+    assert capt.err.count(stpipe_msg) == 1
+    assert capt.err.count(other_msg) == 1
+
+    # Calling undo removes configuration from both
+    log_cfg.undo()
+    stpipe_logger.info(stpipe_msg)
+    other_logger.info(other_msg)
+    capt = capsys.readouterr()
+    assert capt.err.count(stpipe_msg) == 0
+    assert capt.err.count(other_msg) == 0
+
+
+@pytest.mark.parametrize("log_names", [None, ["stpipe"]])
+def test_configuration_undo(capsys, log_names):
+    log_cfg = stpipe_log.LogConfig(["stderr"], level="INFO")
+    stpipe_logger = logging.getLogger("stpipe")
+    stpipe_msg = "stpipe message"
+
+    # If the log_cfg handler is attached to a logger without going
+    # through "apply", it can still be removed with undo.
+    stpipe_logger.addHandler(log_cfg.handlers[0])
+
+    stpipe_logger.info(stpipe_msg)
+    capt = capsys.readouterr()
+    assert capt.err.count(stpipe_msg) == 1
+
+    log_cfg.undo(log_names)
+    stpipe_logger.info(stpipe_msg)
+    capt = capsys.readouterr()
+    assert capt.err.count(stpipe_msg) == 0
+
+
 def test_record_logs():
     """
     Test that record_logs respects the default configuration
@@ -122,7 +190,7 @@ def test_record_logs():
     )
 
     with stpipe_log.record_logs(
-        level=logging.ERROR, formatter=logging.Formatter("%(message)s")
+        log_names=[""], level=logging.ERROR, formatter=logging.Formatter("%(message)s")
     ) as log_records:
         stpipe_logger.warning("Warning from stpipe")
         stpipe_logger.error("Error from stpipe")
@@ -194,9 +262,6 @@ def root_logger_unchanged():
         raise AssertionError(f"Unexpected handler {h} in root logger")
 
 
-@pytest.mark.parametrize(
-    "logging_level",
-)
 @pytest.fixture(
     params=(
         logging.CRITICAL,
@@ -267,7 +332,41 @@ def test_logging_delegation(capsys, root_logger_unchanged):
         def _datamodels_open(self, **kwargs):
             pass
 
+        @staticmethod
+        def get_known_loggers():
+            return ["stpipe", "other_library"]
+
     StepThatLogs.call()
 
     captured = capsys.readouterr()
     assert MSG in captured.err
+
+
+def test_logging_unconfigured_external_package(capsys, root_logger_unchanged):
+    """Test that unexpected messages from external packages are not logged."""
+
+    # make a non-step-specific logger
+    other_library_logger = logging.getLogger("other_library.logger")
+    MSG = "warning from other logger"
+
+    class StepThatLogs(Step):
+        spec = """
+           output_ext = string(default='step')
+        """
+
+        def process(self):
+            other_library_logger.warning(MSG)
+
+        def _datamodels_open(self, **kwargs):
+            pass
+
+        @staticmethod
+        def get_known_loggers():
+            # "other_library" is not a known logger,
+            # so it will not be configured.
+            return ["stpipe"]
+
+    StepThatLogs.call()
+
+    captured = capsys.readouterr()
+    assert MSG not in captured.err
