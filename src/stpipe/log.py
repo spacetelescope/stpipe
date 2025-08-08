@@ -216,7 +216,7 @@ def load_configuration(
     ----------
     config_file : str, pathlib.Path instance, file-like object, or None, optional
         DEPRECATED. Log configuration file. Ignored if log_level, log_format,
-        or log_file are provided.
+        log_file, or log_stream are provided.
     log_level : str, int, or None, optional
         Logging level.  If None, and config_file is not provided, will default
         to INFO level.
@@ -248,7 +248,8 @@ def load_configuration(
         return value
 
     # Ignore config file if other arguments are provided
-    if log_level is not None or log_format is not None or log_file is not None:
+    log_args = [log_level, log_format, log_file, log_stream]
+    if any([arg is not None for arg in log_args]):
         config_file = None
 
     if config_file is not None:
