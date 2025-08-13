@@ -35,6 +35,10 @@ class FakeStep(Step):
     def _datamodels_open(cls, init, **kwargs):
         return init
 
+    @staticmethod
+    def get_known_loggers():
+        return ["stpipe"]
+
 
 class ShovelPixelsStep(FakeStep):
     class_alias = "shovelpixels"
@@ -82,6 +86,10 @@ class MyPipeline(Pipeline):
     @classmethod
     def _datamodels_open(cls, init, **kwargs):
         return init
+
+    @staticmethod
+    def get_known_loggers():
+        return ["stpipe"]
 
     def process(self, input_data):
         result = self.shovelpixels.run(input_data)
