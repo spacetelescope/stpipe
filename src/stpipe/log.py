@@ -130,7 +130,7 @@ class LogConfig:
 
         Parameters
         ----------
-        log_names : list of str or None, optional
+        log_names : tuple of str, list of str, or None, optional
             Log names to configure.  If not provided, only the
             STPIPE_ROOT_LOGGER is configured.
         """

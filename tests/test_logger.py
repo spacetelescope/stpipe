@@ -52,8 +52,8 @@ class LoggingStep(Step):
         pass
 
     @staticmethod
-    def get_known_loggers():
-        return ["stpipe", "external"]
+    def get_stpipe_loggers():
+        return ("stpipe", "external")
 
 
 class LoggingPipeline(Pipeline):
@@ -78,8 +78,8 @@ class LoggingPipeline(Pipeline):
         pass
 
     @staticmethod
-    def get_known_loggers():
-        return ["stpipe", "external"]
+    def get_stpipe_loggers():
+        return ("stpipe", "external")
 
 
 def test_configuration(tmp_path):
@@ -333,8 +333,8 @@ def test_logging_delegation(capsys, root_logger_unchanged):
             pass
 
         @staticmethod
-        def get_known_loggers():
-            return ["stpipe", "other_library"]
+        def get_stpipe_loggers():
+            return ("stpipe", "other_library")
 
     StepThatLogs.call()
 
@@ -361,10 +361,10 @@ def test_logging_unconfigured_external_package(capsys, root_logger_unchanged):
             pass
 
         @staticmethod
-        def get_known_loggers():
+        def get_stpipe_loggers():
             # "other_library" is not a known logger,
             # so it will not be configured.
-            return ["stpipe"]
+            return ("stpipe",)
 
     StepThatLogs.call()
 
