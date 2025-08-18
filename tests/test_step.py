@@ -385,8 +385,8 @@ class StepWithModel(Step):
     """
 
     @staticmethod
-    def get_known_loggers():
-        return ["stpipe"]
+    def get_stpipe_loggers():
+        return ("stpipe",)
 
     def process(self, input_model):
         # make a change to ensure step skip is working
@@ -639,7 +639,7 @@ def test_ref_file_override(klass, tmp_path):
     assert ("dark", ref_path) in step._reference_files_used
 
 
-def test_get_known_loggers():
+def test_get_stpipe_loggers():
     # The default Step class returns the root logger only
     # as the known logger.
-    assert Step.get_known_loggers() == [""]
+    assert Step.get_stpipe_loggers() == ("root",)

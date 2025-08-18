@@ -356,7 +356,7 @@ def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
         # Undo the initial configuration without closing handlers
         log_cfg.undo(close_handlers=False)
         # Apply configuration to specified loggers
-        log_cfg.apply(step.get_known_loggers())
+        log_cfg.apply(step.get_stpipe_loggers())
 
     # Define the primary input file.
     # Always have an output_file set on the outermost step

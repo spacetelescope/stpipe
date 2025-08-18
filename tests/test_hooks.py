@@ -40,8 +40,8 @@ class FakeStep(Step):
         return init
 
     @staticmethod
-    def get_known_loggers():
-        return ["stpipe"]
+    def get_stpipe_loggers():
+        return ("stpipe",)
 
 
 class ShovelPixelsStep(FakeStep):
@@ -92,8 +92,8 @@ class MyPipeline(Pipeline):
         return init
 
     @staticmethod
-    def get_known_loggers():
-        return ["stpipe"]
+    def get_stpipe_loggers():
+        return ("stpipe",)
 
     def process(self, input_data):
         result = self.shovelpixels.run(input_data)

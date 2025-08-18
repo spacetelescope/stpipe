@@ -512,7 +512,7 @@ class Step:
         gc.collect()
 
         with log.record_logs(
-            log_names=self.get_known_loggers(), formatter=self._log_records_formatter
+            log_names=self.get_stpipe_loggers(), formatter=self._log_records_formatter
         ) as log_records:
             self._log_records = log_records
 
@@ -756,7 +756,7 @@ class Step:
             log_cfg = None
         ctx = nullcontext if log_cfg is None else log_cfg.context
 
-        log_names = cls.get_known_loggers()
+        log_names = cls.get_stpipe_loggers()
         with ctx(log_names):
             config, config_file = cls.build_config(filename, **kwargs)
 
@@ -989,7 +989,7 @@ class Step:
         return config_parser.ConfigObj()
 
     @staticmethod
-    def get_known_loggers():
+    def get_stpipe_loggers():
         """
         Get the names of loggers to configure.
 
@@ -1000,20 +1000,20 @@ class Step:
 
         Returns
         -------
-        loggers : list
-            List of log names to configure.
+        loggers : tuple of str
+            Tuple of log names to configure.
         """
         # Raising a deprecation warning is deferred until the next
         # release, for easier integration.
 
         # msg = (
-        #     "The default for `get_known_loggers` is currently the root logger. "
+        #     "The default for `get_stpipe_loggers` is currently the root logger. "
         #     "This method should be overridden in downstream packages. "
         #     "The default logger will change to 'stpipe' only in future builds."
         # )
         # warnings.warn(msg, DeprecationWarning, stacklevel=2)
 
-        return [""]
+        return ("root",)
 
     def set_primary_input(self, obj, exclusive=True):
         """
