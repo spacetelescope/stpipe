@@ -17,7 +17,6 @@ built_in_configuration_parameters = [
     "logcfg",
     "verbose",
     "log_level",
-    "log_format",
     "log_file",
     "log_stream",
 ]
@@ -119,12 +118,6 @@ def _build_parent_arg_parser(cls=None, apply_log_cfg=False):
             default=None,
             help="Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL). "
             "Ignored if 'verbose' is specified.",
-        )
-        parser1.add_argument(
-            "--log_format",
-            type=str,
-            default=None,
-            help="A format string for the logger",
         )
         parser1.add_argument(
             "--log_file",
@@ -297,7 +290,6 @@ def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
             use_log_cfg = True
             log_args = [
                 known.log_level,
-                known.log_format,
                 known.log_file,
                 known.log_stream,
             ]
@@ -329,7 +321,6 @@ def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
                 log_cfg = log.load_configuration(
                     config_file=logcfg,
                     log_level=log_level,
-                    log_format=known.log_format,
                     log_file=known.log_file,
                     log_stream=known.log_stream,
                 )
@@ -370,7 +361,6 @@ def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
         del args.logcfg
         del args.verbose
         del args.log_level
-        del args.log_format
         del args.log_file
         del args.log_stream
     positional = args.args
