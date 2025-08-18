@@ -137,7 +137,8 @@ class LogConfig:
         if log_names is None:
             log_names = [STPIPE_ROOT_LOGGER]
         for log_name in log_names:
-            # Don't reapply configuration, to avoid attaching duplicate handlers
+            # Don't reapply configuration, to avoid overwriting the
+            # previously recorded level.
             if log_name in self._previous_level:
                 continue
 
