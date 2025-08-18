@@ -206,7 +206,7 @@ class LogConfig:
 
 
 def load_configuration(
-    config_file=None, log_level=None, log_format=None, log_file=None, log_stream=None
+    config_file=None, log_level=None, log_file=None, log_stream=None
 ):
     """
     Loads a logging configuration file.  The format of this file is
@@ -215,14 +215,11 @@ def load_configuration(
     Parameters
     ----------
     config_file : str, pathlib.Path instance, file-like object, or None, optional
-        DEPRECATED. Log configuration file. Ignored if log_level, log_format,
-        log_file, or log_stream are provided.
+        DEPRECATED. Log configuration file. Ignored if log_level, log_file,
+        or log_stream are provided.
     log_level : str, int, or None, optional
         Logging level.  If None, and config_file is not provided, will default
         to INFO level.
-    log_format : str or None, optional
-        Log format to apply.  If None, and config_file is not provided, will default
-        to DEFAULT_FORMAT.
     log_file : str or None, optional
         Full path to a file name to write log messages to, if desired.
     log_stream : {"stdout", "stderr", "null", None}
@@ -248,7 +245,7 @@ def load_configuration(
         return value
 
     # Ignore config file if other arguments are provided
-    log_args = [log_level, log_format, log_file, log_stream]
+    log_args = [log_level, log_file, log_stream]
     if any([arg is not None for arg in log_args]):
         config_file = None
 
@@ -265,8 +262,6 @@ def load_configuration(
         # Provide appropriate defaults for level and format
         if log_level is None:
             log_level = "INFO"
-        if log_format is None:
-            log_format = DEFAULT_FORMAT
         if log_stream is None:
             log_stream = "stderr"
 
@@ -279,7 +274,6 @@ def load_configuration(
             "*": {
                 "handler": ",".join(handlers),
                 "level": _level_check(log_level),
-                "format": log_format,
             }
         }
 
