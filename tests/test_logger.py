@@ -492,44 +492,68 @@ def test_call_configure_log(capsys, root_logger_unchanged):
     assert capt.err == ""
 
 
-def test_command_line_log_file(tmp_path, root_logger_unchanged):
-    log_file = tmp_path / "test_log.txt"
-    stpipe.cmdline.step_from_cmdline(
-        ["test_logger.LoggingPipeline", f"--log-file={str(log_file)}"],
-    )
-    assert log_file.exists()
-    with log_file.open() as fh:
-        log_lines = fh.readlines()
-    assert len(log_lines) > 0
-    assert "INFO - Step LoggingPipeline done" in log_lines[-1]
-    all_lines = "\n".join(log_lines)
+@pytest.mark.parametrize(
+    "log_level", [None, "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+)
+@pytest.mark.parametrize("log_stream", [None, "stdout", "stderr", "null"])
+@pytest.mark.parametrize("log_file", [None, "test_log.txt"])
+def test_command_line_arguments(
+    capsys, tmp_path, root_logger_unchanged, log_level, log_stream, log_file
+):
+    # Add specified arguments for the command line
+    cmdline_args = ["test_logger.LoggingPipeline"]
+    if log_level is not None:
+        cmdline_args.append(f"--log-level={log_level}")
+    if log_stream is not None:
+        cmdline_args.append(f"--log-stream={log_stream}")
+    if log_file is not None:
+        log_file = tmp_path / log_file
+        cmdline_args.append(f"--log-file={str(log_file)}")
 
-    # Default level is INFO
-    for message in ALL_MESSAGES_EXCEPT_DEBUG:
-        assert message in all_lines
+    # Run the step with the specified arguments
+    stpipe.cmdline.step_from_cmdline(cmdline_args)
 
+    # Check for a log file: it is not created if there are no messages logged
+    if log_file is not None and log_level not in ["ERROR", "CRITICAL"]:
+        assert log_file.exists()
+        with log_file.open() as fh:
+            log_lines = fh.readlines()
+        file_messages = "\n".join(log_lines)
+    else:
+        file_messages = []
 
-def test_command_line_log_level(capsys, root_logger_unchanged):
-    stpipe.cmdline.step_from_cmdline(
-        ["test_logger.LoggingPipeline", "--log-level=DEBUG"],
-    )
-    # Default is to log INFO and above to the error stream.
-    # DEBUG and above should appear with the level specified.
+    # Check for terminal log messages: default is stderr
     capt = capsys.readouterr()
-    assert capt.out == ""
-    for message in ALL_MESSAGES:
-        assert message in capt.err
+    terminal_messages = ""
+    if log_stream in ["null", "stdout"]:
+        assert capt.err == ""
+        terminal_messages = capt.out
+    if log_stream in [None, "null", "stderr"]:
+        assert capt.out == ""
+        terminal_messages = capt.err
 
+    # Default level is INFO, unless otherwise specified
+    if log_level is None or log_level == "INFO":
+        expected_messages = ALL_MESSAGES_EXCEPT_DEBUG
+    elif log_level == "DEBUG":
+        expected_messages = ALL_MESSAGES
+    elif log_level == "WARNING":
+        expected_messages = ALL_WARNINGS
+    else:
+        # No messages expected, regardless of other settings
+        expected_messages = []
+        assert len(file_messages) == 0
+        assert len(terminal_messages) == 0
 
-def test_command_line_log_stream(capsys, root_logger_unchanged):
-    stpipe.cmdline.step_from_cmdline(
-        ["test_logger.LoggingPipeline", "--log-stream=stdout"],
-    )
-    # Default is to log INFO and above to the error stream.
-    # Messages should appear in stdout with the stream specified.
-    capt = capsys.readouterr()
-    assert capt.err == ""
-    for message in ALL_MESSAGES_EXCEPT_DEBUG:
-        assert message in capt.out
-    for message in ALL_DEBUG:
-        assert message not in capt.out
+    # Check for expected messages in file or terminal
+    for message in expected_messages:
+        if log_file is not None:
+            # The message is logged to the file exactly once
+            assert file_messages.count(message) == 1
+        else:
+            assert len(file_messages) == 0
+        if log_stream != "null":
+            # The message is logged to the terminal exactly once
+            assert terminal_messages.count(message) == 1
+        else:
+            assert len(terminal_messages) == 0
