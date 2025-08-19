@@ -258,7 +258,7 @@ def test_from_cmdline_no_root_logger_changes_level_arg(
     root_logger_unchanged, logging_level
 ):
     LoggingPipeline.from_cmdline(
-        ["test_logger.LoggingPipeline", f"--log_level={logging_level!s}"]
+        ["test_logger.LoggingPipeline", f"--log-level={logging_level!s}"]
     )
 
 
@@ -274,7 +274,7 @@ def test_step_from_cmdline_no_root_logger_changes_level_arg(
     root_logger_unchanged, logging_level
 ):
     stpipe.cmdline.step_from_cmdline(
-        ["test_logger.LoggingPipeline", f"--log_level={logging_level!s}"]
+        ["test_logger.LoggingPipeline", f"--log-level={logging_level!s}"]
     )
 
 
@@ -373,7 +373,7 @@ def test_call_configure_log(capsys, root_logger_unchanged):
 def test_command_line_log_file(tmp_path, root_logger_unchanged):
     log_file = tmp_path / "test_log.txt"
     stpipe.cmdline.step_from_cmdline(
-        ["test_logger.LoggingPipeline", f"--log_file={str(log_file)}"],
+        ["test_logger.LoggingPipeline", f"--log-file={str(log_file)}"],
     )
     assert log_file.exists()
     with log_file.open() as fh:
@@ -389,7 +389,7 @@ def test_command_line_log_file(tmp_path, root_logger_unchanged):
 
 def test_command_line_log_level(capsys, root_logger_unchanged):
     stpipe.cmdline.step_from_cmdline(
-        ["test_logger.LoggingPipeline", "--log_level=DEBUG"],
+        ["test_logger.LoggingPipeline", "--log-level=DEBUG"],
     )
     # Default is to log INFO and above to the error stream.
     # DEBUG and above should appear with the level specified.
@@ -401,7 +401,7 @@ def test_command_line_log_level(capsys, root_logger_unchanged):
 
 def test_command_line_log_stream(capsys, root_logger_unchanged):
     stpipe.cmdline.step_from_cmdline(
-        ["test_logger.LoggingPipeline", "--log_stream=stdout"],
+        ["test_logger.LoggingPipeline", "--log-stream=stdout"],
     )
     # Default is to log INFO and above to the error stream.
     # Messages should appear in stdout with the stream specified.
