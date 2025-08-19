@@ -16,9 +16,9 @@ built_in_configuration_parameters = [
     "debug",
     "logcfg",
     "verbose",
-    "log_level",
-    "log_file",
-    "log_stream",
+    "log-level",
+    "log-file",
+    "log-stream",
 ]
 
 logger = logging.getLogger(__name__)
