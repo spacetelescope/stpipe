@@ -1,2 +1,2 @@
-Provide new command line arguments for configuring logging (log_level, log_format, log_file, log_stream).
+Provide new command line arguments for configuring logging (log-level, log-file, log-stream).
 Prevent applying default configuration in the ``call`` function if the root logger is already configured, or if the user opts out of log configuration (``configure_log=False``).
