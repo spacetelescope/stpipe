@@ -113,20 +113,20 @@ def _build_parent_arg_parser(cls=None, apply_log_cfg=False):
             help="Turn on all logging messages",
         )
         parser1.add_argument(
-            "--log_level",
+            "--log-level",
             type=str,
             default=None,
             help="Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL). "
             "Ignored if 'verbose' is specified.",
         )
         parser1.add_argument(
-            "--log_file",
+            "--log-file",
             type=str,
             default=None,
             help="Full path to a file name to record log messages",
         )
         parser1.add_argument(
-            "--log_stream",
+            "--log-stream",
             type=str,
             default=None,
             help="Log stream for terminal messages (stdout, stderr, or null).",
