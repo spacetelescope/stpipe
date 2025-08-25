@@ -21,9 +21,10 @@ on:
 jobs:
   test:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
-    if: (github.repository == 'spacetelescope/stpipe' && (github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'Weekly CI')))
+    if: (github.repository == 'spacetelescope/stpipe' && (github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run extra tests')))
     with:
       envs: |
-        - macos: py310-xdist
+        - macos: py311-xdist
+        - macos: py312-xdist
         - linux: py3-devdeps-xdist
         - macos: py3-devdeps-xdist
