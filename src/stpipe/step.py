@@ -563,7 +563,7 @@ class Step:
                             setattr(model.meta.cal_step, self.class_alias, "SKIPPED")
                         except AttributeError as e:
                             self.log.info(
-                                "Could not record skip into DataModel " "header: %s",
+                                "Could not record skip into DataModel header: %s",
                                 e,
                             )
 
