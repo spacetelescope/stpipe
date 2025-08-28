@@ -485,7 +485,6 @@ def test_save_list(tmp_cwd, model_list):
 
 
 class SimpleContainer(Sequence):
-
     def __init__(self, models):
         self._models = models
 
@@ -512,7 +511,6 @@ class SimpleContainer(Sequence):
 
 
 class SimpleContainerWithSave(SimpleContainer):
-
     def save(self, path, dir_path=None, *args, **kwargs):
         for model in self._models[1:]:
             # skip the first model to test that the save method is called
