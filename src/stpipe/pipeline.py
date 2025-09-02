@@ -8,12 +8,11 @@ from typing import ClassVar
 
 from astropy.extern.configobj.configobj import ConfigObj, Section
 
-from . import config_parser, crds_client, log
+from . import config_parser, crds_client
 from .step import Step, get_disable_crds_steppars
 from .utilities import _not_set
 
-# For classmethods, use the STPIPE_ROOT_LOGGER
-logger = logging.getLogger(log.STPIPE_ROOT_LOGGER)
+logger = logging.getLogger(__name__)
 
 
 class Pipeline(Step):
@@ -260,7 +259,7 @@ class Pipeline(Step):
         try:
             crds_parameters, observatory = self._get_crds_parameters(input_file)
         except (ValueError, TypeError, OSError):
-            self.log.info("First argument %s does not appear to be a model", input_file)
+            logger.info("First argument %s does not appear to be a model", input_file)
             return
 
         ovr_refs = {
@@ -271,7 +270,7 @@ class Pipeline(Step):
 
         fetch_types = sorted(set(self.reference_file_types) - set(ovr_refs.keys()))
 
-        self.log.info(
+        logger.info(
             "Prefetching reference files for dataset: %r reftypes = %r",
             self._get_filename(input_file),
             fetch_types,
@@ -284,7 +283,7 @@ class Pipeline(Step):
 
         for reftype, refpath in sorted(ref_path_map.items()):
             how = "Override" if reftype in ovr_refs else "Prefetch"
-            self.log.info(
+            logger.info(
                 "%s for %s reference file is '%s'.", how, reftype.upper(), refpath
             )
             crds_client.check_reference_open(refpath)

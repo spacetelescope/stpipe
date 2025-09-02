@@ -1,8 +1,11 @@
+import logging
 import os
 import subprocess
 
 from .datamodel import AbstractDataModel
 from .step import Step
+
+logger = logging.getLogger(__name__)
 
 
 class SystemCall(Step):
@@ -42,7 +45,7 @@ class SystemCall(Step):
             env[var] = val or None
 
         # Start the process and wait for it to finish.
-        self.log.info("Spawning %r", cmd_str)
+        logger.info("Spawning %r", cmd_str)
         try:
             p = subprocess.Popen(
                 args=[cmd_str],
@@ -54,18 +57,18 @@ class SystemCall(Step):
             )
             err = p.wait()
         except Exception as e:
-            self.log.info("Failed with an exception: \n%s", e)
+            logger.info("Failed with an exception: \n%s", e)
 
             if self.failure_as_exception:
                 raise
         else:
-            self.log.info("Done with errorcode %s", err)
+            logger.info("Done with errorcode %s", err)
 
             # Log STDOUT/ERR if we are asked to do so.
             if self.log_stdout:
-                self.log.info("STDOUT: %s", p.stdout.read())
+                logger.info("STDOUT: %s", p.stdout.read())
             if self.log_stderr:
-                self.log.info("STDERR: %s", p.stderr.read())
+                logger.info("STDERR: %s", p.stderr.read())
 
             if self.exitcode_as_exception and err != 0:
                 raise OSError(f"{cmd_str!r} returned error code {err}")
