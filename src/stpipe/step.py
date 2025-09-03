@@ -6,6 +6,7 @@ import gc
 import logging
 import os
 import sys
+import warnings
 from collections.abc import Sequence
 from contextlib import contextmanager, nullcontext, suppress
 from functools import partial
