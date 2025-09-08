@@ -274,7 +274,9 @@ def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
             raise ValueError(
                 f"Error parsing logging config {log_config!r}:\n{e}"
             ) from e
-        # globally apply the logging configuration since we're in cmdline mode
+
+        # Apply the logging configuration to the stpipe logger to
+        # capture start up messages
         if apply_log_cfg:
             log_cfg.apply()
     except Exception as e:
@@ -348,6 +350,13 @@ def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
         _print_important_message("ERROR PARSING CONFIGURATION:", str(e))
         parser2.print_help()
         raise ValueError(str(e)) from e
+
+    # Apply the log configuration to the step's known loggers
+    if apply_log_cfg:
+        # Undo the initial configuration without closing handlers
+        log_cfg.undo(close_handlers=False)
+        # Apply configuration to specified loggers
+        log_cfg.apply(step.get_stpipe_loggers())
 
     # Define the primary input file.
     # Always have an output_file set on the outermost step

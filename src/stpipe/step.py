@@ -512,7 +512,9 @@ class Step:
         """
         gc.collect()
 
-        with log.record_logs(formatter=self._log_records_formatter) as log_records:
+        with log.record_logs(
+            log_names=self.get_stpipe_loggers(), formatter=self._log_records_formatter
+        ) as log_records:
             self._log_records = log_records
 
             step_result = None
@@ -755,15 +757,16 @@ class Step:
             log_cfg = None
         ctx = nullcontext if log_cfg is None else log_cfg.context
 
-        with ctx():
+        log_names = cls.get_stpipe_loggers()
+        with ctx(log_names):
             config, config_file = cls.build_config(filename, **kwargs)
 
             if "logcfg" in config:
                 # a logcfg is in the configuration file
                 if log_cfg is not None:
-                    log_cfg.undo()
+                    log_cfg.undo(log_names)
                 log_cfg = log.load_configuration(config["logcfg"])
-                log_cfg.apply()
+                log_cfg.apply(log_names)
 
             if "class" in config:
                 del config["class"]
@@ -985,6 +988,33 @@ class Step:
 
         logger.debug("No %s reference files found.", reftype.upper())
         return config_parser.ConfigObj()
+
+    @staticmethod
+    def get_stpipe_loggers():
+        """
+        Get the names of loggers to configure.
+
+        For the base class, the root logger is currently returned,
+        to allow downstream classes time to transition to specifying
+        their loggers. In future builds, the base class logger will
+        default to "stpipe" only.
+
+        Returns
+        -------
+        loggers : tuple of str
+            Tuple of log names to configure.
+        """
+        # Raising a deprecation warning is deferred until the next
+        # release, for easier integration.
+
+        # msg = (
+        #     "The default for `get_stpipe_loggers` is currently the root logger. "
+        #     "This method should be overridden in downstream packages. "
+        #     "The default logger will change to 'stpipe' only in future builds."
+        # )
+        # warnings.warn(msg, DeprecationWarning, stacklevel=2)
+
+        return ("root",)
 
     def set_primary_input(self, obj, exclusive=True):
         """
