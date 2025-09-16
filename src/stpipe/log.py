@@ -82,7 +82,7 @@ class LogConfig:
     def __init__(
         self,
         handler,
-        level=logging.NOTSET,
+        level=logging.INFO,
         break_level=logging.NOTSET,
         format=None,  # noqa: A002
     ):
