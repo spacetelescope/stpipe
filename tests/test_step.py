@@ -384,6 +384,10 @@ class StepWithModel(Step):
     save_results = boolean(default=True)
     """
 
+    @staticmethod
+    def get_stpipe_loggers():
+        return ("stpipe",)
+
     def process(self, input_model):
         # make a change to ensure step skip is working
         # without having to define SimpleDataModel.meta.stepname
@@ -633,3 +637,9 @@ def test_ref_file_override(klass, tmp_path):
     ref_path = step.get_reference_file("foo.asdf", "dark")
     assert ref_path == str(override_path)
     assert ("dark", ref_path) in step._reference_files_used
+
+
+def test_get_stpipe_loggers():
+    # The default Step class returns the root logger only
+    # as the known logger.
+    assert Step.get_stpipe_loggers() == ("root",)

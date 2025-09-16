@@ -1,0 +1,1 @@
+Allow downstream packages to specify known loggers, to ensure all desired logging messages are captured without adding configuration to the root logger.
