@@ -717,10 +717,10 @@ class Step:
 
         Gets a config file from CRDS if one is available.
 
-        By default, log handlers are added for the duration of the
-        run, if there are no handlers already present in the root
-        logger.  To avoid configuring the log, specify ``configure_log=False``
-        in the keyword arguments.
+        By default, log handlers are added for the duration of the run, if there
+        are no handlers already present on the stpipe loggers specified by
+        ``get_stpipe_loggers``.  To avoid configuring the log, specify
+        ``configure_log=False`` in the keyword arguments.
 
         To set configuration parameters, pass a ``config_file`` path or
         keyword arguments.  Keyword arguments override those in the
@@ -743,6 +743,7 @@ class Step:
         # set up the log configuration here (although we might undo it
         # below) as log messages are generated before the config is
         # fully loaded
+        log_names = cls.get_stpipe_loggers()
         configure_log = kwargs.pop("configure_log", True)
         deprecation_msg = (
             "The 'logcfg' configuration option is deprecated. "
@@ -760,13 +761,15 @@ class Step:
                 ) from e
             del kwargs["logcfg"]
         elif configure_log and log.LogConfig.applied is None:
-            # Check for existing configuration on the root logger:
+            # Check for existing configuration on the stpipe loggers:
             # if any handlers are present, don't add the default config
-            # Note: if we move to configuring known loggers instead
-            # of always configuring the root logger, we should
-            # check all known loggers here as well.
-            root_logger = logging.getLogger()
-            if not log.is_configured(root_logger):
+            is_configured = False
+            for log_name in log_names:
+                stpipe_log = logging.getLogger(log_name)
+                if len(stpipe_log.handlers) != 0:
+                    is_configured = True
+                    break
+            if not is_configured:
                 # Load a default configuration
                 log_cfg = log.load_configuration(
                     config_file=log._find_logging_config_file()
@@ -777,7 +780,6 @@ class Step:
             log_cfg = None
         ctx = nullcontext if log_cfg is None else log_cfg.context
 
-        log_names = cls.get_stpipe_loggers()
         with ctx(log_names):
             config, config_file = cls.build_config(filename, **kwargs)
 

@@ -303,34 +303,6 @@ def _find_logging_config_file():
     return io.BytesIO(DEFAULT_CONFIGURATION)
 
 
-def is_configured(logger):
-    """
-    Quick check for likely user log configuration.
-
-    Since stpipe may attach handlers to the root logger,
-    we have to check for handlers commonly added by pytest.
-
-    Parameters
-    ----------
-    logger : logging.Logger
-        Logger to check
-    """
-    for handler in logger.handlers:
-        if handler.__class__.__name__ in (
-            "LogCaptureHandler",
-            "_LiveLoggingNullHandler",
-        ):
-            continue
-        elif (
-            isinstance(handler, logging.FileHandler)
-            and handler.baseFilename == "/dev/null"
-        ):
-            continue
-        else:
-            return True
-    return False
-
-
 class RecordingHandler(logging.Handler):
     """
     A handler that simply accumulates LogRecord instances.

@@ -98,6 +98,34 @@ class LoggingPipeline(Pipeline):
         return ("stpipe", "external")
 
 
+def is_configured(logger_instance):
+    """
+    Quick check for likely user log configuration.
+
+    Since stpipe may attach handlers to the root logger,
+    we have to check for handlers commonly added by pytest.
+
+    Parameters
+    ----------
+    logger_instance : logging.Logger
+        Logger to check
+    """
+    for handler in logger_instance.handlers:
+        if handler.__class__.__name__ in (
+            "LogCaptureHandler",
+            "_LiveLoggingNullHandler",
+        ):
+            continue
+        elif (
+            isinstance(handler, logging.FileHandler)
+            and handler.baseFilename == "/dev/null"
+        ):
+            continue
+        else:
+            return True
+    return False
+
+
 def test_configuration(tmp_path):
     """
     Test that load_configuration configures the stpipe root logger
@@ -270,9 +298,7 @@ def root_logger_unchanged():
     original_level = root_logger.level
     yield
     assert root_logger.level == original_level
-    assert not stpipe_log.is_configured(root_logger), (
-        "Unexpected handler in root logger"
-    )
+    assert not is_configured(root_logger), "Unexpected handler in root logger"
 
 
 @pytest.fixture(params=LOGLEVELS)
@@ -447,19 +473,28 @@ def test_logging_unconfigured_external_package(capsys, root_logger_unchanged):
     zip(LOGLEVELS, [[], [], ALL_WARNINGS, ALL_MESSAGES_EXCEPT_DEBUG, ALL_MESSAGES]),
 )
 def test_configure_logging_directly(capsys, root_logger_unchanged, level, expected):
-    root_logger = logging.getLogger()
-    root_level = root_logger.level
-
-    # Allow all messages through
-    root_logger.setLevel(logging.DEBUG)
-
     # Set up a stream handler at the specified level
     handler = logging.StreamHandler()
     handler.setLevel(level)
-    root_logger.addHandler(handler)
 
-    # Root logger is now configured
-    assert stpipe_log.is_configured(root_logger)
+    # Attach it to the stpipe loggers
+    stpipe_loggers = []
+    current_level = []
+    for log_name in LoggingPipeline.get_stpipe_loggers():
+        stpipe_log = logging.getLogger(log_name)
+        current_level.append(stpipe_log.level)
+
+        # Allow all messages through
+        stpipe_log.setLevel(logging.DEBUG)
+
+        # Attach the handler
+        stpipe_log.addHandler(handler)
+
+        # Logger is now configured
+        assert is_configured(stpipe_log)
+
+        # Keep it for later
+        stpipe_loggers.append(stpipe_log)
 
     try:
         LoggingPipeline.call()
@@ -476,11 +511,13 @@ def test_configure_logging_directly(capsys, root_logger_unchanged, level, expect
             else:
                 assert msg not in capt.err
     finally:
-        # Clean up the root logger
+        # Clean up the stpipe loggers
         handler.flush()
         handler.close()
-        root_logger.removeHandler(handler)
-        root_logger.setLevel(root_level)
+        for stpipe_log, old_level in zip(stpipe_loggers, current_level, strict=True):
+            stpipe_log.removeHandler(handler)
+            stpipe_log.setLevel(old_level)
+            assert not is_configured(stpipe_log)
 
 
 def test_call_configure_log(capsys, root_logger_unchanged):
