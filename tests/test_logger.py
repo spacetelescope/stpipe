@@ -270,9 +270,9 @@ def root_logger_unchanged():
     original_level = root_logger.level
     yield
     assert root_logger.level == original_level
-    assert not stpipe_log.is_configured(
-        root_logger
-    ), "Unexpected handler in root logger"
+    assert not stpipe_log.is_configured(root_logger), (
+        "Unexpected handler in root logger"
+    )
 
 
 @pytest.fixture(params=LOGLEVELS)

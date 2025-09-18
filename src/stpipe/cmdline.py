@@ -326,9 +326,11 @@ def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
                 )
             except Exception as e:
                 raise ValueError(f"Error parsing logging configuration:\n{e}") from e
-            # globally apply the logging configuration since we're in cmdline mode
-            if apply_log_cfg:
-                log_cfg.apply()
+
+            # Apply the logging configuration to the stpipe logger to
+            # capture start up messages
+            log_cfg.apply()
+
     except Exception as e:
         _print_important_message("ERROR PARSING CONFIGURATION:", str(e))
         parser1.print_help()
