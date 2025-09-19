@@ -468,58 +468,6 @@ def test_logging_unconfigured_external_package(capsys, root_logger_unchanged):
     assert MSG not in captured.err
 
 
-@pytest.mark.parametrize(
-    "level, expected",
-    zip(LOGLEVELS, [[], [], ALL_WARNINGS, ALL_MESSAGES_EXCEPT_DEBUG, ALL_MESSAGES]),
-)
-def test_configure_logging_directly(capsys, root_logger_unchanged, level, expected):
-    # Set up a stream handler at the specified level
-    handler = logging.StreamHandler()
-    handler.setLevel(level)
-
-    # Attach it to the stpipe loggers
-    stpipe_loggers = []
-    current_level = []
-    for log_name in LoggingPipeline.get_stpipe_loggers():
-        stpipe_log = logging.getLogger(log_name)
-        current_level.append(stpipe_log.level)
-
-        # Allow all messages through
-        stpipe_log.setLevel(logging.DEBUG)
-
-        # Attach the handler
-        stpipe_log.addHandler(handler)
-
-        # Logger is now configured
-        assert is_configured(stpipe_log)
-
-        # Keep it for later
-        stpipe_loggers.append(stpipe_log)
-
-    try:
-        LoggingPipeline.call()
-
-        # Stdout should be empty
-        capt = capsys.readouterr()
-        assert capt.out == ""
-
-        # Check stderr for expected messages
-        for msg in ALL_MESSAGES:
-            if msg in expected:
-                # Make sure there's exactly one copy of the message
-                assert capt.err.count(msg) == 1
-            else:
-                assert msg not in capt.err
-    finally:
-        # Clean up the stpipe loggers
-        handler.flush()
-        handler.close()
-        for stpipe_log, old_level in zip(stpipe_loggers, current_level, strict=True):
-            stpipe_log.removeHandler(handler)
-            stpipe_log.setLevel(old_level)
-            assert not is_configured(stpipe_log)
-
-
 def test_call_configure_log(capsys, root_logger_unchanged):
     LoggingPipeline.call(configure_log=False)
 

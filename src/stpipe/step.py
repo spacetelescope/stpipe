@@ -717,10 +717,9 @@ class Step:
 
         Gets a config file from CRDS if one is available.
 
-        By default, log handlers are added for the duration of the run, if there
-        are no handlers already present on the stpipe loggers specified by
-        ``get_stpipe_loggers``.  To avoid configuring the log, specify
-        ``configure_log=False`` in the keyword arguments.
+        By default, log handlers are added for the duration of the run.
+        To avoid configuring the log, specify ``configure_log=False`` in
+        the keyword arguments.
 
         To set configuration parameters, pass a ``config_file`` path or
         keyword arguments.  Keyword arguments override those in the
@@ -761,21 +760,10 @@ class Step:
                 ) from e
             del kwargs["logcfg"]
         elif configure_log and log.LogConfig.applied is None:
-            # Check for existing configuration on the stpipe loggers:
-            # if any handlers are present, don't add the default config
-            is_configured = False
-            for log_name in log_names:
-                stpipe_log = logging.getLogger(log_name)
-                if len(stpipe_log.handlers) != 0:
-                    is_configured = True
-                    break
-            if not is_configured:
-                # Load a default configuration
-                log_cfg = log.load_configuration(
-                    config_file=log._find_logging_config_file()
-                )
-            else:
-                log_cfg = None
+            # Load a default configuration
+            log_cfg = log.load_configuration(
+                config_file=log._find_logging_config_file()
+            )
         else:
             log_cfg = None
         ctx = nullcontext if log_cfg is None else log_cfg.context
