@@ -2,11 +2,12 @@
 Various utilities to handle running Steps from the commandline.
 """
 
-import io
+import argparse
 import logging
 import os
 import os.path
 import textwrap
+import warnings
 
 from . import config_parser, log, utilities
 from .step import Step, get_disable_crds_steppars
@@ -15,6 +16,9 @@ built_in_configuration_parameters = [
     "debug",
     "logcfg",
     "verbose",
+    "log-level",
+    "log-file",
+    "log-stream",
 ]
 
 logger = logging.getLogger(__name__)
@@ -61,6 +65,75 @@ def _get_config_and_class(identifier):
     return step_class, config, name, config_file
 
 
+def _build_parent_arg_parser(cls=None, apply_log_cfg=False):
+    """Build a top-level argument parser for the command line interface."""
+    parser1 = argparse.ArgumentParser(
+        description="Run an stpipe Step or Pipeline",
+        add_help=False,
+    )
+    if cls is None:
+        parser1.add_argument(
+            "cfg_file_or_class",
+            type=str,
+            nargs=1,
+            help="The configuration file or Python class to run",
+        )
+    else:
+        parser1.add_argument(
+            "--config-file",
+            type=str,
+            help="A configuration file to load parameters from",
+        )
+    parser1.add_argument(
+        "--debug",
+        action="store_true",
+        help="When an exception occurs, invoke the Python debugger, pdb",
+    )
+    parser1.add_argument(
+        "--save-parameters",
+        type=str,
+        help="Save step parameters to specified file",
+    )
+    parser1.add_argument(
+        "--disable-crds-steppars",
+        action="store_true",
+        help="Disable retrieval of step parameter references files from CRDS",
+    )
+    if apply_log_cfg:
+        parser1.add_argument(
+            "--logcfg",
+            type=str,
+            help="DEPRECATED: The logging configuration file to load. "
+            "Ignored if verbose or other log arguments are set.",
+        )
+        parser1.add_argument(
+            "--verbose",
+            "-v",
+            action="store_true",
+            help="Turn on all logging messages",
+        )
+        parser1.add_argument(
+            "--log-level",
+            type=str,
+            default=None,
+            help="Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL). "
+            "Ignored if 'verbose' is specified.",
+        )
+        parser1.add_argument(
+            "--log-file",
+            type=str,
+            default=None,
+            help="Full path to a file name to record log messages",
+        )
+        parser1.add_argument(
+            "--log-stream",
+            type=str,
+            default=None,
+            help="Log stream for terminal messages (stdout, stderr, or null).",
+        )
+    return parser1
+
+
 def _build_arg_parser_from_spec(spec, step_class, parent=None):
     """
     Given a configspec, sets up an argparse argument parser that
@@ -76,8 +149,6 @@ def _build_arg_parser_from_spec(spec, step_class, parent=None):
 
     The "baz" variable can be changed with ``--foo.bar.baz=42``.
     """
-    import argparse
-
     # It doesn't translate the configspec types -- it instead
     # will accept any string.  However, the types of the arguments will
     # later be verified by configobj itself.
@@ -163,13 +234,16 @@ def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
     """
     Create a step from a configuration file and return it.  Don't run it.
 
+    DOES NOT RUN THE STEP.
+
     Parameters
     ----------
     args : list of str
-        Commandline arguments
+        Command line arguments
 
-    cls : Step class
-        The step class to use.  If none is provided, the step
+    cls : Step class, optional
+        The step class to use.  If none is provided, the step is inferred
+        from the input arguments.
 
     apply_log_cfg : bool
         If True, apply the logging configuration. If False,
@@ -192,53 +266,10 @@ def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
     positional: list of strings
         Positional parameters after arg parsing
 
-    DOES NOT RUN THE STEP
+    debug_on_exception : bool
+        If True, the Python debugger will be invoked when an exception occurs.
     """
-    import argparse
-
-    parser1 = argparse.ArgumentParser(
-        description="Run an stpipe Step or Pipeline",
-        add_help=False,
-    )
-    if cls is None:
-        parser1.add_argument(
-            "cfg_file_or_class",
-            type=str,
-            nargs=1,
-            help="The configuration file or Python class to run",
-        )
-    else:
-        parser1.add_argument(
-            "--config-file",
-            type=str,
-            help="A configuration file to load parameters from",
-        )
-    parser1.add_argument(
-        "--logcfg",
-        type=str,
-        help="The logging configuration file to load",
-    )
-    parser1.add_argument(
-        "--verbose",
-        "-v",
-        action="store_true",
-        help="Turn on all logging messages",
-    )
-    parser1.add_argument(
-        "--debug",
-        action="store_true",
-        help="When an exception occurs, invoke the Python debugger, pdb",
-    )
-    parser1.add_argument(
-        "--save-parameters",
-        type=str,
-        help="Save step parameters to specified file.",
-    )
-    parser1.add_argument(
-        "--disable-crds-steppars",
-        action="store_true",
-        help="Disable retrieval of step parameter references files from CRDS",
-    )
+    parser1 = _build_parent_arg_parser(cls, apply_log_cfg=apply_log_cfg)
     known, _ = parser1.parse_known_args(args)
 
     try:
@@ -254,31 +285,52 @@ def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
             )
             step_class = cls
 
-        if known.verbose:
-            if known.logcfg is not None:
-                raise ValueError(
-                    "If --verbose is set, a logging configuration file may not be"
-                    " provided"
-                )
-            log_config = io.BytesIO(log.MAX_CONFIGURATION)
-        elif known.logcfg is not None:
-            if not os.path.exists(known.logcfg):
-                raise OSError(f"Logging config {known.logcfg!r} not found")
-            log_config = known.logcfg
-        else:
-            log_config = log._find_logging_config_file()
-
-        try:
-            log_cfg = log.load_configuration(log_config)
-        except Exception as e:
-            raise ValueError(
-                f"Error parsing logging config {log_config!r}:\n{e}"
-            ) from e
-
-        # Apply the logging configuration to the stpipe logger to
-        # capture start up messages
         if apply_log_cfg:
+            # Retrieve a log config file if specified
+            use_log_cfg = True
+            log_args = [
+                known.log_level,
+                known.log_file,
+                known.log_stream,
+            ]
+            if known.verbose is True or any([arg is not None for arg in log_args]):
+                use_log_cfg = False
+
+            logcfg = None
+            if known.logcfg is not None:
+                msg = (
+                    "The logcfg configuration file is deprecated. "
+                    "Please use the log_* command line "
+                    "arguments to configure logging."
+                )
+                warnings.warn(msg, DeprecationWarning, stacklevel=2)
+                if use_log_cfg:
+                    if not os.path.exists(known.logcfg):
+                        raise OSError(f"Logging config {known.logcfg!r} not found")
+                    logcfg = known.logcfg
+            elif use_log_cfg:
+                logcfg = log._find_logging_config_file()
+
+            if known.verbose:
+                log_level = "DEBUG"
+            elif known.log_level is not None:
+                log_level = str(known.log_level).upper()
+            else:
+                log_level = None
+            try:
+                log_cfg = log.load_configuration(
+                    config_file=logcfg,
+                    log_level=log_level,
+                    log_file=known.log_file,
+                    log_stream=known.log_stream,
+                )
+            except Exception as e:
+                raise ValueError(f"Error parsing logging configuration:\n{e}") from e
+
+            # Apply the logging configuration to the stpipe logger to
+            # capture start up messages
             log_cfg.apply()
+
     except Exception as e:
         _print_important_message("ERROR PARSING CONFIGURATION:", str(e))
         parser1.print_help()
@@ -304,11 +356,15 @@ def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
         del args.cfg_file_or_class
     else:
         del args.config_file
-    del args.logcfg
-    del args.verbose
     del args.debug
     del args.save_parameters
     del args.disable_crds_steppars
+    if apply_log_cfg:
+        del args.logcfg
+        del args.verbose
+        del args.log_level
+        del args.log_file
+        del args.log_stream
     positional = args.args
     del args.args
 
@@ -382,7 +438,9 @@ def step_from_cmdline(args, cls=None):
         Commandline arguments
 
     cls : Step class
-        The step class to use.  If none is provided, the step
+        The step class to use.  If none is provided, the step is inferred
+        from the input arguments.
+
 
     Returns
     -------

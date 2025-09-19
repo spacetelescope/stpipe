@@ -19,6 +19,11 @@ def _clean_up_logging():
     logging.shutdown()
 
 
+STEP_DEBUG = "This step has called out a debug message."
+PIPELINE_DEBUG = "This pipeline has called out a debug message."
+EXTERNAL_DEBUG = "This external package has called out a debug message."
+ALL_DEBUG = [STEP_DEBUG, PIPELINE_DEBUG, EXTERNAL_DEBUG]
+
 STEP_INFO = "This step has called out an info message."
 PIPELINE_INFO = "This pipeline has called out an info message."
 EXTERNAL_INFO = "This external package has called out an info message."
@@ -29,7 +34,16 @@ PIPELINE_WARNING = "This pipeline has called out a warning."
 EXTERNAL_WARNING = "This external package has called out a warning."
 ALL_WARNINGS = [STEP_WARNING, PIPELINE_WARNING, EXTERNAL_WARNING]
 
-ALL_MESSAGES = ALL_INFO + ALL_WARNINGS
+ALL_MESSAGES = ALL_DEBUG + ALL_INFO + ALL_WARNINGS
+ALL_MESSAGES_EXCEPT_DEBUG = ALL_INFO + ALL_WARNINGS
+
+LOGLEVELS = (
+    logging.CRITICAL,
+    logging.ERROR,
+    logging.WARNING,
+    logging.INFO,
+    logging.DEBUG,
+)
 
 logger = logging.getLogger("stpipe.tests.test_logger")
 
@@ -46,8 +60,10 @@ class LoggingStep(Step):
     def process(self):
         logger.info(STEP_INFO)
         logger.warning(STEP_WARNING)
+        logger.debug(STEP_DEBUG)
         logging.getLogger("external.logger").warning(EXTERNAL_WARNING)
         logging.getLogger("external.logger").info(EXTERNAL_INFO)
+        logging.getLogger("external.logger").debug(EXTERNAL_DEBUG)
 
     def _datamodels_open(self, **kwargs):
         pass
@@ -71,6 +87,7 @@ class LoggingPipeline(Pipeline):
     def process(self):
         logger.warning(PIPELINE_WARNING)
         logger.info(PIPELINE_INFO)
+        logger.debug(PIPELINE_DEBUG)
         self.simplestep.run()
 
     def _datamodels_open(self, **kwargs):
@@ -79,6 +96,34 @@ class LoggingPipeline(Pipeline):
     @staticmethod
     def get_stpipe_loggers():
         return ("stpipe", "external")
+
+
+def is_configured(logger_instance):
+    """
+    Quick check for likely user log configuration.
+
+    Since stpipe may attach handlers to the root logger,
+    we have to check for handlers commonly added by pytest.
+
+    Parameters
+    ----------
+    logger_instance : logging.Logger
+        Logger to check
+    """
+    for handler in logger_instance.handlers:
+        if handler.__class__.__name__ in (
+            "LogCaptureHandler",
+            "_LiveLoggingNullHandler",
+        ):
+            continue
+        elif (
+            isinstance(handler, logging.FileHandler)
+            and handler.baseFilename == "/dev/null"
+        ):
+            continue
+        else:
+            return True
+    return False
 
 
 def test_configuration(tmp_path):
@@ -211,7 +256,7 @@ def test_record_logs():
 @pytest.mark.parametrize(
     "level, expected",
     (
-        ("INFO", ALL_MESSAGES),
+        ("INFO", ALL_MESSAGES_EXCEPT_DEBUG),
         ("WARNING", ALL_WARNINGS),
     ),
 )
@@ -223,7 +268,8 @@ def test_logcfg_routing(tmp_path, level, expected):
     with open(logcfg_file, "w") as f:
         f.write(cfg)
 
-    LoggingPipeline.call(logcfg=logcfg_file)
+    with pytest.warns(DeprecationWarning, match="'logcfg' configuration option"):
+        LoggingPipeline.call(logcfg=logcfg_file)
 
     with open(tmp_path / "myrun.log") as f:
         fulltext = "\n".join(list(f))
@@ -239,7 +285,7 @@ def test_log_records():
     pipeline = LoggingPipeline()
     pipeline.run()
 
-    for msg in ALL_MESSAGES:
+    for msg in ALL_MESSAGES_EXCEPT_DEBUG:
         assert msg in pipeline.log_records
 
 
@@ -252,24 +298,10 @@ def root_logger_unchanged():
     original_level = root_logger.level
     yield
     assert root_logger.level == original_level
-    for h in root_logger.handlers:
-        # these are added by pytest
-        if h.__class__.__name__ in ("LogCaptureHandler", "_LiveLoggingNullHandler"):
-            continue
-        if isinstance(h, logging.FileHandler) and h.baseFilename == "/dev/null":
-            continue
-        raise AssertionError(f"Unexpected handler {h} in root logger")
+    assert not is_configured(root_logger), "Unexpected handler in root logger"
 
 
-@pytest.fixture(
-    params=(
-        logging.CRITICAL,
-        logging.ERROR,
-        logging.WARNING,
-        logging.INFO,
-        logging.DEBUG,
-    )
-)
+@pytest.fixture(params=LOGLEVELS)
 def log_cfg_path(request, tmp_path):
     config_level = logging.CRITICAL - request.param
     cfg = f"[*]\nlevel = {config_level}\nhandler = file:{tmp_path}/myrun.log, stderr"
@@ -283,26 +315,70 @@ def log_cfg_path(request, tmp_path):
 
 
 def test_call_no_root_logger_changes(log_cfg_path, root_logger_unchanged):
-    LoggingPipeline.call(logcfg=str(log_cfg_path))
+    with pytest.warns(DeprecationWarning, match="'logcfg' configuration option"):
+        LoggingPipeline.call(logcfg=str(log_cfg_path))
+
+
+def test_default_call(capsys, root_logger_unchanged):
+    LoggingPipeline.call()
+    capt = capsys.readouterr()
+    assert capt.out == ""
+    for msg in ALL_MESSAGES_EXCEPT_DEBUG:
+        assert msg in capt.err
+    for msg in ALL_DEBUG:
+        assert msg not in capt.err
+
+
+def test_default_cmdline(capsys, root_logger_unchanged):
+    LoggingPipeline.from_cmdline(["test_logger.LoggingPipeline"])
+    capt = capsys.readouterr()
+    assert capt.out == ""
+    for msg in ALL_MESSAGES_EXCEPT_DEBUG:
+        assert msg in capt.err
+    for msg in ALL_DEBUG:
+        assert msg not in capt.err
 
 
 def test_from_cmdline_no_root_logger_changes(log_cfg_path, root_logger_unchanged):
+    with pytest.warns(DeprecationWarning, match="logcfg configuration file"):
+        LoggingPipeline.from_cmdline(
+            ["test_logger.LoggingPipeline", f"--logcfg={log_cfg_path!s}"]
+        )
+
+
+@pytest.mark.parametrize("logging_level", LOGLEVELS)
+def test_from_cmdline_no_root_logger_changes_level_arg(
+    root_logger_unchanged, logging_level
+):
     LoggingPipeline.from_cmdline(
-        ["test_logger.LoggingPipeline", f"--logcfg={log_cfg_path!s}"]
+        ["test_logger.LoggingPipeline", f"--log-level={logging_level!s}"]
     )
 
 
 def test_step_from_cmdline_no_root_logger_changes(log_cfg_path, root_logger_unchanged):
+    with pytest.warns(DeprecationWarning, match="logcfg configuration file"):
+        stpipe.cmdline.step_from_cmdline(
+            ["test_logger.LoggingPipeline", "--logcfg", str(log_cfg_path)]
+        )
+
+
+@pytest.mark.parametrize("logging_level", LOGLEVELS)
+def test_step_from_cmdline_no_root_logger_changes_level_arg(
+    root_logger_unchanged, logging_level
+):
     stpipe.cmdline.step_from_cmdline(
-        ["test_logger.LoggingPipeline", "--logcfg", str(log_cfg_path)]
+        ["test_logger.LoggingPipeline", f"--log-level={logging_level!s}"]
     )
 
 
 def test_just_the_step_from_cmdline_no_root_logger_changes(
     log_cfg_path, root_logger_unchanged
 ):
+    # By default, no log configuration is applied or available in the
+    # parameters.  If apply_log_cfg is True, it *will* modify the
+    # root logger.
     stpipe.cmdline.just_the_step_from_cmdline(
-        ["test_logger.LoggingPipeline", "--logcfg", str(log_cfg_path)]
+        ["test_logger.LoggingPipeline"], apply_log_cfg=False
     )
 
 
@@ -390,3 +466,79 @@ def test_logging_unconfigured_external_package(capsys, root_logger_unchanged):
 
     captured = capsys.readouterr()
     assert MSG not in captured.err
+
+
+def test_call_configure_log(capsys, root_logger_unchanged):
+    LoggingPipeline.call(configure_log=False)
+
+    # Nothing is logged
+    capt = capsys.readouterr()
+    assert capt.out == ""
+    assert capt.err == ""
+
+
+@pytest.mark.parametrize(
+    "log_level", [None, "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+)
+@pytest.mark.parametrize("log_stream", [None, "stdout", "stderr", "null"])
+@pytest.mark.parametrize("log_file", [None, "test_log.txt"])
+def test_command_line_arguments(
+    capsys, tmp_path, root_logger_unchanged, log_level, log_stream, log_file
+):
+    # Add specified arguments for the command line
+    cmdline_args = ["test_logger.LoggingPipeline"]
+    if log_level is not None:
+        cmdline_args.append(f"--log-level={log_level}")
+    if log_stream is not None:
+        cmdline_args.append(f"--log-stream={log_stream}")
+    if log_file is not None:
+        log_file = tmp_path / log_file
+        cmdline_args.append(f"--log-file={str(log_file)}")
+
+    # Run the step with the specified arguments
+    stpipe.cmdline.step_from_cmdline(cmdline_args)
+
+    # Check for a log file: it is not created if there are no messages logged
+    if log_file is not None and log_level not in ["ERROR", "CRITICAL"]:
+        assert log_file.exists()
+        with log_file.open() as fh:
+            log_lines = fh.readlines()
+        file_messages = "\n".join(log_lines)
+    else:
+        file_messages = []
+
+    # Check for terminal log messages: default is stderr
+    capt = capsys.readouterr()
+    terminal_messages = ""
+    if log_stream in ["null", "stdout"]:
+        assert capt.err == ""
+        terminal_messages = capt.out
+    if log_stream in [None, "null", "stderr"]:
+        assert capt.out == ""
+        terminal_messages = capt.err
+
+    # Default level is INFO, unless otherwise specified
+    if log_level is None or log_level == "INFO":
+        expected_messages = ALL_MESSAGES_EXCEPT_DEBUG
+    elif log_level == "DEBUG":
+        expected_messages = ALL_MESSAGES
+    elif log_level == "WARNING":
+        expected_messages = ALL_WARNINGS
+    else:
+        # No messages expected, regardless of other settings
+        expected_messages = []
+        assert len(file_messages) == 0
+        assert len(terminal_messages) == 0
+
+    # Check for expected messages in file or terminal
+    for message in expected_messages:
+        if log_file is not None:
+            # The message is logged to the file exactly once
+            assert file_messages.count(message) == 1
+        else:
+            assert len(file_messages) == 0
+        if log_stream != "null":
+            # The message is logged to the terminal exactly once
+            assert terminal_messages.count(message) == 1
+        else:
+            assert len(terminal_messages) == 0
