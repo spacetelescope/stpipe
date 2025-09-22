@@ -1,0 +1,2 @@
+Provide new command line arguments for configuring logging (log-level, log-file, log-stream).
+Prevent applying default configuration in the ``call`` function if the user opts out of log configuration (``configure_log=False``).
