@@ -1,3 +1,31 @@
+0.11.0 (2025-09-23)
+===================
+
+New Features
+------------
+
+- Provide new command line arguments for configuring logging (log-level,
+  log-file, log-stream).
+  Prevent applying default configuration in the ``call`` function if the user
+  opts out of log configuration (``configure_log=False``). (`#250
+  <https://github.com/spacetelescope/stpipe/issues/250>`_)
+- Allow downstream packages to specify known loggers, to ensure all desired
+  logging messages are captured without adding configuration to the root
+  logger. (`#255 <https://github.com/spacetelescope/stpipe/issues/255>`_)
+
+
+Deprecations and Removals
+-------------------------
+
+- Deprecate the ``Step.log`` logger. Downstream packages should transition to
+  logging to local loggers, retrieved via ``logging.getLogger``. (`#249
+  <https://github.com/spacetelescope/stpipe/issues/249>`_)
+- Deprecate logging configuration files in ``logcfg`` arguments. Users should
+  transition to using log configuration command line arguments or directly
+  configuring logging in their Python code. (`#250
+  <https://github.com/spacetelescope/stpipe/issues/250>`_)
+
+
 0.10.0 (2025-07-10)
 ===================
 
