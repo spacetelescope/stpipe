@@ -1,0 +1,1 @@
+Remove ``logging.captureWarnings`` setting from the ``stpipe.log`` module.

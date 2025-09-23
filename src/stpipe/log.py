@@ -337,6 +337,3 @@ def record_logs(log_names, level=logging.NOTSET, formatter=None):
             for log_name in log_names:
                 logger = logging.getLogger(log_name)
                 logger.removeHandler(handler)
-
-
-logging.captureWarnings(True)
