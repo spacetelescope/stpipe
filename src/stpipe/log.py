@@ -148,7 +148,7 @@ class LogConfig:
             log = logging.getLogger(log_name)
             for handler in self.handlers:
                 log.addHandler(handler)
-            if log_name == 'py.warnings':
+            if log_name == "py.warnings":
                 logging.captureWarnings(True)
 
             # Set the log level
@@ -179,7 +179,7 @@ class LogConfig:
             log_names = [STPIPE_ROOT_LOGGER]
         for log_name in log_names:
             log = logging.getLogger(log_name)
-            if log_name == 'py.warnings':
+            if log_name == "py.warnings":
                 logging.captureWarnings(False)
             for handler in self.handlers:
                 handler.flush()
