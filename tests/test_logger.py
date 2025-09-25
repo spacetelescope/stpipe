@@ -544,7 +544,7 @@ def test_command_line_arguments(
             assert len(terminal_messages) == 0
 
 
-def test_logging_capwarnings(capsys, caplog):
+def test_logging_capwarnings(caplog, recwarn):
     """
     Test that uncaptured warnings don't make it into the logs,
     but captured warnings do.
@@ -582,12 +582,10 @@ def test_logging_capwarnings(capsys, caplog):
             return ("stpipe", "py.warnings")
 
     StepNoCapture.call()
-    captured = capsys.readouterr()
-    assert MSG not in captured.err
+    assert len(recwarn) == 1
     assert MSG not in caplog.text
 
     StepCaptures.call()
-    captured = capsys.readouterr()
-    assert MSG in captured.err
+    assert len(recwarn) == 1  # Unchanged from above assert
     assert MSG in caplog.text
     assert logging._warnings_showwarning is None
