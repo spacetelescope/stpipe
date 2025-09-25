@@ -564,7 +564,7 @@ def test_logging_capwarnings(capsys, caplog):
 
         @staticmethod
         def get_stpipe_loggers():
-            return ("stpipe")
+            return "stpipe"
 
     class StepCaptures(Step):
         spec = """
@@ -592,4 +592,3 @@ def test_logging_capwarnings(capsys, caplog):
     assert MSG in captured.err
     assert MSG in caplog.text
     assert logging._warnings_showwarning is None
-
