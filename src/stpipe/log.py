@@ -139,6 +139,8 @@ class LogConfig:
         """
         if log_names is None:
             log_names = [STPIPE_ROOT_LOGGER]
+        if "py.warnings" in log_names:
+            logging.captureWarnings(True)
         for log_name in log_names:
             # Don't reapply configuration, to avoid overwriting the
             # previously recorded level.
@@ -187,6 +189,8 @@ class LogConfig:
         if LogConfig.applied is self:
             self._previous_level = {}
             LogConfig.applied = None
+        if "py.warnings" in log_names:
+            logging.captureWarnings(False)
 
     @contextmanager
     def context(self, log_names=None):
@@ -337,6 +341,3 @@ def record_logs(log_names, level=logging.NOTSET, formatter=None):
             for log_name in log_names:
                 logger = logging.getLogger(log_name)
                 logger.removeHandler(handler)
-
-
-logging.captureWarnings(True)
