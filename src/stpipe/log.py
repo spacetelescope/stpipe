@@ -102,7 +102,6 @@ class LogConfig:
             self.handlers.append(BreakHandler(self.break_level))
 
         self._previous_level = {}
-        self._orig_warnings_showwarning = logging._warnings_showwarning
 
     def get_handler(self, handler_str):
         """
@@ -190,7 +189,7 @@ class LogConfig:
         if LogConfig.applied is self:
             self._previous_level = {}
             LogConfig.applied = None
-        if "py.warnings" in log_names and self._orig_warnings_showwarning is None:
+        if "py.warnings" in log_names:
             logging.captureWarnings(False)
 
     @contextmanager
