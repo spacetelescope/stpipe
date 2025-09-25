@@ -1,1 +1,1 @@
-If a step lists the ``py.warnings`` logger as configurable, capture warnings and emit them as logging messages. Remove the capturing of warnings on import of ``stpipe``. 
+If a step lists the ``py.warnings`` logger as configurable, capture warnings and emit them as logging messages. Remove the capturing of warnings on import of ``stpipe``.
