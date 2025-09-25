@@ -542,3 +542,54 @@ def test_command_line_arguments(
             assert terminal_messages.count(message) == 1
         else:
             assert len(terminal_messages) == 0
+
+
+def test_logging_capwarnings(capsys, caplog):
+    """
+    Test that uncaptured warnings don't make it into the logs,
+    but captured warnings do.
+    """
+    MSG = "warning from py.warnings"
+
+    class StepNoCapture(Step):
+        spec = """
+           output_ext = string(default='step')
+        """
+
+        def process(self):
+            warnings.warn(MSG)
+
+        def _datamodels_open(self, **kwargs):
+            pass
+
+        @staticmethod
+        def get_stpipe_loggers():
+            return ("stpipe")
+
+    class StepCaptures(Step):
+        spec = """
+           output_ext = string(default='step')
+        """
+
+        def process(self):
+            warnings.warn(MSG)
+
+        def _datamodels_open(self, **kwargs):
+            pass
+
+        @staticmethod
+        def get_stpipe_loggers():
+            return ("stpipe", "py.warnings")
+
+    StepNoCapture.call()
+    captured = capsys.readouterr()
+    assert MSG not in captured.err
+    assert MSG not in caplog.text
+
+    StepCaptures.call()
+    captured = capsys.readouterr()
+
+    assert MSG in captured.err
+    assert MSG in caplog.text
+    assert logging._warnings_showwarning is None
+
