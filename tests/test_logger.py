@@ -588,7 +588,6 @@ def test_logging_capwarnings(capsys, caplog):
 
     StepCaptures.call()
     captured = capsys.readouterr()
-
     assert MSG in captured.err
     assert MSG in caplog.text
     assert logging._warnings_showwarning is None
