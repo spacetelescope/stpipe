@@ -1,3 +1,15 @@
+0.11.1 (2025-09-26)
+===================
+
+Bug Fixes
+---------
+
+- If a step lists the ``py.warnings`` logger as configurable, capture warnings
+  and emit them as logging messages. Remove the capturing of warnings on import
+  of ``stpipe``. (`#271
+  <https://github.com/spacetelescope/stpipe/issues/271>`_)
+
+
 0.11.0 (2025-09-23)
 ===================
 
