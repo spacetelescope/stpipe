@@ -4,7 +4,7 @@ description = "Framework for calibration pipeline software"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
-    { name = "STScI", email = "help@stsci.edu" },
+    { name = "STScI" },
 ]
 classifiers = [
     "Intended Audience :: Science/Research",
