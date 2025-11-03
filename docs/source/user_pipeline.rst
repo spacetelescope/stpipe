@@ -4,8 +4,6 @@
 Pipelines
 =========
 
-.. TODO: Rewrite using a real-world example
-
 It is important to note that a Pipeline is also a Step, so everything
 that applies to a Step in the :ref:`stpipe-user-steps` chapter also
 applies to Pipelines.
@@ -27,7 +25,7 @@ From a parameter file
 A Pipeline parameter file follows the same format as a Step parameter file:
 :ref:`config_asdf_files`
 
-Here is an example pipeline parameter file for the ``Image2Pipeline``
+Here is an example pipeline parameter file for an imaginary ``CalibrationPipeline``
 class:
 
 .. code-block:: yaml
@@ -39,18 +37,17 @@ class:
    --- !core/asdf-1.1.0
    asdf_library: !core/software-1.0.0 {author: Space Telescope Science Institute, homepage: 'http://github.com/spacetelescope/asdf',
       name: asdf, version: 2.7.3}
-   class: jwst.pipeline.Image2Pipeline
-   name: Image2Pipeline
+   class: mycode.pipelines.CalibrationPipeline
+   name: MyCalibrationPipeline
    steps:
-   - class: jwst.flatfield.flat_field_step.FlatFieldStep
-     name: flat_field
+   - class: mycode.steps.CleanupStep
+     name: cleanup
      parameters:
        skip = True
-   - class: jwst.resample.resample_step.ResampleStep
-     name: resample
+   - class: mycode.steps.DenoiseStep
+     name: denoise
      parameters:
-       pixel_scale_ratio: 1.0
-       pixfrac: 1.0
+       smoothing: 1.0
 
 Just like a ``Step``, it must have ``name`` and ``class`` values.
 Here the ``class`` must refer to a subclass of ``stpipe.Pipeline``.
@@ -70,31 +67,29 @@ parameter file that contains:
 .. code-block:: yaml
 
    steps:
-   - class: jwst.resample.resample_step.ResampleStep
-     name: resample
+   - class: mycode.steps.DenoiseStep
+     name: denoise
      parameters:
-       pixel_scale_ratio: 1.0
-       pixfrac: 1.0
+       smoothing: 1.0
 
 is equivalent to:
 
 .. code-block:: yaml
 
    steps:
-   - class: jwst.resample.resample_step.ResampleStep
-     name: resample
+   - class: mycode.steps.DenoiseStep
+     name: denoise
      parameters:
-        config_file = myresample.asdf
+       config_file = mydenoise.asdf
 
-with the file ``myresample.asdf.`` in the same directory:
+with the file ``mydenoise.asdf.`` in the same directory:
 
 .. code-block:: yaml
 
-   class: jwst.resample.resample_step.ResampleStep
-   name: resample
+   class: mycode.steps.DenoiseStep
+   name: denoise
    parameters:
-     pixel_scale_ratio: 1.0
-     pixfrac: 1.0
+     smoothing: 1.0
 
 If both a ``config_file`` and additional parameters are specified, the
 ``config_file`` is loaded, and then the local parameters override
@@ -115,13 +110,13 @@ equivalent of the parameter file above:
 
 .. code-block:: python
 
-    from stpipe.pipeline import Image2Pipeline
+    from mycode.pipelines import CalibrationPipeline
 
     steps = {
-        'resample': {'pixel_scale_ratio': 1.0, 'pixfrac': 1.0}
+        'denoise': {'smoothing': 2.0}
     }
 
-    pipe = Image2Pipeline(steps=steps)
+    pipe = CalibrationPipeline(steps=steps)
 
 Running a Pipeline
 ==================
@@ -139,7 +134,7 @@ step in the example above, one can do:
 
 .. code-block:: shell
 
-    strun stpipe.pipeline.Image2Pipeline --steps.resample.pixfrac=2.0
+    strun mycode.pipelines.CalibrationPipeline --steps.denoise.smoothing=2.0
 
 From Python
 -----------
@@ -149,16 +144,6 @@ Once the pipeline has been configured (as above), run it::
     pipe.run()
 
 For more details, see :ref:`python_run_vs_call`.
-
-Caching details
----------------
-
-The results of a Step are cached using Python pickles.  This allows
-virtually most of the standard Python data types to be cached.  In
-addition, any FITS models that are the result of a step are saved as
-standalone FITS files to make them more easily used by external tools.
-The filenames are based on the name of the substep within the
-pipeline.
 
 Hooks
 =====
@@ -188,13 +173,13 @@ Each of these parameters is a list of strings, where each entry is one of:
 * A dot-separated path to a Python function.
 
 
-For example, here's a ``post_hook`` that will display a FITS file in
-the ``ds9`` FITS viewer after the resample step has completed processing:
+For example, here's a ``post_hook`` that runs ``stat`` on our output file
+after the denoise step:
 
 .. code-block:: yaml
 
    steps:
-   - class: jwst.resample.resample_step.ResampleStep
-     name: resample
+   - class: mycode.steps.DenoiseStep
+     name: denoise
      parameters:
-        post_hooks = "ds9 {0}",
+        post_hooks = "stat {0}",
