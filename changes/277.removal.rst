@@ -1,0 +1,1 @@
+Remove support for profiling via STPIPE_PROFILE. Use standard python profiling if needed.
