@@ -14,7 +14,6 @@ For Users
    user_step.rst
    user_pipeline.rst
    config_asdf.rst
-   config_cfg.rst
    call_via_call.rst
    call_via_run.rst
    parameter_files.rst
