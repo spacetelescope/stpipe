@@ -1,0 +1,1 @@
+Remove warning when step is passed a "discouraged" type.
