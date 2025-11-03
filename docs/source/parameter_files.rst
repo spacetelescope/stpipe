@@ -4,7 +4,7 @@ Parameter Files
 ===============
 
 Parameter files can be used to specify parameter values when running a
-pipeline or individual steps. For JWST, parameter files are retrieved from
+pipeline or individual steps. Typically, parameter files are retrieved from
 CRDS, just as with other reference files. If there is no match between a step,
 the input data, and CRDS, the coded defaults are used. These values can be
 overridden either by the command line options and/or a
@@ -23,15 +23,11 @@ parameter file add ``--save-parameters <filename.asdf>`` to the command::
 
     strun <step.class> <required-input-files> --save-parameters <filename.asdf>
 
-For example, to save the parameters used for a run of the ``calwebb_image2`` pipeline, use::
-
-    strun calwebb_image2 jw82500001003_02101_00001_NRCALONG_rate.fits --save-parameters my_image2.asdf
-
 Once saved, the file can be edited, removing parameters that should be left
 at their default/CRDS values, and setting the remaining parameters to the
 desired values. Once modified, the new parameter file can be used::
 
-    strun my_image2.asdf jw82500001003_02101_00001_NRCALONG_rate.fits
+    strun my_config.asdf myfile.asdf
 
 Note that the parameter values will reflect whatever was set on the
 command-line, through a specified local parameter file, and what was
