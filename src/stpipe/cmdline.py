@@ -466,13 +466,7 @@ def step_from_cmdline(args, cls=None):
         raise e
 
     try:
-        profile_path = os.environ.pop("STPIPE_PROFILE", None)
-        if profile_path:
-            import cProfile
-
-            cProfile.runctx("step.run(*positional)", globals(), locals(), profile_path)
-        else:
-            step.run(*positional)
+        step.run(*positional)
     except Exception as e:
         _print_important_message(f"ERROR RUNNING STEP {step_class.__name__!r}:", str(e))
 
