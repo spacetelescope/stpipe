@@ -58,7 +58,7 @@ that includes every available parameter, which can then be trimmed to the
 parameters that require customization.
 
 Here is an example parameter file (``do_cleanup.asdf``) that runs the (imaginary)
-step ``stpipe.cleanup`` to clean up an image.
+step ``CleanupStep`` to clean up an image.
 
 .. code-block:: yaml
 
@@ -67,7 +67,7 @@ step ``stpipe.cleanup`` to clean up an image.
     %YAML 1.1
     %TAG ! tag:stsci.edu:asdf/
     --- !core/asdf-1.1.0
-    class: stpipe.cleanup
+    class: mycode.steps.CleanupStep
     name: MyCleanup
     parameters:
       threshold: 42.0
@@ -261,19 +261,19 @@ Finally, the remaining optional keyword arguments are the parameters that the
 particular step accepts. The method returns the result of the step. A basic
 example is::
 
-    from mycode.steps import Cleanup
-    output = Cleanup.call('myfile.asdf')
+    from mycode.steps import CleanupStep
+    output = CleanupStep.call('myfile.asdf')
 
-makes a new instance of a ficitonal ``Cleanup`` step and executes using the specified
-file, ``myfile.asdf``. ``Cleanup`` has a parameter ``threshold``. To use a different
+makes a new instance of an imaginary ``CleanupStep`` step and executes using the specified
+file, ``myfile.asdf``. ``CleanupStep`` has a parameter ``threshold``. To use a different
 value than the default, the statement would be::
 
-    output = Cleanup.call('myfile.asdf', threshold=26.0)
+    output = CleanupStep.call('myfile.asdf', threshold=26.0)
 
 If one wishes to use a :ref:`parameter file<parameter_files>`, specify the path
 to it using the ``config_file`` argument::
 
-    output = Cleanup.call('myfile.asdf', config_file='my_config.asdf')
+    output = CleanupStep.call('myfile.asdf', config_file='my_config.asdf')
 
 run()
 `````
@@ -282,9 +282,9 @@ The instance method ``Step.run()`` is the lowest-level method to executing a ste
 or pipeline. Initialization and parameter settings are left up to the user. An
 example is::
 
-    from mycode.steps import Cleanup
+    from mycode.steps import CleanupStep
 
-    mystep = Cleanup()
+    mystep = CleanupStep()
     cleanup.threshold = 26
     cleanup.run(input_data)
 
@@ -298,20 +298,20 @@ reference file. Parameters can be set individually on the instance, as is shown
 above. Parameters can also be specified as keyword arguments when instantiating
 the step. The previous example could be re-written as::
 
-    from mycode.steps import Cleanup
+    from mycode.steps import CleanupStep
 
-    mystep = Cleanup(threshold=26)
+    mystep = CleanupStep(threshold=26)
     output = mystep.run(input_data)
 
 One can implement parameter reference file retrieval and use of a local
 parameter file as follows::
 
     from stpipe import config_parser
-    from mycode.steps import Cleanup
+    from mycode.steps import CleanupStep
 
-    config = Cleanup.get_config_from_reference(input_data)
+    config = CleanupStep.get_config_from_reference(input_data)
     local_config = config_parser.load_config_file('my_config.asdf')
     config_parser.merge_config(config, local_config)
 
-    mystep = Cleanup.from_config_section(config)
+    mystep = CleanupStep.from_config_section(config)
     output = mystep.run(input_data)
