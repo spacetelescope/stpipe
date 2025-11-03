@@ -23,18 +23,14 @@ the next.  That is defined in Python code in the Pipeline’s
 called, the Steps in ``step_defs`` will be instantiated as member
 variables.
 
-For example, here is a pipeline with two steps: one that processes
-each chip of a multi-chip FITS file, and another to combine the chips
-into a single image::
+For example, here is a pipeline with two steps:
 
-    from jwst.stpipe import Pipeline
+    from stpipe import Pipeline
 
-    from stdatamodels.jwst.datamodels import ImageModel
+    from mycode.datamodels import MyDataModel
+    from mycode.steps import CleanupStep, DenoiseStep
 
-    # Some locally-defined steps
-    from . import FlatField, Combine
-
-    class ExamplePipeline(Pipeline):
+    class CalibrationPipeline(Pipeline):
         """
         This example pipeline demonstrates how to combine steps
         using Python code, in some way that it not necessarily
@@ -42,18 +38,18 @@ into a single image::
         """
 
         step_defs = {
-            'flat_field': FlatField,
-            'combine': Combine,
+            'cleanup': CleanupStep,
+            'denoise': DenoiseStep,
             }
 
         def process(self, input):
-            with ImageModel(input) as science:
+            with MyDataModel(input) as science:
 
-                flattened = self.flat_field(science, self.multiplier)
+                cleaner = self.cleanup(science, self.multiplier)
 
-                combined = self.combine(flattened)
+                noise_free = self.denoise(cleaner)
 
-            return combined
+            return noise_free
 
         spec = """
         multiplier = float()     # A multiplier constant
@@ -62,9 +58,6 @@ into a single image::
 When writing the spec member for a Pipeline, only the parameters
 that apply to the Pipeline as a whole need to be included.  The
 parameters for each Step are automatically loaded in by the framework.
-
-In the case of the above example, we define two new pipeline parameters for the
-flat field file and the output filename.
 
 The parameters for the individual substeps that make up the Pipeline
 will be implicitly added by the framework.
