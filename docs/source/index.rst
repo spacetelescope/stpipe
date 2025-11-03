@@ -9,6 +9,8 @@ For Users
 .. toctree::
    :maxdepth: 2
 
+   datamodels.rst
+   model_library.rst
    user_step.rst
    user_pipeline.rst
    config_asdf.rst
@@ -42,7 +44,6 @@ API
 .. toctree::
    :maxdepth: 1
 
-   model_library.rst
    changes.rst
    api.rst
 
