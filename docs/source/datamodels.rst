@@ -1,6 +1,6 @@
 .. _datamodels:
 
-Datamodels
+DataModels
 ==========
 
 TBD
