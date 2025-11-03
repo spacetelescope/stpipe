@@ -17,7 +17,7 @@ collections of `~stpipe.datamodel.AbstractDataModel` instances created from an a
 .. _library_association:
 
 Loading an association
-----------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 Most commonly an instance will be created from an association file:
 
@@ -32,7 +32,7 @@ Most commonly an instance will be created from an association file:
 .. _library_borrowing_and_shelving:
 
 Borrowing and shelving models
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Interacting with an `~stpipe.library.AbstractModelLibrary` involves "borrowing" and "shelving"
 models, both of which must occur during a ``with`` statement (while the library
@@ -58,7 +58,7 @@ Iteration is also supported (but don't forget to return your models!).
 .. _library_on_disk:
 
 On Disk Mode
-------------
+^^^^^^^^^^^^
 
 For large associations (like those larger than memory) it is important
 that the library avoid reading all models at once. The borrow/shelve API
@@ -103,7 +103,7 @@ on both disk space and the time required to write.
 .. _library_map_function:
 
 Map function
-------------
+^^^^^^^^^^^^
 
 Let's say you want to get the ``meta.filename`` attribute for all models
 in a library. The above "open", "borrow", "shelve" pattern can be quite
@@ -126,7 +126,7 @@ applied to each model in the library:
 .. _library_grouping:
 
 Grouping
---------
+^^^^^^^^
 
 Grouping also doesn't require an open library (as all grouping is
 performed on the association metadata).
@@ -148,7 +148,7 @@ performed on the association metadata).
 .. _library_association_information:
 
 Association Information
-=======================
+-----------------------
 
 `~stpipe.library.AbstractModelLibrary.asn` provides read-only access to the association data.
 
@@ -175,7 +175,7 @@ group name) should be added to each member dictionary (see
 .. _library_usage_patterns:
 
 Usage Patterns
-==============
+--------------
 
 What follows is a section about using `~stpipe.library.AbstractModelLibrary`
 in `~stpipe.step.Step` and `~stpipe.pipeline.Pipeline` code. This section
@@ -185,7 +185,7 @@ the `~stpipe.library.AbstractModelLibrary` is used in more pipeline code.
 .. _library_step_input_handling:
 
 Step input handling
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 It is recommended that any `~stpipe.step.Step` (or `~stpipe.pipeline.Pipeline`)
 that accept an
@@ -248,7 +248,7 @@ to have the step process the inputs separately
 .. _library_isolated_processing:
 
 Isolated Processing
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 Let's say we have a `~stpipe.step.Step`, ``flux_calibration``
 that performs an operation that is only concerned with the data
@@ -272,12 +272,12 @@ this method to each model in the library.
 .. _library_troubleshooting:
 
 Troubleshooting
-===============
+---------------
 
 .. _library_closed_library_error:
 
 ClosedLibraryError
-------------------
+^^^^^^^^^^^^^^^^^^
 
 .. code-block:: pycon
 
@@ -302,7 +302,7 @@ This error can be avoided by "opening" the library before calling
 .. _library_borrow_error:
 
 BorrowError
------------
+^^^^^^^^^^^
 
 .. code-block:: pycon
 
@@ -375,7 +375,7 @@ Forgetting to first borrow the model at the index will also produce a
 .. _library_implementing_a_subclass:
 
 Implementing a subclass
-=======================
+-----------------------
 
 Several methods are abstract and will need implementations:
 
@@ -405,7 +405,7 @@ It may also be required (depending on your usage) to update
 .. _library_developer_documentation:
 
 Developer Documentation
-=======================
+-----------------------
 
 What follows are note primarily aimed towards developers and
 maintainers of `~stpipe.library.AbstractModelLibrary`. This section might be useful
@@ -415,7 +415,7 @@ to effectively use `~stpipe.library.AbstractModelLibrary`.
 .. _library_motivation:
 
 Motivation
-----------
+^^^^^^^^^^
 
 The development of `~stpipe.library.AbstractModelLibrary` was largely motivated by
 the need for a container compatible with stpipe machinery
@@ -450,7 +450,7 @@ container code never read and hold all input data in memory.
 .. _library_design_priciples:
 
 Design principles
------------------
+^^^^^^^^^^^^^^^^^
 
 The high level goals of `~stpipe.library.AbstractModelLibrary` are:
 
@@ -481,7 +481,7 @@ in sync.
 .. _library_integration_with_stpipe:
 
 Integration with stpipe
------------------------
+^^^^^^^^^^^^^^^^^^^^^^^
 
 An `~stpipe.library.AbstractModelLibrary` may interact with stpipe when used as an
 input or output for a `~stpipe.step.Step`.
@@ -497,7 +497,7 @@ input or output for a `~stpipe.step.Step`.
 .. _library_future_directions:
 
 Future directions
------------------
+^^^^^^^^^^^^^^^^^
 
 The initial implementation of `~stpipe.library.AbstractModelLibrary` was intentionally
 simple. Several features were discussed but deemed unnecessary for the current code.
