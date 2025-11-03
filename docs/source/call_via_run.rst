@@ -10,7 +10,7 @@ file (as is done when using the :ref:`call <call_examples>` method), the
 parameter file will be ignored::
 
     # Instantiate the class. Do not provide a parameter file.
-    pipe = MyPipeline()
+    pipe = CalibrationPipeline()
 
     # Manually set any desired non-default parameter values
     pipe.mystep.myparameter = 26
@@ -23,7 +23,7 @@ parameter file will be ignored::
 To run a single step::
 
     # Instantiate the step
-    step = MyStep()
+    step = CleanupStep()
 
     # Set parameter values
     step.myparameter = 26
