@@ -95,7 +95,7 @@ override it so the threshold parameter is different:
 
 .. code-block:: shell
 
-    strun do_cleanup.asdf input.fits --threshold=86
+    strun do_cleanup.asdf input.asdf --threshold=86
 
 To display a list of the parameters that are accepted for a given Step
 class, pass the ``-h`` parameter, and the name of a Step class or
@@ -134,7 +134,7 @@ The command would show text similar to this::
       --post_hooks          List of Step classes to run after step [default=list]
       --output_file         File to save output to.
       --output_dir          Directory path for output files
-      --output_ext          Output file type [default='.fits']
+      --output_ext          Output file type [default='.asdf']
       --output_use_model    When saving use `DataModel.meta.filename` [default=False]
       --output_use_index    Append index. [default=True]
       --save_results        Force save results [default=False]
@@ -149,8 +149,8 @@ The command would show text similar to this::
 
 Every step has a number of standard parameters, including the ``--output_file`` parameter.
 If an output filename is not provided, it is determined based on the input file by
-appending the name of the step.  For example, in this case, ``foo.fits`` is output
-to ``foo_cleanup.fits``.
+appending the name of the step.  For example, in this case, ``foo.asdf`` is output
+to ``foo_cleanup.asdf``.
 
 Finally, the parameters a ``Step`` actually ran with can be saved to a new
 parameter file using the ``--save-parameters`` option. This file will have all
@@ -199,7 +199,7 @@ CRDS Retrieval of Step Parameters
 `````````````````````````````````
 
 In general, CRDS uses the input to a ``Step`` to determine which reference files
-to use. Nearly all JWST-related steps take only a single input file. However,
+to use. Nearly all steps take only a single input file. However,
 often times that input file is an association. Since step parameters are
 configured only once per execution of a step or pipeline, only the first
 qualifying member, usually of type ``science`` is used.
@@ -230,15 +230,16 @@ For example, given the following command-line:
 
 .. code-block:: shell
 
+    strun cleanup myfile.asdf --threshold=86
     strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.linearity.override_linearity='my_lin.fits'
 
 the equivalent ``from_cmdline`` call would be::
 
-    from jwst.stpipe import Step
+    from stpipe import Step
     Step.from_cmdline([
-        "calwebb_detector1",
-        "jw00017001001_01101_00001_nrca1_uncal.fits",
-        "--steps.linearity.override_linearity='my_lin.fits'"
+        "cleanup",
+        "myfile.asdf",
+        "--threshold=86",
     ])
 
 
@@ -254,27 +255,25 @@ signature is::
     Step.call(input_data, config_file=None, **parameters)
 
 The positional argument ``input_data`` is the data to be operated on, usually a
-string representing a file path or a :ref:`DataModel<jwst-data-models>`
+string representing a file path or a `DataModel`
 The optional keyword argument ``config_file`` is used to specify a local parameter file.
 Finally, the remaining optional keyword arguments are the parameters that the
 particular step accepts. The method returns the result of the step. A basic
 example is::
 
-    from jwst.jump import JumpStep
-    output = JumpStep.call('jw00017001001_01101_00001_nrca1_uncal.fits')
+    from mycode.steps import Cleanup
+    output = Cleanup.call('myfile.asdf')
 
-makes a new instance of ``JumpStep`` and executes using the specified exposure
-file. ``JumpStep`` has a parameter ``rejection_threshold``. To use a different
+makes a new instance of a ficitonal ``Cleanup`` step and executes using the specified
+file, ``myfile.asdf``. ``Cleanup`` has a parameter ``threshold``. To use a different
 value than the default, the statement would be::
 
-    output = JumpStep.call('jw00017001001_01101_00001_nrca1_uncal.fits',
-                           rejection_threshold=42.0)
+    output = Cleanup.call('myfile.asdf', threshold=26.0)
 
 If one wishes to use a :ref:`parameter file<parameter_files>`, specify the path
 to it using the ``config_file`` argument::
 
-    output = JumpStep.call('jw00017001001_01101_00001_nrca1_uncal.fits',
-                           config_file='my_jumpstep_config.asdf')
+    output = Cleanup.call('myfile.asdf', config_file='my_config.asdf')
 
 run()
 `````
@@ -283,15 +282,15 @@ The instance method ``Step.run()`` is the lowest-level method to executing a ste
 or pipeline. Initialization and parameter settings are left up to the user. An
 example is::
 
-    from jwst.flatfield import FlatFieldStep
+    from mycode.steps import Cleanup
 
-    mystep = FlatFieldStep()
-    mystep.override_sflat = 'sflat.fits'
-    output = mystep.run(input_data)
+    mystep = Cleanup()
+    cleanup.threshold = 26
+    cleanup.run(input_data)
 
-``input_data`` in this case can be a fits file containing the appropriate data, or the output
+``input_data`` in this case can be a file containing the appropriate data, or the output
 of a previously run step/pipeline, which is an instance of a particular
-:ref:`datamodel<jwst-data-models>`.
+`Datamodel`.
 
 Unlike the ``call`` class method, there is no parameter initialization that
 occurs, either by a local parameter file or from a CRDS-retrieved parameter
@@ -299,20 +298,20 @@ reference file. Parameters can be set individually on the instance, as is shown
 above. Parameters can also be specified as keyword arguments when instantiating
 the step. The previous example could be re-written as::
 
-    from jwst.flatfield import FlatFieldStep
+    from mycode.steps import Cleanup
 
-    mystep = FlatFieldStep(override_sflat='sflat.fits')
+    mystep = Cleanup(threshold=26)
     output = mystep.run(input_data)
 
 One can implement parameter reference file retrieval and use of a local
 parameter file as follows::
 
     from stpipe import config_parser
-    from jwst.flatfield import FlatFieldStep
+    from mycode.steps import Cleanup
 
-    config = FlatFieldStep.get_config_from_reference(input_data)
-    local_config = config_parser.load_config_file('my_flatfield_config.asdf')
+    config = Cleanup.get_config_from_reference(input_data)
+    local_config = config_parser.load_config_file('my_config.asdf')
     config_parser.merge_config(config, local_config)
 
-    flat_field_step = FlatFieldStep.from_config_section(config)
-    output = flat_field_step.run(input_data)
+    mystep = Cleanup.from_config_section(config)
+    output = mystep.run(input_data)
