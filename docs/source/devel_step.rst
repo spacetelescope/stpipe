@@ -72,12 +72,7 @@ name of the step that produced the results. Use the ``suffix`` parameter
 to explicitly change the suffix.
 
 For pipelines, this can be done either in a parameter file, or within the code
-itself. See :ref:`calwebb_dark <calwebb_dark>` for an example of specifying in
-the parameter file.
-
-For an example where the suffix can only be determined at runtime, see
-:ref:`calwebb_detector1 <calwebb_detector1>`. For an example of a pipeline that returns many
-results, see :ref:`calwebb_spec2 <calwebb_spec2>`.
+itself.
 
 The Python class
 ----------------
@@ -113,9 +108,9 @@ to describe its parameters.
     import logging
 
     from my_awesome_astronomy_library import combine
-    from stdatamodels.jwst.datamodels import ImageModel
+    from mycode.datamodels import MyDataModel
 
-    from jwst.stpipe import Step
+    from stpipe import Step
 
     log = logging.getLogger(__name__)
 
@@ -133,7 +128,7 @@ to describe its parameters.
             threshold = self.threshold
 
             # 3.
-            with ImageModel(image1) as image1, ImageModel(image2) as image2:
+            with MyDataModel(image1) as image1, ImageModel(image2) as image2:
                 # 4.
                 with self.get_reference_file_model(image1, "flat_field") as flat:
                     new_image = combine(image1, image2, flat, threshold)
@@ -289,45 +284,8 @@ following::
 then the user can override the flat field reference file using the
 parameter file::
 
-   override_flat_field = /path/to/my_reference_file.fits
+   override_flat_field = /path/to/my_reference_file.asdf
 
 or at the command line::
 
-   --override_flat_field=/path/to/my_reference_file.fits
-
-Making a simple commandline script for a step
-=============================================
-
-Any step can be run from the commandline using :ref:`strun`.  However,
-to make a step even easier to run from the commandline, a custom
-script can be created.  stpipe provides a function
-``stpipe.cmdline.step_script`` to make those scripts easier to write.
-
-For example, to make a script for the step ``mypackage.ExampleStep``::
-
-    #!/usr/bin/python
-    # ExampleStep
-
-    # Import the custom step
-    from mypackage import ExampleStep
-
-    # Import stpipe.cmdline
-    from jwst.stpipe import cmdline
-
-    if __name__ == '__main__':
-        # Pass the step class to cmdline.step_script
-        cmdline.step_script(ExampleStep)
-
-Running this script is similar to invoking the step with :ref:`strun`,
-with one difference.  Since the Step class is known (it is hard-coded
-in the script), it does not need to be specified on the commandline.
-To specify a config file on the commandline, use the ``--config-file``
-option.
-
-For example::
-
-    ExampleStep
-
-    ExampleStep --config-file=example_step.asdf
-
-    ExampleStep --parameter1=42.0 input_file.fits
+   --override_flat_field=/path/to/my_reference_file.asdf
