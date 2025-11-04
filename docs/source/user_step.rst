@@ -135,7 +135,7 @@ The command would show text similar to this::
       --output_file         File to save output to.
       --output_dir          Directory path for output files
       --output_ext          Output file type [default='.asdf']
-      --output_use_model    When saving use `DataModel.meta.filename` [default=False]
+      --output_use_model    When saving use ``DataModel.meta.filename`` [default=False]
       --output_use_index    Append index. [default=True]
       --save_results        Force save results [default=False]
       --skip                Skip this step [default=False]
@@ -189,7 +189,7 @@ Debugging
 
 To output all logging output from the step, add the ``--verbose`` option
 to the commandline.  (If more fine-grained control over logging is
-required, see :ref:`logging`).
+required, see :ref:`user-logging`).
 
 To start the Python debugger if the step itself raises an exception,
 pass the ``--debug`` option to the commandline.
@@ -255,7 +255,7 @@ signature is::
     Step.call(input_data, config_file=None, **parameters)
 
 The positional argument ``input_data`` is the data to be operated on, usually a
-string representing a file path or a `DataModel`
+string representing a file path or a ``DataModel``
 The optional keyword argument ``config_file`` is used to specify a local parameter file.
 Finally, the remaining optional keyword arguments are the parameters that the
 particular step accepts. The method returns the result of the step. A basic
@@ -290,7 +290,7 @@ example is::
 
 ``input_data`` in this case can be a file containing the appropriate data, or the output
 of a previously run step/pipeline, which is an instance of a particular
-`Datamodel`.
+``Datamodel``.
 
 Unlike the ``call`` class method, there is no parameter initialization that
 occurs, either by a local parameter file or from a CRDS-retrieved parameter
