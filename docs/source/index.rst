@@ -10,7 +10,6 @@ For Users
    :maxdepth: 2
 
    datamodels.rst
-   model_library.rst
    user_step.rst
    user_pipeline.rst
    user_logging.rst
@@ -18,6 +17,7 @@ For Users
    call_via_call.rst
    call_via_run.rst
    parameter_files.rst
+   model_library.rst
 
 .. _stpipe-for-developers:
 
