@@ -9,8 +9,7 @@ Format", a general purpose, non-proprietary, and system-agnostic format for the
 dissemination of data. Built on `YAML <https://yaml.org/>`_, the most basic file
 is text-based requiring minimal formatting.
 
-ASDF replaces the original :ref:`CFG <config_cfg_files>` format for step
-configuration. Using ASDF allows the configurations to be stored and retrieved
+Using ASDF allows the configurations to be stored and retrieved
 from CRDS, selecting the best parameter file for a given set of criteria, such
 as instrument and observation mode.
 

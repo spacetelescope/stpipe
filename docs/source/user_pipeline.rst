@@ -5,7 +5,7 @@ Pipelines
 =========
 
 It is important to note that a Pipeline is also a Step, so everything
-that applies to a Step in the :ref:`stpipe-user-steps` chapter also
+that applies to a Step in the :ref:`configuring-a-step` chapter also
 applies to Pipelines.
 
 Configuring a Pipeline
@@ -143,7 +143,7 @@ Once the pipeline has been configured (as above), run it::
 
     pipe.run()
 
-For more details, see :ref:`python_run_vs_call`.
+For more details, see :ref:`run_examples`.
 
 Hooks
 =====

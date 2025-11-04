@@ -13,11 +13,11 @@ For Users
    model_library.rst
    user_step.rst
    user_pipeline.rst
+   user_logging.rst
    config_asdf.rst
    call_via_call.rst
    call_via_run.rst
    parameter_files.rst
-   cfg_deprecation.rst
 
 .. _stpipe-for-developers:
 

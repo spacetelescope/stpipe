@@ -11,20 +11,17 @@ API Summary
 -----------------------------
 
 
-* ``--output_dir``: :ref:`Directory <intro_output_directory>` where all output will go.
-* ``--output_file``: :ref:`File name <intro_output_file>` upon which
-  output files will be based.
+* ``--output_dir``: Directory where all output will go.
+* ``--output_file``: File name upon which output files will be based.
 
 ``Step`` configuration options
 ------------------------------
 
-* ``output_dir``: :ref:`Directory <intro_output_directory>` where all output will go.
-* ``output_file``: :ref:`File name <intro_output_file>` upon which
-  output files will be based.
-* ``suffix``: :ref:`Suffix <pipeline_step_suffix_definitions>` defining the output of this step.
-* ``save_results``: True to create output files. :ref:`[more] <devel_io_when_files_are_created>`
-* ``search_output_file``: True to retrieve the ``output_file`` from a
-  parent ``Step`` or ``Pipeline``. :ref:`[more] <devel_io_substeps_and_output>`
+* ``output_dir``: Directory where all output will go.
+* ``output_file``: File name upon which output files will be based.
+* ``suffix``: Suffix defining the output of this step.
+* ``save_results``: True to create output files.
+* ``search_output_file``: True to retrieve the ``output_file`` from a parent ``Step`` or ``Pipeline``.
 * ``output_use_model``: True to always base output file names on the
   ``DataModel.meta.filename`` of the ``DataModel`` being saved.
 * ``input_dir``: Generally defined by the location of the primary
@@ -34,9 +31,6 @@ API Summary
 Classes, Methods, Functions
 ---------------------------
 
-* :meth:`stpipe.Step.open_model`: Open a ``DataModel``
-* :meth:`jwst.stpipe.core.JwstStep.load_as_level2_asn`: Open a list or file as Level2 association
-* :meth:`jwst.stpipe.core.JwstStep.load_as_level3_asn`: Open a list or file as Level3 association
 * :meth:`stpipe.Step.make_input_path`: Create a file name to
   be used as input
 * :meth:`stpipe.Step.save_model`: Save a ``DataModel`` immediately
@@ -69,33 +63,24 @@ best practices.
 To facilitate this design, a basic ``Step`` is suggested to have the
 following structure::
 
-  class MyStep(jwst.stpipe.core.JwstStep):
+  class MyStep(stpipe.Step):
 
       spec = ''  # Desired configuration parameters
 
       def process(self, input):
-
-          with jwst.datamodels.open(input) as input_model:
-
-              # Do awesome processing with final result
-              # in `result`
-              result = final_calculation(input_model)
-
-          return (result)
+          return do_calculation(input)
 
 When run from the command line::
 
-  strun MyStep input_data.fits
+  strun MyStep input_data.asdf
 
 the result will be saved in a file called::
 
-  input_data_mystep.fits
+  input_data_mystep.asdf
 
 Similarly, the same code can be used in a Python script or interactive
 environment as follows::
 
-  import jwst
-  input = jwst.datamodels.open('input_data.fits')
   result = MyStep.call(input)
   # result contains the resulting data
   # which can then be used by further steps or
@@ -103,100 +88,7 @@ environment as follows::
   #
   # when done, the data can be saved with the DataModel.save
   # method
-  result.save('my_final_results.fits')
-
-
-Input and JWST Conventions
-==========================
-
-A ``Step`` gets its input from two sources:
-
-* Configuration parameters
-* Arguments to the ``Step.process`` method
-
-The definition and use of parameters is documented in :ref:`writing-a-step`.
-
-When using the ``Step.process`` arguments, the code must at least expect
-strings. When invoked from the command line using ``strun``, how many
-arguments to expect are the same number of arguments defined by
-``Step.process``. Similarly, the arguments themselves are passed to
-``Step.process`` as strings.
-
-However, to facilitate code development and interactive usage, code
-is expected to accept other object types as well.
-
-A ``Step``'s primary argument is expected to be either a string containing
-the file path to a data file, or a JWST
-:class:`~stdatamodels.jwst.datamodels.JwstDataModel` object. The method
-:meth:`~stpipe.Step.open_model` handles either type of
-input, returning a ``DataModel`` from the specified file or a shallow
-copy of the ``DataModel`` that was originally passed to it. A typical
-pattern for handling input arguments is::
-
-  class MyStep(jwst.stpipe.core.JwstStep):
-
-      def process(self, input_argument):
-
-          input_model = self.open_model(input_argument)
-          #...
-
-``input_argument`` can either be a string containing a path to a data
-file, such as FITS file, or a ``DataModel`` directly.
-
-:meth:`~stpipe.Step.open_model` handles ``Step``-specific
-issues, such ensuring consistency of input directory handling.
-
-If some other file type is to be opened, the lower level method
-:meth:`~stpipe.Step.make_input_path` can be used to specify
-the input directory location.
-
-Input and Associations
-----------------------
-
-Many of the JWST calibration steps and pipelines expect an
-:ref:`Association <associations>` file as input. When opened with
-:meth:`~stpipe.Step.open_model`, a
-:class:`~jwst.datamodels.container.ModelContainer` is returned. ``ModelContainer``
-is a list-like object where each element is the
-``DataModel`` of each member of the association. The ``asn_table`` attribute is
-populated with the association data structure, allowing direct access
-to the association itself.  The association file, as well as the files
-listed in the association file, must be in the input directory.
-
-To read in a list of files, or an association file, as an association,
-use the ``load_as_level2_asn`` or ``load_as_level3_asn`` methods.
-
-ModelContainer vs ModelLibrary
-``````````````````````````````
-
-Some steps in the pipeline, namely any steps involved in the Stage 3 Imaging pipeline,
-rely on the :class:`~jwst.datamodels.library.ModelLibrary` class instead of the
-:class:`~jwst.datamodels.container.ModelContainer` class to process association-type data.
-The ``ModelLibrary`` class is purpose-built for enabling memory-saving options in the
-image3 pipeline and is only recommended when working with large associations.
-Additional documentation on the ``ModelLibrary`` class can be found in the
-:ref:`stpipe ModelLibrary documentation <stpipe:model_library>`.
-
-ModelContainer Changes in JWST 1.17
-```````````````````````````````````
-
-In JWST 1.17, the ``ModelContainer`` class was de-scoped in light of the introduction of the
-``ModelLibrary`` class in JWST 1.16. The ``ModelContainer`` class is still the recommended class
-for handling association-type data, but it is no longer a subclass of ``JWSTDataModel``. The
-following changes in behavior are noteworthy:
-
-* The ``ModelContainer`` class no longer has a ``meta`` attribute. The association data is now
-  stored in the top-level ``asn_table`` attribute, along with several other association-relevant
-  attributes including ``asn_table_name``, ``asn_pool_name``, ``asn_exptypes``, ``asn_n_members``,
-  ``asn_file_path``. Note that ``asn_table`` is now a dictionary, not an ``ObjectNode``.
-* All infrastructure that attempted memory savings in the ``ModelContainer`` class has been removed.
-  Use the ``ModelLibrary`` class if memory-saving options are needed.
-* A ``ModelContainer`` object can no longer hold a list of ``ModelContainer`` objects.
-* The ``ModelContainer`` class is still list-like, and can be indexed and sliced like a list.
-* The ``ModelContainer`` class is still the default class returned by stdatamodels ``open()``
-  for association-type input data, e.g., a JSON file or dict.
-* The ``ModelContainer`` class can still be used as a context manager, such that ``with open("asn_file.json")``
-  still works.
+  result.save('my_final_results.asdf')
 
 Input Source
 ------------
@@ -240,8 +132,6 @@ file. However, there are some :ref:`caveats <basename_determination>`
 discussed below.
 
 Ultimately, the suffix is what ``Step`` use to identify their output.
-The most common suffixes are listed in the
-:ref:`pipeline_step_suffix_definitions`.
 
 A ``Step``'s suffix is defined in a couple of different ways:
 
@@ -294,48 +184,6 @@ Also, for ``output_file``, there is another option,
 ``search_output_file``, that can also control this behavior. If set to
 `False`, a ``Step`` will never query its parent for its value.
 
-Basenames, Associations, and Stage 3 Pipelines
-``````````````````````````````````````````````
-
-Stage 3 pipelines, such as :ref:`calwebb_image3 <calwebb_image3>`
-or :ref:`calwebb_spec3 <calwebb_spec3>`, take associations
-as their primary input. In general, the association defines what the
-output basename should be. A typical pattern used to handle
-associations is::
-
-  class MyStep(jwst.stpipe.core.JwstStep):
-
-      spec = ''  # Desired configuration parameters
-
-      def process(self, input):
-
-          with jwst.datamodels.open(input) as input_model:
-
-              # If not already specified, retrieve the output
-              # file name from the association.
-              if self.save_results and self.output_file is None:
-                  try:
-                     self.output_file = input_model.meta.asn_table.products[0].name
-
-                  except AttributeError:
-                      pass
-
-              # Do awesome processing with final result
-              # in `result`
-              result = final_calculation(input_model)
-
-          return (result)
-
-Some pipelines, such as :ref:`calwebb_spec3 <calwebb_spec3>`, call steps which
-are supposed to save their results, but whose basenames should not be based on
-the association product name. An example is the
-`~jwst.outlier_detection.OutlierDetectionStep` step. For such steps, one can
-prevent using the ``Pipeline.output_file`` specification by setting the parameter
-``search_output_file=False``. When such steps then save their output, they will go
-through the standard basename search. If nothing else is specified, the basename
-will be based on ``DataModel.meta.filename`` that step's result, creating
-appropriate names for that step.
-
 Output API: When More Control Is Needed
 ---------------------------------------
 
@@ -350,7 +198,7 @@ Save That Model: Step.save_model
 
 If a ``Step`` needs to save a ``DataModel`` before the step completes, use
 of :meth:`stpipe.Step.save_model` is the recommended over
-directly calling :meth:`stdatamodels.DataModel.save`.
+directly calling ``DataModel.save``.
 ``Step.save_model`` uses the ``Step`` framework and hence will honor the
 following:
 
