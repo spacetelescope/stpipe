@@ -1,0 +1,1 @@
+Consolidate docs from jwst and romancal packages into a more general description of stpipe.
