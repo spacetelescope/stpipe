@@ -8,15 +8,16 @@ For Users
 
 .. toctree::
    :maxdepth: 2
+   :caption: For Users
 
-   datamodels.rst
    user_step.rst
    user_pipeline.rst
    user_logging.rst
-   config_asdf.rst
    call_via_call.rst
    call_via_run.rst
+   config_asdf.rst
    parameter_files.rst
+   datamodels.rst
    model_library.rst
 
 .. _stpipe-for-developers:
@@ -26,6 +27,7 @@ For Developers
 
 .. toctree::
    :maxdepth: 2
+   :caption: For Developers
 
    devel_step.rst
    devel_pipeline.rst
@@ -41,6 +43,7 @@ API
 ===
 
 .. toctree::
+   :caption: API
    :maxdepth: 1
 
    changes.rst
