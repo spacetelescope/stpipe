@@ -1,5 +1,5 @@
 """
-Test that the AbstractDataModel interface works properly
+Test that the DataModel interface of the protocol works properly
 """
 
 import pytest

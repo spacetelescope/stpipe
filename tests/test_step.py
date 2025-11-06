@@ -12,8 +12,8 @@ import pytest
 
 import stpipe.config_parser as cp
 from stpipe import cmdline, crds_client
-from stpipe.datamodel import AbstractDataModel
 from stpipe.pipeline import Pipeline
+from stpipe.protocols import DataModel
 from stpipe.step import Step
 
 
@@ -428,7 +428,7 @@ class Meta:
     pass
 
 
-class SimpleDataModel(AbstractDataModel):
+class SimpleDataModel(DataModel):
     """A simple data model"""
 
     def __init__(self, filename="foo.asdf"):

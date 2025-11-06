@@ -4,7 +4,7 @@ Model Library
 =============
 
 `~stpipe.library.AbstractModelLibrary` is a container designed to allow efficient processing of
-collections of `~stpipe.datamodel.AbstractDataModel` instances created from an association.
+collections of `~stpipe.protocols.DataModel` instances created from an association.
 
 `~stpipe.library.AbstractModelLibrary` is an ordered collection (like a `list`) but provides:
 
@@ -234,8 +234,8 @@ allowing the `~stpipe.step.Step` to generate an :ref:`library_on_disk`
 
 ``Step.process`` can extend the above pattern to
 support additional inputs (for example a single
-`~stpipe.datamodel.AbstractDataModel` or filename containing
-a `~stpipe.datamodel.AbstractDataModel`) to allow more
+`~stpipe.protocols.DataModel` or filename containing
+a `~stpipe.protocols.DataModel`) to allow more
 flexible data processings, although some consideration
 should be given to how to handle input that does not
 contain association metadata. Does it make sense
@@ -252,9 +252,9 @@ Isolated Processing
 
 Let's say we have a `~stpipe.step.Step`, ``flux_calibration``
 that performs an operation that is only concerned with the data
-for a single `~stpipe.datamodel.AbstractDataModel` at a time.
+for a single `~stpipe.protocols.DataModel` at a time.
 This step applies a function ``calibrate_model_flux`` that
-accepts a single `~stpipe.datamodel.AbstractDataModel` and index as an input.
+accepts a single `~stpipe.protocols.DataModel` and index as an input.
 Its ``Step.process`` function can make good use of
 `~stpipe.library.AbstractModelLibrary.map_function` to apply
 this method to each model in the library.

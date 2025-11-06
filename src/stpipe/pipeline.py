@@ -148,7 +148,7 @@ class Pipeline(Step):
             Either a class or instance of a class derived
             from `Step`.
 
-        dataset : `stpipe.datamodel.AbstractDataModel` or dict
+        dataset : `stpipe.protocols.DataModel` or dict
             A model of the input file.  Metadata on this input file will
             be used by the CRDS "bestref" algorithm to obtain a reference
             file. If dict, crds_observatory must be a non-None value.

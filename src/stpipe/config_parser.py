@@ -21,7 +21,7 @@ from astropy.extern.configobj.validate import ValidateError, Validator, VdtTypeE
 
 from . import utilities
 from .config import StepConfig
-from .datamodel import AbstractDataModel
+from .protocols import DataModel
 from .utilities import _not_set
 
 # Configure logger
@@ -82,7 +82,7 @@ def _get_output_file_check(root_dir):
 
 def _is_datamodel(value):
     """Verify that value is a DataModel."""
-    if isinstance(value, AbstractDataModel):
+    if isinstance(value, DataModel):
         return value
 
     raise VdtTypeError(value)
@@ -92,7 +92,7 @@ def _is_string_or_datamodel(value):
     """Verify that value is either a string (nominally a reference file path)
     or a DataModel (possibly one with no corresponding file.)
     """
-    if isinstance(value, AbstractDataModel):
+    if isinstance(value, DataModel):
         return value
 
     if isinstance(value, str):

@@ -10,7 +10,7 @@ from types import MappingProxyType
 
 import asdf
 
-from .datamodel import AbstractDataModel
+from .protocols import DataModel
 
 __all__ = [
     "LibraryError",
@@ -771,7 +771,7 @@ class AbstractModelLibrary(abc.ABC):
         return model_filename
 
     def _to_group_id(self, model_or_filename, index):
-        if isinstance(model_or_filename, AbstractDataModel):
+        if isinstance(model_or_filename, DataModel):
             getter = self._model_to_group_id
         else:
             getter = self._filename_to_group_id
