@@ -5,4 +5,4 @@ stpipe API
 
 .. automodapi:: stpipe.library
 
-.. automodapi:: stpipe.datamodel
+.. automodapi:: stpipe.protocols

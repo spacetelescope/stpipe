@@ -4,8 +4,11 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
+    import os
     from collections.abc import Callable
-    from os import PathLike
+
+
+__all__ = ("DataModel",)
 
 
 @runtime_checkable
@@ -44,28 +47,27 @@ class DataModel(Protocol):
     @abstractmethod
     def save(
         self,
-        path: PathLike | Callable[..., PathLike],
-        dir_path: PathLike | None = None,
+        path: os.PathLike | Callable[..., os.PathLike],
+        dir_path: os.PathLike | None = None,
         *args,
         **kwargs,
-    ) -> PathLike:
+    ) -> os.PathLike:
         """
         Save to a file.
 
         Parameters
         ----------
-        path : string or callable
+        path :
             File path to save to.
             If function, it takes one argument that is
             model.meta.filename and returns the full path string.
 
-        dir_path : str
+        dir_path :
             Directory to save to. If not None, this will override
             any directory information in the ``path``
 
         Returns
         -------
-        output_path: str
             The file path the model was saved in.
         """
         ...
