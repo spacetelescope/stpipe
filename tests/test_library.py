@@ -8,7 +8,6 @@ from collections.abc import Sequence
 import asdf
 import pytest
 
-from stpipe.datamodel import AbstractDataModel
 from stpipe.library import (
     AbstractModelLibrary,
     BorrowError,
@@ -16,6 +15,7 @@ from stpipe.library import (
     NoGroupID,
     _Ledger,
 )
+from stpipe.protocols import DataModel
 from stpipe.step import Step
 
 _GROUP_IDS = ["1", "1", "2"]
@@ -39,7 +39,7 @@ class _Meta:
     pass
 
 
-class DataModel:
+class ExampleDataModel:
     def __init__(self, **kwargs):
         self.meta = _Meta()
         self.meta.__dict__.update(kwargs)
@@ -58,7 +58,7 @@ class DataModel:
 
 def _load_model(filename):
     with asdf.open(filename) as af:
-        return DataModel(**af.tree)
+        return ExampleDataModel(**af.tree)
 
 
 class ModelLibrary(AbstractModelLibrary):
@@ -114,7 +114,7 @@ def example_models():
     """
     models = []
     for i in range(_N_MODELS):
-        m = DataModel(group_id=_GROUP_IDS[i], index=i)
+        m = ExampleDataModel(group_id=_GROUP_IDS[i], index=i)
         m.meta.filename = f"{i}.asdf"
         models.append(m)
     return models
@@ -220,7 +220,7 @@ def test_init_from_models_no_ondisk(example_models):
         ModelLibrary(example_models, on_disk=True)
 
 
-@pytest.mark.parametrize("invalid", (None, ModelLibrary([]), DataModel()))
+@pytest.mark.parametrize("invalid", (None, ModelLibrary([]), ExampleDataModel()))
 def test_invalid_init(invalid):
     """
     Test that some unsupported init values produce errors.
@@ -409,7 +409,7 @@ def test_closed_library_model_shelve(example_library):
     an error.
     """
     with pytest.raises(ClosedLibraryError, match="ModelLibrary is not open"):
-        example_library.shelve(DataModel(), 0)
+        example_library.shelve(ExampleDataModel(), 0)
 
 
 def test_closed_library_model_iter(example_library):
@@ -578,7 +578,7 @@ def test_shelve_unknown_model(example_library, use_index):
     with lib_ctx:  # to catch the error for the un-returned model
         with example_library:
             example_library.borrow(0)
-            new_model = DataModel()
+            new_model = ExampleDataModel()
 
             if use_index:
                 ctx = contextlib.nullcontext()
@@ -759,7 +759,7 @@ def test_ledger():
     based on index and index based on models.
     """
     ledger = _Ledger()
-    model = DataModel()
+    model = ExampleDataModel()
     ledger[0] = model
     assert ledger[0] == model
     assert ledger[model] == 0
@@ -774,10 +774,21 @@ def test_ledger():
 def test_library_datamodel_relationship():
     """
     Smoke test to make sure the relationship between
-    AbstractModelLibrary and AbstractDataModel doesn't
+    AbstractModelLibrary and DataModel doesn't
     change.
     """
-    assert not issubclass(AbstractModelLibrary, AbstractDataModel)
+    dm = ExampleDataModel()
+    lib = ModelLibrary([])
+
+    assert isinstance(dm, DataModel)
+    assert isinstance(lib, AbstractModelLibrary)
+
+    assert not isinstance(dm, AbstractModelLibrary)
+    assert not isinstance(lib, DataModel)
+
+    # Protocols don't support issubclass for complex reasons
+    # so we check the relationship with isinstance on instances instead
+    # assert not issubclass(AbstractModelLibrary, DataModel)
 
 
 def test_library_is_not_sequence():

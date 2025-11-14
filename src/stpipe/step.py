@@ -27,9 +27,9 @@ from typing import ClassVar
 import yaml
 
 from . import config, config_parser, crds_client, log, utilities
-from .datamodel import AbstractDataModel
 from .format_template import FormatTemplate
 from .library import AbstractModelLibrary
+from .protocols import DataModel
 from .utilities import _not_set
 
 logger = logging.getLogger(__name__)
@@ -326,7 +326,7 @@ class Step:
                 return None
             dataset = dataset[0]
 
-        if isinstance(dataset, AbstractDataModel):
+        if isinstance(dataset, DataModel):
             return cls._get_filename(dataset.meta.filename)
 
         if isinstance(dataset, AbstractModelLibrary):
@@ -352,7 +352,7 @@ class Step:
             Observatory to pass to CRDS.
         """
         if isinstance(dataset, AbstractModelLibrary) or (
-            isinstance(dataset, AbstractDataModel) and not isinstance(dataset, Sequence)
+            isinstance(dataset, DataModel) and not isinstance(dataset, Sequence)
         ):
             return (
                 dataset.get_crds_parameters(),
@@ -556,7 +556,7 @@ class Step:
 
                     if isinstance(args[0], AbstractModelLibrary):
                         list(args[0].map_function(lambda m, i: set_skipped(m)))
-                    elif isinstance(args[0], AbstractDataModel):
+                    elif isinstance(args[0], DataModel):
                         if isinstance(args[0], Sequence):
                             [set_skipped(m) for m in args[0]]
                         else:
@@ -606,7 +606,7 @@ class Step:
                 for idx, result in enumerate(results_to_save):
                     if len(results_to_save) <= 1:
                         idx = None
-                    if isinstance(result, (AbstractDataModel | AbstractModelLibrary)):
+                    if isinstance(result, (DataModel | AbstractModelLibrary)):
                         self.save_model(result, idx=idx)
                     elif hasattr(result, "save"):
                         try:
@@ -636,7 +636,7 @@ class Step:
 
         Parameters
         ----------
-        result : a datamodel that is an instance of AbstractDataModel or
+        result : a datamodel that is an instance of DataModel or
                  collections.abc.Sequence
                  One step result (potentially of many).
 
@@ -839,7 +839,7 @@ class Step:
         """
         override_name = crds_client.get_override_name(reference_file_type)
         path = getattr(self, override_name, None)
-        if isinstance(path, AbstractDataModel):
+        if isinstance(path, DataModel):
             return path
 
         return abspath(path) if path and path != "N/A" else path
@@ -854,7 +854,7 @@ class Step:
 
         Parameters
         ----------
-        input_file : a datamodel that is an instance of AbstractDataModel
+        input_file : a datamodel that is an instance of DataModel
             A model of the input file.  Metadata on this input file
             will be used by the CRDS "bestref" algorithm to obtain a
             reference file.
@@ -869,7 +869,7 @@ class Step:
         """
         override = self.get_ref_override(reference_file_type)
         if override is not None:
-            if isinstance(override, AbstractDataModel):
+            if isinstance(override, DataModel):
                 self._reference_files_used.append(
                     (reference_file_type, override.override_handle)
                 )
@@ -905,7 +905,7 @@ class Step:
         cls : stpipe.Step
             Either a class or instance of a class derived
             from `Step`.
-        dataset : AbstractDataModel or dict
+        dataset : stpipe.protocols.DataModel
             A model of the input file.  Metadata on this input file will
             be used by the CRDS "bestref" algorithm to obtain a reference
             file. If a dict, crds_observatory must be a non-None value.
@@ -929,12 +929,12 @@ class Step:
             if crds_observatory is None:
                 raise ValueError("Need a valid name for crds_observatory.")
         else:
-            # If the dataset is not an operable instance of AbstractDataModel,
+            # If the dataset is not an operable instance of DataModel,
             # log as such and return an empty config object
             try:
                 crds_parameters, crds_observatory = cls._get_crds_parameters(dataset)
             except (OSError, TypeError, ValueError):
-                logger.warning("Input dataset is not an instance of AbstractDataModel.")
+                logger.warning("Input dataset is not an instance of DataModel.")
                 disable = True
 
         # Check if retrieval should be attempted.
@@ -1007,7 +1007,7 @@ class Step:
 
         Parameters
         ----------
-        obj : str, pathlib.Path, or instance of AbstractDataModel
+        obj : str, pathlib.Path, or instance of DataModel
             The object to base the name on. If a datamodel,
             use Datamodel.meta.filename.
 
@@ -1022,7 +1022,7 @@ class Step:
         if not exclusive or parent_input_filename is None:
             if isinstance(obj, str | Path):
                 self._input_filename = str(obj)
-            elif isinstance(obj, AbstractDataModel):
+            elif isinstance(obj, DataModel):
                 try:
                     self._input_filename = obj.meta.filename
                 except AttributeError:
@@ -1044,7 +1044,7 @@ class Step:
 
         Parameters
         ----------
-        model : a instance of AbstractDataModel
+        model : a instance of DataModel
             The model to save.
 
         suffix : str
@@ -1243,7 +1243,7 @@ class Step:
 
         Returns
         -------
-        datamodel : instance of AbstractDataModel
+        datamodel : instance of DataModel
             Object opened as a datamodel
         """
         # Use the parent method if available, since this step

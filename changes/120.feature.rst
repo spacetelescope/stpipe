@@ -1,0 +1,2 @@
+Refactor ``AbstractDataModel`` into a Python protocol as that is how it was
+effectively used.
