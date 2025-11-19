@@ -9,10 +9,7 @@ from stpipe.datamodel import AbstractDataModel
 
 def test_roman_datamodel():
     roman_datamodels = pytest.importorskip("roman_datamodels.datamodels")
-    from roman_datamodels.maker_utils import mk_level2_image
-
-    roman_image_tree = mk_level2_image()
-    image_model = roman_datamodels.ImageModel(roman_image_tree)
+    image_model = roman_datamodels.ImageModel().create_fake_data()
     assert isinstance(image_model, AbstractDataModel)
 
 
