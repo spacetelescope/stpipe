@@ -4,39 +4,6 @@
 Step I/O Design
 ===============
 
-API Summary
-===========
-
-``Step`` command-line options
------------------------------
-
-
-* ``--output_dir``: Directory where all output will go.
-* ``--output_file``: File name upon which output files will be based.
-
-``Step`` configuration options
-------------------------------
-
-* ``output_dir``: Directory where all output will go.
-* ``output_file``: File name upon which output files will be based.
-* ``suffix``: Suffix defining the output of this step.
-* ``save_results``: True to create output files.
-* ``search_output_file``: True to retrieve the ``output_file`` from a parent ``Step`` or ``Pipeline``.
-* ``output_use_model``: True to always base output file names on the
-  ``DataModel.meta.filename`` of the ``DataModel`` being saved.
-* ``input_dir``: Generally defined by the location of the primary
-  input file unless otherwise specified.  All input files must be
-  in this directory.
-
-Classes, Methods, Functions
----------------------------
-
-* :meth:`stpipe.Step.make_input_path`: Create a file name to
-  be used as input
-* :meth:`stpipe.Step.save_model`: Save a ``DataModel`` immediately
-* :attr:`stpipe.Step.make_output_path`: Create a file name
-  to be used as output
-
 Design
 ======
 
