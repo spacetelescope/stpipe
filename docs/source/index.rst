@@ -3,9 +3,6 @@ Welcome to stpipe's documentation!
 
 .. _stpipe-for-users:
 
-For Users
-=========
-
 .. toctree::
    :maxdepth: 2
    :caption: For Users
@@ -22,9 +19,6 @@ For Users
 
 .. _stpipe-for-developers:
 
-For Developers
-==============
-
 .. toctree::
    :maxdepth: 2
    :caption: For Developers
@@ -38,9 +32,6 @@ For Developers
    :maxdepth: 2
    :caption: Contents:
 
-
-API
-===
 
 .. toctree::
    :caption: API
