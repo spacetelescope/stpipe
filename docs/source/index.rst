@@ -1,6 +1,13 @@
 Welcome to stpipe's documentation!
 ========================================
 
+Stpipe provides classes, command line tools and configuration
+for writing data processing pipelines.
+
+This package is used at the `Space Telescope Science Institute <https://www.stsci.edu/>`__
+for both the `jwst <https://jwst-pipeline.readthedocs.io/en/latest/>`__ and
+`romancal <https://roman-pipeline.readthedocs.io/en/latest/>`__ calibration pipelines.
+
 .. _stpipe-for-users:
 
 .. toctree::
