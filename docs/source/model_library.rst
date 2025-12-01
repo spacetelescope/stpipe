@@ -1,7 +1,13 @@
 .. _model_library:
 
+=============
 Model Library
 =============
+
+.. _model_library_introduction:
+
+Introduction
+============
 
 `~stpipe.library.AbstractModelLibrary` is a container designed to allow efficient processing of
 collections of `~stpipe.datamodel.AbstractDataModel` instances created from an association.
@@ -148,7 +154,7 @@ performed on the association metadata).
 .. _library_association_information:
 
 Association Information
-=======================
+-----------------------
 
 `~stpipe.library.AbstractModelLibrary.asn` provides read-only access to the association data.
 
@@ -302,7 +308,7 @@ This error can be avoided by "opening" the library before calling
 .. _library_borrow_error:
 
 BorrowError
------------
+===========
 
 .. code-block:: pycon
 
@@ -372,10 +378,20 @@ Forgetting to first borrow the model at the index will also produce a
 
    BorrowError: Attempt to shelve model at a non-borrowed index
 
+.. _library_developer_documentation:
+
+Developer Documentation
+-----------------------
+
+What follows are note primarily aimed towards developers and
+maintainers of `~stpipe.library.AbstractModelLibrary`. This section might be useful
+to provide context to users but shouldn't be necessary for a user
+to effectively use `~stpipe.library.AbstractModelLibrary`.
+
 .. _library_implementing_a_subclass:
 
 Implementing a subclass
-=======================
+^^^^^^^^^^^^^^^^^^^^^^^
 
 Several methods are abstract and will need implementations:
 
@@ -402,20 +418,10 @@ It may also be required (depending on your usage) to update
 ``stpipe.step.Step._datamodels_open`` to allow stpipe to open and inspect an
 `~stpipe.library.AbstractModelLibrary` when provided as a `~stpipe.step.Step` input.
 
-.. _library_developer_documentation:
-
-Developer Documentation
-=======================
-
-What follows are note primarily aimed towards developers and
-maintainers of `~stpipe.library.AbstractModelLibrary`. This section might be useful
-to provide context to users but shouldn't be necessary for a user
-to effectively use `~stpipe.library.AbstractModelLibrary`.
-
 .. _library_motivation:
 
 Motivation
-----------
+^^^^^^^^^^
 
 The development of `~stpipe.library.AbstractModelLibrary` was largely motivated by
 the need for a container compatible with stpipe machinery
@@ -450,7 +456,7 @@ container code never read and hold all input data in memory.
 .. _library_design_priciples:
 
 Design principles
------------------
+^^^^^^^^^^^^^^^^^
 
 The high level goals of `~stpipe.library.AbstractModelLibrary` are:
 
@@ -481,7 +487,7 @@ in sync.
 .. _library_integration_with_stpipe:
 
 Integration with stpipe
------------------------
+^^^^^^^^^^^^^^^^^^^^^^^
 
 An `~stpipe.library.AbstractModelLibrary` may interact with stpipe when used as an
 input or output for a `~stpipe.step.Step`.
@@ -497,7 +503,7 @@ input or output for a `~stpipe.step.Step`.
 .. _library_future_directions:
 
 Future directions
------------------
+^^^^^^^^^^^^^^^^^
 
 The initial implementation of `~stpipe.library.AbstractModelLibrary` was intentionally
 simple. Several features were discussed but deemed unnecessary for the current code.
