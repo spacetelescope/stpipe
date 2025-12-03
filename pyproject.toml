@@ -32,7 +32,7 @@ docs = [
     "tomli; python_version <\"3.11\"",
 ]
 test = [
-    "pytest >=7.0.0",
+    "pytest >=9.0.0",
     "pytest-doctestplus >=0.10.0",
 ]
 
@@ -65,28 +65,17 @@ where = [
     "src",
 ]
 
-[tool.pytest.ini_options]
-minversion = 6
+[tool.pytest]
+minversion = "9"
 log_cli_level = "INFO"
 xfail_strict = true
 doctest_plus = true
 doctest_rst = true
 text_file_format = "rst"
-addopts = [
-    "--strict-config",
-    "--strict-markers",
-    "-ra",
-    "--color=yes",
-]
-testpaths = [
-    "tests",
-]
-filterwarnings = [
-    "error",
-]
-markers = [
-    "soctests",
-]
+addopts = ["--strict-config", "--strict-markers", "-ra", "--color=yes"]
+testpaths = ["tests"]
+filterwarnings = ["error"]
+markers = ["soctests"]
 
 [tool.ruff]
 src = [
