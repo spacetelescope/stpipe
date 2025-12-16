@@ -69,8 +69,8 @@ where = [
 minversion = "9"
 log_cli_level = "INFO"
 xfail_strict = true
-doctest_plus = true
-doctest_rst = true
+doctest_plus = "enabled"
+doctest_rst = "enabled"
 text_file_format = "rst"
 addopts = ["--strict-config", "--strict-markers", "-ra", "--color=yes"]
 testpaths = ["tests"]
