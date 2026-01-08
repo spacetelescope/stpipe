@@ -565,12 +565,7 @@ class Step:
             else:
                 if self.prefetch_references:
                     self.prefetch(*args)
-                try:
-                    step_result = self.process(*args)
-                except TypeError as e:
-                    if "process() takes exactly" in str(e):
-                        raise TypeError("Incorrect number of arguments to step") from e
-                    raise
+                step_result = self.process(*args)
 
             # Run the post hooks
             for post_hook in self._post_hooks:
