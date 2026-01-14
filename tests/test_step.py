@@ -1,7 +1,9 @@
 """Test step.Step"""
 
 import copy
+import os
 import re
+import sys
 from collections.abc import Sequence
 from contextlib import nullcontext
 from pathlib import Path
@@ -444,12 +446,32 @@ class SimpleDataModel(AbstractDataModel):
 
     def save(self, path, dir_path=None, *args, **kwargs):
         saveid = getattr(self, "saveid", None)
+
+        if saveid == "stdatamodels":
+            return self._stdm_save(path, dir_path=dir_path, *args, **kwargs)
+
         if saveid is not None:
             fname = saveid + "-saved.txt"
             with open(fname, "w") as f:
-                f.write(f"{path}")
+                f.write(f"{path}\n")
             return fname
         return None
+
+    def _stdm_save(self, path, dir_path=None, *args, **kwargs):
+        """Adapted from stdatamodels/model_base.py"""
+        path_head, path_tail = os.path.split(os.path.join(path, "test-saved.txt"))
+        ext = Path(path_tail).suffix
+        if isinstance(ext, bytes):
+            ext = ext.decode(sys.getfilesystemencoding())
+
+        if dir_path:
+            path_head = dir_path
+        output_path = os.path.join(path_head, path_tail)  # noqa: PTH118
+
+        with open(output_path, "w") as f:
+            f.write(f"{output_path}\n")
+
+        return output_path
 
 
 def test_save_results(tmp_cwd):
@@ -460,6 +482,16 @@ def test_save_results(tmp_cwd):
     step = StepWithModel()
     step.run(model)
     assert (tmp_cwd / "test-saved.txt").exists()
+
+
+def test_save_with_output_dir(tmp_cwd):
+    outpath = tmp_cwd / "my_out_dir"
+    model = SimpleDataModel()
+    model.saveid = "stdatamodels"
+    step = StepWithModel()
+    step.output_dir = str(outpath)
+    step.run(model)
+    assert (outpath / "test-saved.txt").exists()
 
 
 def test_skip():
