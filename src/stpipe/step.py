@@ -1217,7 +1217,7 @@ class Step:
 
         output_dir = step.search_attr("output_dir", default="")
         output_dir = expandvars(expanduser(output_dir))
-        os.makedirs(outpath_dir, exist_ok=True)
+        os.makedirs(output_dir, exist_ok=True)
         return join(output_dir, basename)
 
     @classmethod
