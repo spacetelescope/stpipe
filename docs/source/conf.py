@@ -82,6 +82,8 @@ html_use_index = True
 nitpicky = True
 nitpick_ignore = []
 
+suppress_warnings = ["app.add_directive"]
+
 # Set the default role for all single backtick annotations
 default_role = "obj"
 
