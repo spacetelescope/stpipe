@@ -1157,7 +1157,7 @@ class Step:
 
         Returns
         -------
-        outpath : str
+        str
             The fully qualified path name.
 
         Notes
@@ -1217,9 +1217,8 @@ class Step:
 
         output_dir = step.search_attr("output_dir", default="")
         output_dir = expandvars(expanduser(output_dir))
-        outpath = join(output_dir, basename)
-        os.makedirs(outpath, exist_ok=True)
-        return outpath
+        os.makedirs(outpath_dir, exist_ok=True)
+        return join(output_dir, basename)
 
     @classmethod
     def _datamodels_open(cls, init, **kwargs):
