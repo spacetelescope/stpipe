@@ -15,6 +15,6 @@ This PR addresses ...
 - [ ] update relevant docstrings and / or `docs/` page
 - [ ] Does this PR change any API used downstream? (if not, label with `no-changelog-entry-needed`)
   - [ ] write news fragment(s) in `changes/`: `echo "changed something" > changes/<PR#>.<changetype>.rst` (see [changelog readme](https://github.com/spacetelescope/stpipe/blob/main/changes/README.rst) for instructions)
-  - [ ] run regression tests with this branch installed (`"git+https://github.com/<fork>/stpipe@<branch>"`)
+  - [ ] run regression tests with this branch installed (`stpipe@git+https://github.com/<fork>/stpipe.git@<branch>`)
     - [ ] [`jwst` regression test](https://github.com/spacetelescope/RegressionTests/actions/workflows/jwst.yml)
     - [ ] [`romancal` regression test](https://github.com/spacetelescope/RegressionTests/actions/workflows/romancal.yml)
