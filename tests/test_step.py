@@ -458,10 +458,9 @@ class SimpleDataModel(AbstractDataModel):
 
     def _stdm_save(self, path, dir_path=None, *args, **kwargs):
         """Adapted from stdatamodels/model_base.py but very simplified"""
-        output_path = os.path.join(path, "test-saved.txt")
-        with open(output_path, "w") as f:
-            f.write(f"{output_path}\n")
-        return output_path
+        with open(path, "w") as f:
+            f.write(f"{path}\n")
+        return path
 
 
 def test_save_results(tmp_cwd):
@@ -481,7 +480,7 @@ def test_save_with_output_dir(tmp_cwd):
     step = StepWithModel()
     step.output_dir = str(outpath)
     step.run(model)
-    assert (outpath / "foo_stepwithmodel.simplestep" / "test-saved.txt").exists()
+    assert (outpath / "foo_stepwithmodel.simplestep").exists()
 
 
 def test_skip():
