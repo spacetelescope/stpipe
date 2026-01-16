@@ -523,6 +523,9 @@ class Step:
             if self.output_file is not None:
                 self.save_results = True
 
+            if self.save_results and self.output_dir:
+                os.makedirs(self.output_dir)
+
             if self.suffix is None:
                 self.suffix = self.default_suffix()
 
@@ -1157,7 +1160,7 @@ class Step:
 
         Returns
         -------
-        outpath : str
+        str
             The fully qualified path name.
 
         Notes
@@ -1217,9 +1220,7 @@ class Step:
 
         output_dir = step.search_attr("output_dir", default="")
         output_dir = expandvars(expanduser(output_dir))
-        outpath = join(output_dir, basename)
-        os.makedirs(outpath, exist_ok=True)
-        return outpath
+        return join(output_dir, basename)
 
     @classmethod
     def _datamodels_open(cls, init, **kwargs):
