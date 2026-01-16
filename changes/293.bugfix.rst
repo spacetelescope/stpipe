@@ -1,0 +1,1 @@
+Fixed a bug where output_dir crashes pipeline at the end if given directory does not exist. Now, it crashes before the step is run.

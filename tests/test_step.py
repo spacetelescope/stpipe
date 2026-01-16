@@ -478,8 +478,9 @@ def test_save_with_output_dir(tmp_cwd):
     model.saveid = "stdatamodels"
     step = StepWithModel()
     step.output_dir = str(outpath)
-    step.run(model)
-    assert (outpath / "foo_stepwithmodel.simplestep").exists()
+    with pytest.raises(NotADirectoryError, match="output_dir"):
+        step.run(model)
+    assert not (outpath / "foo_stepwithmodel.simplestep").exists()
 
 
 def test_skip():
