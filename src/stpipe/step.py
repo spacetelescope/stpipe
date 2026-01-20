@@ -523,7 +523,7 @@ class Step:
             if self.output_file is not None:
                 self.save_results = True
 
-            if self.save_results and self.output_dir:
+            if self.output_dir:
                 os.makedirs(self.output_dir, exist_ok=True)
 
             if self.suffix is None:
