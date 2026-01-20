@@ -524,8 +524,7 @@ class Step:
                 self.save_results = True
 
             if (
-                self.save_results
-                and self.output_dir
+                self.output_dir
                 and not os.path.isdir(self.output_dir)
             ):
                 raise NotADirectoryError(
