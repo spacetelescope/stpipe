@@ -1,7 +1,6 @@
 """Test step.Step"""
 
 import copy
-import os
 import re
 from collections.abc import Sequence
 from contextlib import nullcontext
