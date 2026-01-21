@@ -133,7 +133,7 @@ The command would show text similar to this::
       --pre_hooks           List of Step classes to run before step [default=list]
       --post_hooks          List of Step classes to run after step [default=list]
       --output_file         File to save output to.
-      --output_dir          Directory path for output files
+      --output_dir          Directory path for output files (created if nonexistent)
       --output_ext          Output file type [default='.asdf']
       --output_use_model    When saving use ``DataModel.meta.filename`` [default=False]
       --output_use_index    Append index. [default=True]

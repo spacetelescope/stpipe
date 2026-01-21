@@ -44,7 +44,7 @@ class Step:
     pre_hooks          = list(default=list())        # List of Step classes to run before step
     post_hooks         = list(default=list())        # List of Step classes to run after step
     output_file        = output_file(default=None)   # File to save output to.
-    output_dir         = string(default=None)        # Directory path for output files
+    output_dir         = string(default=None)        # Directory path for output files (created if nonexistent)
     output_ext         = string()                    # Default type of output
     output_use_model   = boolean(default=False)      # When saving use `DataModel.meta.filename`
     output_use_index   = boolean(default=True)       # Append index.
