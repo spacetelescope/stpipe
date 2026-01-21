@@ -1,1 +1,1 @@
-Fixed a bug where output_dir crashes pipeline if given directory does not exist. Now, the directory would be created silently instead.
+Create the provided ``output_dir`` if it does not exist.
