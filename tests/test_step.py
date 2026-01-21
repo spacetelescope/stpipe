@@ -483,9 +483,9 @@ def test_save_with_output_dir_str(tmp_cwd):
     assert (outpath / "foo_stepwithmodel.simplestep").exists()
 
 
-def test_save_with_output_dir_env(tmp_cwd):
+def test_save_with_output_dir_env(tmp_cwd, monkeypatch):
     outpath = tmp_cwd / "my_out_dir"
-    os.environ["TSSWE_OUTPATH"] = str(outpath)
+    monkeypatch.setenv("TSSWE_OUTPATH", str(outpath))
     model = SimpleDataModel()
     model.saveid = "stdatamodels"
     step = StepWithModel()
