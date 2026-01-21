@@ -525,7 +525,7 @@ class Step:
 
             if self.output_dir and not os.path.isdir(self.output_dir):
                 raise NotADirectoryError(
-                    f"output_dir={self.self.output_dir} requested but not a directory"
+                    f"output_dir={self.output_dir} requested but not a directory"
                 )
 
             if self.suffix is None:
