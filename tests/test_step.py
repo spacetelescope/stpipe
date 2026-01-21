@@ -1,6 +1,7 @@
 """Test step.Step"""
 
 import copy
+import os
 import re
 from collections.abc import Sequence
 from contextlib import nullcontext
@@ -472,12 +473,24 @@ def test_save_results(tmp_cwd):
     assert (tmp_cwd / "test-saved.txt").exists()
 
 
-def test_save_with_output_dir(tmp_cwd):
+def test_save_with_output_dir_str(tmp_cwd):
     outpath = tmp_cwd / "my_out_dir"
     model = SimpleDataModel()
     model.saveid = "stdatamodels"
     step = StepWithModel()
     step.output_dir = str(outpath)
+    with pytest.raises(NotADirectoryError, match="output_dir"):
+        step.run(model)
+    assert not (outpath / "foo_stepwithmodel.simplestep").exists()
+
+
+def test_save_with_output_dir_env(tmp_cwd):
+    outpath = tmp_cwd / "my_out_dir"
+    os.environ["TSSWE_OUTPATH"] = str(outpath)
+    model = SimpleDataModel()
+    model.saveid = "stdatamodels"
+    step = StepWithModel()
+    step.output_dir = "$TSSWE_OUTPATH"
     with pytest.raises(NotADirectoryError, match="output_dir"):
         step.run(model)
     assert not (outpath / "foo_stepwithmodel.simplestep").exists()
