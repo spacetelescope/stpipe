@@ -523,10 +523,12 @@ class Step:
             if self.output_file is not None:
                 self.save_results = True
 
-            if self.output_dir and not os.path.isdir(self.output_dir):
-                raise NotADirectoryError(
-                    f"output_dir={self.output_dir} requested but not a directory"
-                )
+            if self.output_dir:
+                output_dir = expandvars(expanduser(self.output_dir))
+                if not os.path.isdir(output_dir):
+                    raise NotADirectoryError(
+                        f"output_dir={output_dir} requested but not a directory"
+                    )
 
             if self.suffix is None:
                 self.suffix = self.default_suffix()
