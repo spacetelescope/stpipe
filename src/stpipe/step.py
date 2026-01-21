@@ -524,7 +524,8 @@ class Step:
                 self.save_results = True
 
             if self.output_dir:
-                os.makedirs(self.output_dir, exist_ok=True)
+                output_dir = expandvars(expanduser(self.output_dir))
+                os.makedirs(output_dir, exist_ok=True)
 
             if self.suffix is None:
                 self.suffix = self.default_suffix()
