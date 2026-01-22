@@ -38,7 +38,10 @@ class StepSpecDocumenter(AttributeDocumenter):
 
 def setup(app):
     # add a custom AttributeDocumenter subclass to handle Step.spec formatting
-    app.add_autodocumenter(StepSpecDocumenter, True)
+    def register_documenter(app, config):
+        app.add_autodocumenter(StepSpecDocumenter, True)
+    # register it with a high priority so it behaves with the built-in autodoc
+    app.connect("config-inited", register_documenter, priority=9000)
 
 
 REPO_ROOT = Path(__file__).parent.parent.parent
@@ -59,6 +62,7 @@ version = package.__version__.split("-", 1)[0]
 release = package.__version__
 
 extensions = [
+    "sphinx.ext.autodoc",
     "sphinx_automodapi.automodapi",
     "numpydoc",
     "sphinx.ext.intersphinx",
