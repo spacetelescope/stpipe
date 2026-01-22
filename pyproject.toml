@@ -26,7 +26,7 @@ dynamic = [
 [project.optional-dependencies]
 docs = [
     "numpydoc",
-    "sphinx<9", # pin until spec formatter is updated for Sphinx 9 https://github.com/spacetelescope/jwst/issues/10151
+    "sphinx",
     "sphinx-automodapi",
     "sphinx-rtd-theme",
     "tomli; python_version <\"3.11\"",
