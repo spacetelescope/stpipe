@@ -51,7 +51,8 @@ implicitly created parameters ``output_dir`` and ``output_file`` which the user 
 use to specify the directory and file to save this model to. Since the `stpipe`
 architecture generally creates output file names, in general, it is expected
 that ``output_file`` be rarely specified, and that different sets of outputs be
-separated using ``output_dir``.
+separated using ``output_dir``, which will be created if the directory
+does not yet exist.
 
 Output Suffix
 -------------

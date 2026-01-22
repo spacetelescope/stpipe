@@ -44,7 +44,7 @@ class Step:
     pre_hooks          = list(default=list())        # List of Step classes to run before step
     post_hooks         = list(default=list())        # List of Step classes to run after step
     output_file        = output_file(default=None)   # File to save output to.
-    output_dir         = string(default=None)        # Directory path for output files
+    output_dir         = string(default=None)        # Directory path for output files (created if nonexistent)
     output_ext         = string()                    # Default type of output
     output_use_model   = boolean(default=False)      # When saving use `DataModel.meta.filename`
     output_use_index   = boolean(default=True)       # Append index.
@@ -522,6 +522,10 @@ class Step:
             # Default output file configuration
             if self.output_file is not None:
                 self.save_results = True
+
+            if self.output_dir:
+                output_dir = expandvars(expanduser(self.output_dir))
+                os.makedirs(output_dir, exist_ok=True)
 
             if self.suffix is None:
                 self.suffix = self.default_suffix()
@@ -1157,7 +1161,8 @@ class Step:
 
         Returns
         -------
-        The fully qualified path name.
+        str
+            The fully qualified path name.
 
         Notes
         -----

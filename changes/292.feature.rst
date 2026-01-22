@@ -1,0 +1,1 @@
+Create the provided ``output_dir`` if it does not exist.

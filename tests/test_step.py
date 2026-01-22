@@ -444,12 +444,22 @@ class SimpleDataModel(AbstractDataModel):
 
     def save(self, path, dir_path=None, *args, **kwargs):
         saveid = getattr(self, "saveid", None)
+
+        if saveid == "stdatamodels":
+            return self._stdm_save(path, dir_path=dir_path, *args, **kwargs)
+
         if saveid is not None:
             fname = saveid + "-saved.txt"
             with open(fname, "w") as f:
-                f.write(f"{path}")
+                f.write(f"{path}\n")
             return fname
         return None
+
+    def _stdm_save(self, path, dir_path=None, *args, **kwargs):
+        """Adapted from stdatamodels/model_base.py but very simplified"""
+        with open(path, "w") as f:
+            f.write(f"{path}\n")
+        return path
 
 
 def test_save_results(tmp_cwd):
@@ -460,6 +470,27 @@ def test_save_results(tmp_cwd):
     step = StepWithModel()
     step.run(model)
     assert (tmp_cwd / "test-saved.txt").exists()
+
+
+def test_save_with_output_dir_str(tmp_cwd):
+    outpath = tmp_cwd / "my_out_dir"
+    model = SimpleDataModel()
+    model.saveid = "stdatamodels"
+    step = StepWithModel()
+    step.output_dir = str(outpath)
+    step.run(model)
+    assert (outpath / "foo_stepwithmodel.simplestep").exists()
+
+
+def test_save_with_output_dir_env(tmp_cwd, monkeypatch):
+    outpath = tmp_cwd / "my_out_dir"
+    monkeypatch.setenv("TSSWE_OUTPATH", str(outpath))
+    model = SimpleDataModel()
+    model.saveid = "stdatamodels"
+    step = StepWithModel()
+    step.output_dir = "$TSSWE_OUTPATH"
+    step.run(model)
+    assert (outpath / "foo_stepwithmodel.simplestep").exists()
 
 
 def test_skip():

@@ -57,4 +57,5 @@ parameter ``save_results=True``::
  result = CleanupStep.call('myfile.asdf', myparameter=42, save_results=True)
 
 If one wishes to specify a different file name, rather than a system-generated
-one, set ``output_file`` and/or ``output_dir``.
+one, set ``output_file`` and/or ``output_dir``, the latter which will be
+created if the directory does not yet exist.
