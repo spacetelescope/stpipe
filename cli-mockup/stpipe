@@ -1,0 +1,113 @@
+#!/usr/bin/env python3
+import argparse
+
+
+def parse_args():
+    parser = argparse.ArgumentParser("stpipe", description="stpipe CLI")
+    parser.add_argument("-V", "--version", help="print version information and exit", action="store_true")
+
+    subparsers = parser.add_subparsers(dest="command", title="commands", required=True)
+
+    describe_epilog = """
+examples:
+  print step description and parameters:
+
+    stpipe describe jwst.step.RampFitStep
+
+  increase verbosity to include parameters for nested steps:
+
+    stpipe describe --verbose jwst.pipeline.Detector1Pipeline
+    """.strip()
+
+    describe_parser = subparsers.add_parser(
+        "describe",
+        description="describe a step or pipeline",
+        epilog=describe_epilog,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        help="describe a step or pipeline",
+    )
+    describe_parser.add_argument("class", metavar="<class>", help="step or pipeline class name (case-insensitive, module path may be omitted for unique class names)")
+    describe_parser.add_argument("-v", "--verbose", action="store_true", default=False, help="verbose output")
+
+    list_epilog = """
+examples:
+  list available pipeline classes:
+
+    stpipe list
+
+  list pipelines and steps:
+
+    stpipe list --all
+
+  list steps in the jwst package:
+
+    stpipe list --steps-only jwst.*
+    """.strip()
+    list_parser = subparsers.add_parser(
+        "list",
+        epilog=list_epilog,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="list available classes",
+        help="list available classes",
+    )
+    list_parser.add_argument("pattern", metavar="<pattern>", help="restrict classes to glob pattern (case-insensitive)", nargs="?")
+    list_parser.add_argument("--all", help="list both step and pipeline classes", action="store_true", default=False)
+    list_parser.add_argument("--steps-only", help="list only step classes", action="store_true", default=False)
+
+    print_epilog = """
+examples:
+  save a pipeline config to a local file:
+
+    stpipe print-config jwst.pipeline.Detector1Pipeline dataset.fits > config.asdf
+    """.strip()
+    print_parser = subparsers.add_parser(
+        "print-config",
+        description="print step or pipeline config to stdout",
+        epilog=print_epilog,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        help="print step or pipeline config to stdout",
+    )
+    print_parser.add_argument("class", metavar="<class>", help="step or pipeline class name (case-insensitive, module path may be omitted for unique class names)")
+    print_parser.add_argument("input-file", metavar="<input-file>", help="input dataset or association (used to fetch parameters from CRDS)")
+
+    run_epilog = """
+examples:
+  run a pipeline with default parameters recommended by CRDS:
+
+    stpipe run jwst.pipeline.Detector1Pipeline dataset.fits
+
+  run a pipeline with parameters specified in a local config:
+
+    stpipe run --config config.asdf jwst.pipeline.Detector1Pipeline dataset.fits
+
+  override an individual pipeline parameter:
+
+    stpipe run -p save_calibrated_ramp=true jwst.pipeline.Detector1Pipeline dataset.fits
+
+  override an individual step parameter:
+
+    stpipe run -p jump.rejection_threshold=3.0 jwst.pipeline.Detector1Pipeline dataset.fits
+    """
+    run_parser = subparsers.add_parser(
+        "run",
+        description="run a step or pipeline",
+        epilog=run_epilog,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        help="run a step or pipeline",
+    )
+    run_parser.add_argument("class", metavar="<class>", help="step or pipeline class name (case-insensitive, module path may be omitted for unique class names)")
+    run_parser.add_argument("input-file", metavar="<input-file>", help="input dataset or association")
+    run_parser.add_argument("--config", metavar="<path>", help="config file (use 'stpipe print-config' to save and edit the default config)")
+    run_parser.add_argument("-d", "--debug", action="store_true", help="debug logging (DEBUG level)")
+    run_parser.add_argument("-p", metavar="<name>=<value>", help="override an individual step or pipeline parameter (use 'stpipe describe' to list available parameters)")
+    run_parser.add_argument("-v", "--verbose", action="store_true", help="verbose logging (INFO level)")
+
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+
+if __name__ == "__main__":
+    main()
