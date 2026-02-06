@@ -801,7 +801,9 @@ class AbstractModelLibrary(abc.ABC):
         exptype : str
             Exposure type (for example "SCIENCE").
         """
-        return getattr(model.meta, "exptype", "SCIENCE")
+        if getattr(model.meta, "exptype", None) is None:
+            return "SCIENCE"
+        return model.meta.exptype
 
     @property
     @abc.abstractmethod
