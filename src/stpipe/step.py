@@ -868,19 +868,29 @@ class Step:
         """
         override = self.get_ref_override(reference_file_type)
         if override is not None:
+            # Store a representative string for datamodels, then
+            # return the model without checking it.
             if isinstance(override, AbstractDataModel):
                 self._reference_files_used.append(
                     (reference_file_type, override.override_handle)
                 )
                 return override
 
-            if override.strip() != "":
+            # Return an empty string without storing or checking it.
+            if override.strip() == "":
+                return ""
+
+            # For either "N/A" or a file name, store the value and then
+            # check that it is a valid reference.
+            if override.strip() == "N/A":
+                # Special value: store it as is.
+                self._reference_files_used.append((reference_file_type, "N/A"))
+            else:
+                # Record the full path to the override file.
                 self._reference_files_used.append(
                     (reference_file_type, abspath(override))
                 )
-                reference_name = override
-            else:
-                return ""
+            reference_name = override
         else:
             parameters, observatory = self._get_crds_parameters(input_file)
             reference_name = crds_client.get_reference_file(

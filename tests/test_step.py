@@ -661,6 +661,7 @@ def test_get_config_from_reference_dict(monkeypatch, klass, observatory, error):
 
 @pytest.mark.parametrize("klass", (SimpleStep, SimplePipe, PipeWithPipe))
 def test_ref_file_override(klass, tmp_path):
+    """Test that override paths are stored as absolute paths."""
     override_path = tmp_path / "ref.asdf"
     override_path.touch()
     step = SimpleStep()
@@ -668,6 +669,28 @@ def test_ref_file_override(klass, tmp_path):
     ref_path = step.get_reference_file("foo.asdf", "dark")
     assert ref_path == str(override_path)
     assert ("dark", ref_path) in step._reference_files_used
+
+
+@pytest.mark.parametrize("klass", (SimpleStep, SimplePipe, PipeWithPipe))
+def test_ref_file_override_na(klass):
+    """Test that the special override value N/A is stored as is."""
+    override_path = "N/A"
+    step = SimpleStep()
+    step.override_dark = override_path
+    ref_path = step.get_reference_file("foo.asdf", "dark")
+    assert ref_path == override_path
+    assert ("dark", ref_path) in step._reference_files_used
+
+
+@pytest.mark.parametrize("klass", (SimpleStep, SimplePipe, PipeWithPipe))
+def test_ref_file_override_empty(klass):
+    """Test that an empty string passed as an override is not stored."""
+    override_path = ""
+    step = SimpleStep()
+    step.override_dark = override_path
+    ref_path = step.get_reference_file("foo.asdf", "dark")
+    assert ref_path == override_path
+    assert ("dark", ref_path) not in step._reference_files_used
 
 
 def test_get_stpipe_loggers():
