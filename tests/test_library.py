@@ -23,6 +23,7 @@ _N_MODELS = len(_GROUP_IDS)
 _N_GROUPS = len(set(_GROUP_IDS))
 _PRODUCT_NAME = "foo_out"
 _INIT_TYPES = ("filename", "asn", "models")
+_TEST_URI_SCHEME = "file://"
 
 
 def _load_asn(filename):
@@ -84,6 +85,14 @@ class ModelLibrary(AbstractModelLibrary):
         raise NoGroupID(f"{model} missing group_id")
 
 
+class URIModelLibrary(ModelLibrary):
+    def _datamodels_open(self, filename, **kwargs):
+        return super()._datamodels_open(filename.removeprefix(_TEST_URI_SCHEME))
+
+    def _filename_to_group_id(self, filename):
+        return super()._filename_to_group_id(filename.removeprefix(_TEST_URI_SCHEME))
+
+
 def _library_to_models(library):
     """
     A few tests are easier to understand and write when
@@ -142,6 +151,17 @@ def example_asn_path(example_models, tmp_path):
     }
     asn_filename = tmp_path / (asn["asn_id"] + ".json")
     _write_asn(asn, asn_filename)
+    return asn_filename
+
+
+@pytest.fixture
+def example_uri_asn_path(example_asn_path):
+    asn_dir = example_asn_path.parent
+    asn_data = _load_asn(example_asn_path)
+    for member in asn_data["products"][0]["members"]:
+        member["expname"] = _TEST_URI_SCHEME + str(asn_dir / member["expname"])
+    asn_filename = asn_dir / "uri_asn.json"
+    _write_asn(asn_data, asn_filename)
     return asn_filename
 
 
@@ -801,3 +821,16 @@ def test_get_filename(table_name, filename):
     if table_name != "MISSING":
         lib._asn["table_name"] = table_name
     assert Step._get_filename(lib) == filename
+
+
+@pytest.mark.parametrize("loaded", [False, True])
+def test_uri_member_paths(example_uri_asn_path, loaded):
+    if loaded:
+        asn = _load_asn(example_uri_asn_path)
+    else:
+        asn = example_uri_asn_path
+    lib = URIModelLibrary(asn)
+    with lib:
+        for i, model in enumerate(lib):
+            assert model
+            lib.shelve(model, i, modify=False)

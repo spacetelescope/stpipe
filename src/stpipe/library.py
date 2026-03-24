@@ -7,6 +7,7 @@ import warnings
 from collections.abc import Iterable, MutableMapping
 from pathlib import Path
 from types import MappingProxyType
+from urllib.parse import urlparse
 
 import asdf
 
@@ -279,8 +280,9 @@ class AbstractModelLibrary(abc.ABC):
 
         for index, member in enumerate(self._members):
             if "group_id" not in member:
-                filename = os.path.join(self._asn_dir, member["expname"])
-                member["group_id"] = self._to_group_id(filename, index)
+                member["group_id"] = self._to_group_id(
+                    self._member_to_filename(member), index
+                )
 
         if not on_disk:
             # if models were provided as input, assign the members here
@@ -548,6 +550,27 @@ class AbstractModelLibrary(abc.ABC):
         if "asn_pool" in self.asn:
             model.meta.asn["pool_name"] = self.asn["asn_pool"]
 
+    def _member_to_filename(self, member):
+        """
+        Resolve a filename for the provided member.
+
+        Parameters
+        ----------
+        member : dict
+            Member definition (likely from an association).
+
+        Returns
+        -------
+        filename : str
+            Filename for the provided member.
+        """
+        member_filename = member["expname"]
+        if self._asn_dir is None:
+            return member_filename
+        if urlparse(member_filename).scheme:
+            return member_filename
+        return os.path.join(self._asn_dir, member["expname"])
+
     def _load_member(self, index):
         """
         Load a model for the association member at the provided index.
@@ -565,7 +588,7 @@ class AbstractModelLibrary(abc.ABC):
         model : DataModel
         """
         member = self._members[index]
-        filename = os.path.join(self._asn_dir, member["expname"])
+        filename = self._member_to_filename(member)
 
         model = self._datamodels_open(filename, **self._datamodels_open_kwargs)
 
