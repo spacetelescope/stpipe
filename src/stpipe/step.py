@@ -488,8 +488,6 @@ class Step:
         the running of each step.  The real work that is unique to
         each step type is done in the `process` method.
         """
-        gc.collect()
-
         with log.record_logs(
             log_names=self.get_stpipe_loggers(), formatter=self._log_records_formatter
         ) as log_records:
@@ -626,6 +624,7 @@ class Step:
             if not self.skip:
                 logger.info("Step %s done", self.name)
 
+        gc.collect()
         return step_result
 
     def finalize_result(self, result, reference_files_used):
