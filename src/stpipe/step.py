@@ -449,7 +449,9 @@ class Step:
         self._log = logging.getLogger(self.qualified_name)
 
         # Log the fact that we have been init-ed.
-        type(self)._prerun_logs.append((logging.INFO, f"{self.__class__.__name__} instance created."))
+        type(self)._prerun_logs.append(
+            (logging.INFO, f"{self.__class__.__name__} instance created.")
+        )
 
         # Store the config file path so config filenames can be resolved
         # against it.
@@ -952,18 +954,30 @@ class Step:
             try:
                 crds_parameters, crds_observatory = cls._get_crds_parameters(dataset)
             except (OSError, TypeError, ValueError):
-                cls._prerun_logs.append((logging.WARNING, "Input dataset is not an instance of AbstractDataModel."))
+                cls._prerun_logs.append(
+                    (
+                        logging.WARNING,
+                        "Input dataset is not an instance of AbstractDataModel.",
+                    )
+                )
                 disable = True
 
         # Check if retrieval should be attempted.
         if disable is None:
             disable = get_disable_crds_steppars()
         if disable:
-            cls._prerun_logs.append((logging.INFO, f"{reftype_upper}: CRDS parameter reference retrieval disabled."))
+            cls._prerun_logs.append(
+                (
+                    logging.INFO,
+                    f"{reftype_upper}: CRDS parameter reference retrieval disabled.",
+                )
+            )
             return config_parser.ConfigObj()
 
         # Retrieve step parameters from CRDS
-        cls._prerun_logs.append((logging.DEBUG, f"Retrieving step {reftype_upper} parameters from CRDS"))
+        cls._prerun_logs.append(
+            (logging.DEBUG, f"Retrieving step {reftype_upper} parameters from CRDS")
+        )
         try:
             ref_file = crds_client.get_reference_file(
                 crds_parameters,
@@ -971,20 +985,31 @@ class Step:
                 crds_observatory,
             )
         except (AttributeError, crds_client.CrdsError):
-            cls._prerun_logs.append((logging.DEBUG, f"{reftype_upper}: No parameters found"))
+            cls._prerun_logs.append(
+                (logging.DEBUG, f"{reftype_upper}: No parameters found")
+            )
             return config_parser.ConfigObj()
         if ref_file != "N/A":
-            cls._prerun_logs.append((logging.INFO, f"{reftype_upper} parameters found: {ref_file}"))
+            cls._prerun_logs.append(
+                (logging.INFO, f"{reftype_upper} parameters found: {ref_file}")
+            )
             ref = config_parser.load_config_file(ref_file)
 
             ref_pars = {
                 par: value for par, value in ref.items() if par not in ["class", "name"]
             }
-            cls._prerun_logs.append((logging.DEBUG, f"{reftype_upper} parameters retrieved from CRDS: {ref_pars}"))
+            cls._prerun_logs.append(
+                (
+                    logging.DEBUG,
+                    f"{reftype_upper} parameters retrieved from CRDS: {ref_pars}",
+                )
+            )
 
             return ref
 
-        cls._prerun_logs.append((logging.DEBUG, f"No {reftype_upper} reference files found."))
+        cls._prerun_logs.append(
+            (logging.DEBUG, f"No {reftype_upper} reference files found.")
+        )
         return config_parser.ConfigObj()
 
     @staticmethod
@@ -1012,7 +1037,7 @@ class Step:
         # )
         # warnings.warn(msg, DeprecationWarning, stacklevel=2)
 
-        return ("root", )
+        return ("root",)
 
     def set_primary_input(self, obj, exclusive=True):
         """
