@@ -1,3 +1,41 @@
+0.12.0 (2026-03-25)
+===================
+
+Bug Fixes
+---------
+
+- Check for the special value "N/A" for override reference files and store it
+  as is. Any other non-empty string is recorded as an absolute path. (`#301
+  <https://github.com/spacetelescope/stpipe/issues/301>`_)
+
+
+Documentation
+-------------
+
+- Consolidate docs from jwst and romancal packages into a more general
+  description of stpipe. (`#279
+  <https://github.com/spacetelescope/stpipe/issues/279>`_)
+
+
+New Features
+------------
+
+- Create the provided ``output_dir`` if it does not exist. (`#292
+  <https://github.com/spacetelescope/stpipe/issues/292>`_)
+
+
+Deprecations and Removals
+-------------------------
+
+- Remove support for profiling via STPIPE_PROFILE. Use standard python
+  profiling if needed. (`#277
+  <https://github.com/spacetelescope/stpipe/issues/277>`_)
+- Remove warning when step is passed a "discouraged" type. (`#278
+  <https://github.com/spacetelescope/stpipe/issues/278>`_)
+- Remove deprecated configobj. (`#282
+  <https://github.com/spacetelescope/stpipe/issues/282>`_)
+
+
 0.11.1 (2025-09-26)
 ===================
 

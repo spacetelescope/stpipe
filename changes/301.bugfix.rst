@@ -1,1 +1,0 @@
-Check for the special value "N/A" for override reference files and store it as is. Any other non-empty string is recorded as an absolute path.
