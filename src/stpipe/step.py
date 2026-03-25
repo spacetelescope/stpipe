@@ -1158,7 +1158,8 @@ class Step:
                     **components,
                 )
             )
-            # NOTE: This method is called from self.run() so logger is captured normally.
+            # NOTE: This method is called from self.run()
+            #       so logger is captured normally.
             logger.info("Saved model in %s", output_path)
 
         return output_path
@@ -1430,7 +1431,8 @@ class Step:
                     for step_name, step_parameters in value.items():
                         getattr(self, step_name).update_pars(step_parameters)
             else:
-                # NOTE: This is called from utility function, so no need for cls._prerun_logs
+                # NOTE: This is called from utility function,
+                #       so no need for cls._prerun_logs
                 logger.debug(
                     "Parameter %s is not valid for step %s. Ignoring.", parameter, self
                 )
