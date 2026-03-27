@@ -1,0 +1,1 @@
+Support URIs in member expnames in ModelLibrary.
