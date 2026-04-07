@@ -128,6 +128,7 @@ class Step:
         name : str, optional
             If provided, use that name for the returned instance.
             If not provided, the following are tried (in order):
+
             - The ``name`` parameter in the config file
             - The filename of the config file
             - The name of returned class
@@ -172,7 +173,7 @@ class Step:
         Parameters
         ----------
         args : list of str
-            Commandline arguments
+            Command line arguments
 
         Returns
         -------
@@ -239,15 +240,19 @@ class Step:
         config : configobj.Section instance
             The config file fragment containing parameters for this
             step only.
+
         parent : Step instance, optional
             The parent step of this step.  Used to determine a
             fully-qualified name for this step, and to determine
             the mode in which to run this step.
+
         name : str, optional
             If provided, use that name for the returned instance.
             If not provided, try the following (in order):
+
             - The ``name`` parameter in the config file fragment
             - The name of returned class
+
         config_file : str or pathlib.Path, optional
             The path to the config file that created this step, if
             any.  This is used to resolve relative file name
@@ -931,6 +936,7 @@ class Step:
         """
 
         reftype = cls.get_config_reftype()
+        reftype_upper = reftype.upper()
 
         if isinstance(dataset, dict):
             # crds_parameters was passed as input from pipeline.py
@@ -951,12 +957,12 @@ class Step:
             disable = get_disable_crds_steppars()
         if disable:
             logger.info(
-                "%s: CRDS parameter reference retrieval disabled.", reftype.upper()
+                "%s: CRDS parameter reference retrieval disabled.", reftype_upper
             )
             return config_parser.ConfigObj()
 
         # Retrieve step parameters from CRDS
-        logger.debug("Retrieving step %s parameters from CRDS", reftype.upper())
+        logger.debug("Retrieving step %s parameters from CRDS", reftype_upper)
         try:
             ref_file = crds_client.get_reference_file(
                 crds_parameters,
@@ -964,22 +970,22 @@ class Step:
                 crds_observatory,
             )
         except (AttributeError, crds_client.CrdsError):
-            logger.debug("%s: No parameters found", reftype.upper())
+            logger.debug("%s: No parameters found", reftype_upper)
             return config_parser.ConfigObj()
         if ref_file != "N/A":
-            logger.info("%s parameters found: %s", reftype.upper(), ref_file)
+            logger.info("%s parameters found: %s", reftype_upper, ref_file)
             ref = config_parser.load_config_file(ref_file)
 
             ref_pars = {
                 par: value for par, value in ref.items() if par not in ["class", "name"]
             }
             logger.debug(
-                "%s parameters retrieved from CRDS: %s", reftype.upper(), ref_pars
+                "%s parameters retrieved from CRDS: %s", reftype_upper, ref_pars
             )
 
             return ref
 
-        logger.debug("No %s reference files found.", reftype.upper())
+        logger.debug("No %s reference files found.", reftype_upper)
         return config_parser.ConfigObj()
 
     @staticmethod
@@ -1026,6 +1032,7 @@ class Step:
         """
         self._set_input_dir(obj, exclusive=exclusive)
 
+        # NOTE: This method is called from self.run() so logger is captured normally.
         err_message = f"Cannot set master input file name from object {obj}"
         parent_input_filename = self.search_attr("_input_filename")
         if not exclusive or parent_input_filename is None:
@@ -1127,6 +1134,8 @@ class Step:
                     **components,
                 )
             )
+            # NOTE: This method is called from self.run()
+            #       so logger is captured normally.
             logger.info("Saved model in %s", output_path)
 
         return output_path
@@ -1398,6 +1407,8 @@ class Step:
                     for step_name, step_parameters in value.items():
                         getattr(self, step_name).update_pars(step_parameters)
             else:
+                # NOTE: This method is called from self.run()
+                #       so logger is captured normally.
                 logger.debug(
                     "Parameter %s is not valid for step %s. Ignoring.", parameter, self
                 )
