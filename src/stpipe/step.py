@@ -487,7 +487,7 @@ class Step:
         """
         return self._log_records
 
-    def run(self, *args):
+    def run(self, *args, _external_log_context=None):
         """
         Run handles the generic setup and teardown that happens with
         the running of each step.  The real work that is unique to
@@ -495,10 +495,19 @@ class Step:
         """
         gc.collect()
 
-        with log.record_logs(
-            log_names=self.get_stpipe_loggers(), formatter=self._log_records_formatter
-        ) as log_records:
-            self._log_records = log_records
+        if _external_log_context is not None:
+            ctx = nullcontext()
+        else:
+            ctx = log.record_logs(
+                log_names=self.get_stpipe_loggers(),
+                formatter=self._log_records_formatter,
+            )
+
+        with ctx as log_records:
+            if _external_log_context is not None:
+                self._log_records = _external_log_context
+            else:
+                self._log_records = log_records
 
             step_result = None
 
@@ -537,7 +546,9 @@ class Step:
 
             hook_args = args
             for pre_hook in self._pre_hooks:
-                hook_results = pre_hook.run(*hook_args)
+                hook_results = pre_hook.run(
+                    *hook_args, _external_log_context=_external_log_context
+                )
                 if hook_results is not None:
                     hook_args = (hook_results,)
             args = hook_args
@@ -578,7 +589,9 @@ class Step:
 
             # Run the post hooks
             for post_hook in self._post_hooks:
-                hook_results = post_hook.run(step_result)
+                hook_results = post_hook.run(
+                    step_result, _external_log_context=_external_log_context
+                )
                 if hook_results is not None:
                     step_result = hook_results
 
@@ -744,7 +757,12 @@ class Step:
             log_cfg = None
         ctx = nullcontext if log_cfg is None else log_cfg.context
 
-        with ctx(log_names):
+        with (
+            ctx(log_names),
+            log.record_logs(
+                log_names=cls.get_stpipe_loggers(), formatter=cls._log_records_formatter
+            ) as log_records,
+        ):
             config, config_file = cls.build_config(filename, **kwargs)
 
             if "logcfg" in config:
@@ -764,7 +782,7 @@ class Step:
                 config, name=name, config_file=config_file
             )
 
-            return instance.run(*args)
+            return instance.run(*args, _external_log_context=log_records)
 
     @property
     def input_dir(self):
