@@ -10,30 +10,21 @@ on:
       - reopened
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  changelog-check:
+  check:
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'no-changelog-entry-needed') }}
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v6
         with:
-          python-version: 3.12
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - run: pip install .
-      - run: pip install towncrier
+          python-version: "3"
+      - run: pip install . towncrier
       - run: towncrier check
-      - run: towncrier build --draft | grep -P '#${{ github.event.number }}'
-  changelog-prevent-manual-edit:
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'allow-manual-changelog-edit') }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - name: prevent direct changes to `CHANGES.rst` (write a towncrier fragment in `changes/` instead; you can override this with the `allow-manual-changelog-edit` label)
-        run: git diff HEAD ${{ github.event.pull_request.base.sha }} --no-patch --exit-code CHANGES.rst
+      - name: search for news fragment matching pull request number
+        run: towncrier build --draft | grep -P '#${{ github.event.number }}'
