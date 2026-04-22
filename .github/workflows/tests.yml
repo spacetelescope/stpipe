@@ -1,20 +1,21 @@
 name: tests
 
 on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
   push:
     branches:
       - main
-    tags:
-      - "*"
-  pull_request:
-  schedule:
-    # Weekly Monday 9AM build
-    # * is a special character in YAML so you have to quote this string
-    - cron: "0 9 * * 1"
   workflow_dispatch:
 
+permissions: {}
+
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -23,15 +24,17 @@ jobs:
     with:
       envs: |
         - linux: py310-oldestdeps-cov-xdist
-        - linux: py310-xdist
-        - linux: py311-xdist
         - linux: py311-downstreamdeps-cov-xdist
           coverage: 'codecov'
         - linux: py312-xdist-nolegacypath
-        - linux: py313-xdist
         - linux: py314-cov-xdist
           coverage: 'codecov'
         - macos: py314-xdist
+      fill: true
+      fill_platforms: linux
+      fill_factors: xdist
+      artifact-path: |
+        results.xml
   test_downstream:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v2
     with:
@@ -42,4 +45,4 @@ jobs:
       envs: |
         - linux: py313-jwst-cov
         - linux: py313-romancal-cov
-      coverage: codecov
+      coverage: github

@@ -2,21 +2,25 @@ name: extra tests
 
 on:
   schedule:
-    # Weekly Monday 6AM build
-    - cron: "0 0 * * 1"
+    - cron: "6 0 * * 1" # every Monday at 6a
   pull_request:
-    # We also want this workflow triggered if the `Weekly CI` label is
-    # added or present when PR is updated
     types:
       - opened
+      - synchronize
       - reopened
+      - ready_for_review
       - labeled
       - unlabeled
-      - synchronize
   push:
     tags:
       - "*"
   workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -24,8 +28,8 @@ jobs:
     if: (github.repository == 'spacetelescope/stpipe' && (github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run extra tests')))
     with:
       envs: |
-        - macos: py311-xdist
-        - macos: py312-xdist
-        - macos: py313-xdist
         - linux: py314-devdeps-xdist
         - macos: py314-devdeps-xdist
+      fill: true
+      fill_platforms: macos
+      fill_factors: xdist

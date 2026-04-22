@@ -1,0 +1,112 @@
+requires = ["tox>=4.50"]
+env_list = [
+  { product = [
+    { prefix = "py3", start = 11, stop = 14 },
+    ["warnings"],
+    ["oldestdeps", "devdeps", "downstreamdeps"],
+    ["nolegacypath"],
+    ["cov"],
+    ["xdist"],
+  ] },
+  { product = [
+    { prefix = "py3", start = 11, stop = 14 },
+    ["jwst", "romancal"],
+  ] }
+]
+
+[env_run_base]
+factors = [
+  ["warnings"],
+  ["oldestdeps", "devdeps", "downstreamdeps", "jwst", "romancal"],
+  ["nolegacypath"],
+  ["cov"],
+  ["xdist"]
+]
+pass_env = [
+  "TOXENV",
+  "CI",
+  "CODECOV_*",
+  "HOME",
+  "STRICT_VALIDATION",
+  "PASS_INVALID_VALUES",
+  "VALIDATE_ON_ASSIGNMENT",
+  "CRDS_*",
+  "TEST_BIGDATA",
+]
+set_env.PIP_EXTRA_INDEX_URL = { replace = "if", condition = "factor.devdeps", then = "https://pypi.anaconda.org/astropy/simple https://pypi.anaconda.org/scientific-python-nightly-wheels/simple" }
+set_env.CRDS_SERVER_URL = { replace = "if", condition = "factor.romancal", then = "https://roman-crds.stsci.edu", "else" = "https://jwst-crds.stsci.edu" }
+set_env.CRDS_PATH = { replace = "if", condition = "factor.jwst or factor.romancal", then = "{package_root}/crds_cache" }
+set_env.CRDS_CLIENT_RETRY_COUNT = { replace = "if", condition = "factor.jwst or factor.romancal", then = "3" }
+set_env.CRDS_CLIENT_RETRY_DELAY_SECONDS = { replace = "if", condition = "factor.jwst or factor.romancal", then = "20" }
+deps = [
+  "pytest>=9",
+  { replace = "if", condition = "factor.oldestdeps", then = [
+    "minimum_dependencies"
+  ], extend = true },
+  { replace = "if", condition = "factor.devdeps", then = ["astropy>=0.0.dev0"], extend = true },
+  { replace = "if", condition = "factor.downstreamdeps", then = [
+    "jwst",
+    "stdatamodels",
+    "roman_datamodels"
+  ], extend = true },
+  { replace = "if", condition = "factor.cov", then = ["pytest-cov"], extend = true },
+  { replace = "if", condition = "factor.xdist", then = ["pytest-xdist"], extend = true },
+]
+extras = ["test"]
+commands_pre = [
+  { replace = "if", condition = "factor.oldestdeps", then = [
+    [
+      "minimum_dependencies",
+      "stpipe",
+      "--filename",
+      "requirements-min.txt"
+    ],
+    ["pip", "install", "numpy<2.0"],
+    ["pip", "install", "-r", "requirements-min.txt"]
+  ], extend = true },
+  { replace = "if", condition = "factor.jwst or factor.romancal", then = [
+    [
+      "bash",
+      "-c",
+      "pip freeze -q | grep 'stpipe @' > {env_tmp_dir}/requirements.txt"
+    ]
+  ], extend = true },
+  { replace = "if", condition = "factor.jwst", then = [
+    ["git", "clone", "https://github.com/spacetelescope/jwst.git"],
+    ["pip", "install", "-e", "jwst[test]"]
+  ], extend = true },
+  { replace = "if", condition = "factor.romancal", then = [
+    ["git", "clone", "https://github.com/spacetelescope/romancal.git"],
+    ["pip", "install", "-e", "romancal[test]"]
+  ], extend = true },
+  { replace = "if", condition = "factor.jwst or factor.romancal", then = [
+    ["pip", "install", "-r", "{env_tmp_dir}/requirements.txt"]
+  ], extend = true },
+]
+commands = [
+  [
+    "pytest",
+    { replace = "if", condition = "factor.warnings", then = [
+      "-W",
+      "error",
+    ], extend = true },
+    { replace = "if", condition = "factor.nolegacypath", then = [
+      "-p",
+      "no:legacypath",
+    ], extend = true },
+    { replace = "if", condition = "factor.jwst", then = ["jwst"], extend = true },
+    { replace = "if", condition = "factor.romancal", then = ["romancal"], extend = true },
+    { replace = "if", condition = "factor.cov", then = [
+      "--cov",
+      "--cov-report",
+      "xml:{toxinidir}/coverage.xml",
+      "--cov-report",
+      "term-missing",
+    ], extend = true },
+    { replace = "if", condition = "factor.xdist", then = [
+      "-n",
+      "auto",
+    ], extend = true },
+    { replace = "posargs", extend = true },
+  ],
+]
