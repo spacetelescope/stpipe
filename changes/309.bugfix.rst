@@ -1,0 +1,1 @@
+Fixed some step log messages not getting saved to output model logs.
