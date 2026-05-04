@@ -26,6 +26,16 @@ __all__ = [
 ]
 
 
+def remove_crds_log_handler():
+    """Remove the default stream handler for the CRDS logger."""
+    log.remove_console_handler()
+
+
+def restore_crds_log_handler():
+    """Restore the default stream handler for the CRDS logger."""
+    log.add_console_handler()
+
+
 def get_multiple_reference_paths(parameters, reference_file_types, observatory):
     """Aligns stpipe requirements with CRDS library top level interfaces.
 

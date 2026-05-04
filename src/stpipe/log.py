@@ -13,7 +13,7 @@ from contextlib import contextmanager
 from astropy.extern.configobj import validate
 from astropy.extern.configobj.configobj import ConfigObj
 
-from . import config_parser
+from . import config_parser, crds_client
 
 STPIPE_ROOT_LOGGER = "stpipe"
 DEFAULT_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -141,6 +141,8 @@ class LogConfig:
             log_names = [STPIPE_ROOT_LOGGER]
         if "py.warnings" in log_names:
             logging.captureWarnings(True)
+        if "CRDS" in log_names:
+            crds_client.remove_crds_log_handler()
         for log_name in log_names:
             # Don't reapply configuration, to avoid overwriting the
             # previously recorded level.
@@ -191,6 +193,8 @@ class LogConfig:
             LogConfig.applied = None
         if "py.warnings" in log_names:
             logging.captureWarnings(False)
+        if "CRDS" in log_names:
+            crds_client.restore_crds_log_handler()
 
     @contextmanager
     def context(self, log_names=None):
