@@ -428,7 +428,7 @@ def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
     return step, step_class, positional, debug_on_exception
 
 
-def step_from_cmdline(args, cls=None):
+def step_from_cmdline(args):
     """
     Create a step from a configuration file and run it.
 
@@ -436,10 +436,6 @@ def step_from_cmdline(args, cls=None):
     ----------
     args : list of str
         Commandline arguments
-
-    cls : Step class
-        The step class to use.  If none is provided, the step is inferred
-        from the input arguments.
 
 
     Returns
@@ -456,7 +452,6 @@ def step_from_cmdline(args, cls=None):
     try:
         step, step_class, positional, debug_on_exception = just_the_step_from_cmdline(
             args,
-            cls,
             apply_log_cfg=True,
         )
     except Exception as e:
