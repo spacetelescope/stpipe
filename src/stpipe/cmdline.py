@@ -65,25 +65,18 @@ def _get_config_and_class(identifier):
     return step_class, config, name, config_file
 
 
-def _build_parent_arg_parser(cls=None, apply_log_cfg=False):
+def _build_parent_arg_parser(apply_log_cfg=False):
     """Build a top-level argument parser for the command line interface."""
     parser1 = argparse.ArgumentParser(
         description="Run an stpipe Step or Pipeline",
         add_help=False,
     )
-    if cls is None:
-        parser1.add_argument(
-            "cfg_file_or_class",
-            type=str,
-            nargs=1,
-            help="The configuration file or Python class to run",
-        )
-    else:
-        parser1.add_argument(
-            "--config-file",
-            type=str,
-            help="A configuration file to load parameters from",
-        )
+    parser1.add_argument(
+        "cfg_file_or_class",
+        type=str,
+        nargs=1,
+        help="The configuration file or Python class to run",
+    )
     parser1.add_argument(
         "--debug",
         action="store_true",
@@ -265,7 +258,7 @@ def just_the_step_from_cmdline(args, apply_log_cfg=False):
     debug_on_exception : bool
         If True, the Python debugger will be invoked when an exception occurs.
     """
-    parser1 = _build_parent_arg_parser(None, apply_log_cfg=apply_log_cfg)
+    parser1 = _build_parent_arg_parser(apply_log_cfg=apply_log_cfg)
     known, _ = parser1.parse_known_args(args)
 
     try:
