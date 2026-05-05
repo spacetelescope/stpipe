@@ -65,7 +65,7 @@ def _get_config_and_class(identifier):
     return step_class, config, name, config_file
 
 
-def _build_parent_arg_parser(apply_log_cfg=False):
+def _build_parent_arg_parser():
     """Build a top-level argument parser for the command line interface."""
     parser1 = argparse.ArgumentParser(
         description="Run an stpipe Step or Pipeline",
@@ -92,38 +92,37 @@ def _build_parent_arg_parser(apply_log_cfg=False):
         action="store_true",
         help="Disable retrieval of step parameter references files from CRDS",
     )
-    if apply_log_cfg:
-        parser1.add_argument(
-            "--logcfg",
-            type=str,
-            help="DEPRECATED: The logging configuration file to load. "
-            "Ignored if verbose or other log arguments are set.",
-        )
-        parser1.add_argument(
-            "--verbose",
-            "-v",
-            action="store_true",
-            help="Turn on all logging messages",
-        )
-        parser1.add_argument(
-            "--log-level",
-            type=str,
-            default=None,
-            help="Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL). "
-            "Ignored if 'verbose' is specified.",
-        )
-        parser1.add_argument(
-            "--log-file",
-            type=str,
-            default=None,
-            help="Full path to a file name to record log messages",
-        )
-        parser1.add_argument(
-            "--log-stream",
-            type=str,
-            default=None,
-            help="Log stream for terminal messages (stdout, stderr, or null).",
-        )
+    parser1.add_argument(
+        "--logcfg",
+        type=str,
+        help="DEPRECATED: The logging configuration file to load. "
+        "Ignored if verbose or other log arguments are set.",
+    )
+    parser1.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Turn on all logging messages",
+    )
+    parser1.add_argument(
+        "--log-level",
+        type=str,
+        default=None,
+        help="Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL). "
+        "Ignored if 'verbose' is specified.",
+    )
+    parser1.add_argument(
+        "--log-file",
+        type=str,
+        default=None,
+        help="Full path to a file name to record log messages",
+    )
+    parser1.add_argument(
+        "--log-stream",
+        type=str,
+        default=None,
+        help="Log stream for terminal messages (stdout, stderr, or null).",
+    )
     return parser1
 
 
@@ -223,7 +222,7 @@ def _override_config_from_args(config, args):
             set_value(config, key, val)
 
 
-def _just_the_step_from_cmdline(args, apply_log_cfg=False):
+def _just_the_step_from_cmdline(args):
     """
     Create a step from a configuration file and return it.  Don't run it.
 
@@ -233,10 +232,6 @@ def _just_the_step_from_cmdline(args, apply_log_cfg=False):
     ----------
     args : list of str
         Command line arguments
-
-    apply_log_cfg : bool
-        If True, apply the logging configuration. If False,
-        any provided log configuration will be ignored.
 
     Returns
     -------
@@ -258,7 +253,7 @@ def _just_the_step_from_cmdline(args, apply_log_cfg=False):
     debug_on_exception : bool
         If True, the Python debugger will be invoked when an exception occurs.
     """
-    parser1 = _build_parent_arg_parser(apply_log_cfg=apply_log_cfg)
+    parser1 = _build_parent_arg_parser()
     known, _ = parser1.parse_known_args(args)
 
     try:
@@ -266,51 +261,50 @@ def _just_the_step_from_cmdline(args, apply_log_cfg=False):
             known.cfg_file_or_class[0]
         )
 
-        if apply_log_cfg:
-            # Retrieve a log config file if specified
-            use_log_cfg = True
-            log_args = [
-                known.log_level,
-                known.log_file,
-                known.log_stream,
-            ]
-            if known.verbose is True or any([arg is not None for arg in log_args]):
-                use_log_cfg = False
+        # Retrieve a log config file if specified
+        use_log_cfg = True
+        log_args = [
+            known.log_level,
+            known.log_file,
+            known.log_stream,
+        ]
+        if known.verbose is True or any([arg is not None for arg in log_args]):
+            use_log_cfg = False
 
-            logcfg = None
-            if known.logcfg is not None:
-                msg = (
-                    "The logcfg configuration file is deprecated. "
-                    "Please use the log_* command line "
-                    "arguments to configure logging."
-                )
-                warnings.warn(msg, DeprecationWarning, stacklevel=2)
-                if use_log_cfg:
-                    if not os.path.exists(known.logcfg):
-                        raise OSError(f"Logging config {known.logcfg!r} not found")
-                    logcfg = known.logcfg
-            elif use_log_cfg:
-                logcfg = log._find_logging_config_file()
+        logcfg = None
+        if known.logcfg is not None:
+            msg = (
+                "The logcfg configuration file is deprecated. "
+                "Please use the log_* command line "
+                "arguments to configure logging."
+            )
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
+            if use_log_cfg:
+                if not os.path.exists(known.logcfg):
+                    raise OSError(f"Logging config {known.logcfg!r} not found")
+                logcfg = known.logcfg
+        elif use_log_cfg:
+            logcfg = log._find_logging_config_file()
 
-            if known.verbose:
-                log_level = "DEBUG"
-            elif known.log_level is not None:
-                log_level = str(known.log_level).upper()
-            else:
-                log_level = None
-            try:
-                log_cfg = log.load_configuration(
-                    config_file=logcfg,
-                    log_level=log_level,
-                    log_file=known.log_file,
-                    log_stream=known.log_stream,
-                )
-            except Exception as e:
-                raise ValueError(f"Error parsing logging configuration:\n{e}") from e
+        if known.verbose:
+            log_level = "DEBUG"
+        elif known.log_level is not None:
+            log_level = str(known.log_level).upper()
+        else:
+            log_level = None
+        try:
+            log_cfg = log.load_configuration(
+                config_file=logcfg,
+                log_level=log_level,
+                log_file=known.log_file,
+                log_stream=known.log_stream,
+            )
+        except Exception as e:
+            raise ValueError(f"Error parsing logging configuration:\n{e}") from e
 
-            # Apply the logging configuration to the stpipe logger to
-            # capture start up messages
-            log_cfg.apply()
+        # Apply the logging configuration to the stpipe logger to
+        # capture start up messages
+        log_cfg.apply()
 
     except Exception as e:
         _print_important_message("ERROR PARSING CONFIGURATION:", str(e))
@@ -337,12 +331,11 @@ def _just_the_step_from_cmdline(args, apply_log_cfg=False):
     del args.debug
     del args.save_parameters
     del args.disable_crds_steppars
-    if apply_log_cfg:
-        del args.logcfg
-        del args.verbose
-        del args.log_level
-        del args.log_file
-        del args.log_stream
+    del args.logcfg
+    del args.verbose
+    del args.log_level
+    del args.log_file
+    del args.log_stream
     positional = args.args
     del args.args
 
@@ -386,11 +379,10 @@ def _just_the_step_from_cmdline(args, apply_log_cfg=False):
         raise ValueError(str(e)) from e
 
     # Apply the log configuration to the step's known loggers
-    if apply_log_cfg:
-        # Undo the initial configuration without closing handlers
-        log_cfg.undo(close_handlers=False)
-        # Apply configuration to specified loggers
-        log_cfg.apply(step.get_stpipe_loggers())
+    # Undo the initial configuration without closing handlers
+    log_cfg.undo(close_handlers=False)
+    # Apply configuration to specified loggers
+    log_cfg.apply(step.get_stpipe_loggers())
 
     # Define the primary input file.
     # Always have an output_file set on the outermost step
@@ -429,8 +421,7 @@ def step_from_cmdline(args):
     """
     try:
         step, step_class, positional, debug_on_exception = _just_the_step_from_cmdline(
-            args,
-            apply_log_cfg=True,
+            args
         )
     except Exception as e:
         # since we applied a log config above, undo it

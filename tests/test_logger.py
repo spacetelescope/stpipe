@@ -372,17 +372,6 @@ def test_step_from_cmdline_no_root_logger_changes_level_arg(
     )
 
 
-def test_just_the_step_from_cmdline_no_root_logger_changes(
-    log_cfg_path, root_logger_unchanged
-):
-    # By default, no log configuration is applied or available in the
-    # parameters.  If apply_log_cfg is True, it *will* modify the
-    # root logger.
-    stpipe.cmdline._just_the_step_from_cmdline(
-        ["test_logger.LoggingPipeline"], apply_log_cfg=False
-    )
-
-
 def test_logging_delegation(capsys, root_logger_unchanged):
     """
     Python 3.13.3 and 3.13.4 have a bug where logging within a logger
