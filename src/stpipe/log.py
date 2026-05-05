@@ -169,7 +169,7 @@ class LogConfig:
             log.setLevel(self.level)
         LogConfig.applied = self
 
-    def undo(self, log_names=None, close_handlers=True):
+    def undo(self, log_names=None):
         """
         Removes the configuration from known loggers.
 
@@ -190,9 +190,6 @@ class LogConfig:
             This parameter is ignored if log configuration has been
             previously applied by this instance: in that case,
             only the previously affected logs are unconfigured.
-        close_handlers : bool, optional
-            If True, handlers will be closed as well as removed from
-            the named loggers.
         """
         if LogConfig.applied is self:
             log_names = list(self._previous_level.keys())
@@ -202,8 +199,7 @@ class LogConfig:
             log = logging.getLogger(log_name)
             for handler in self.handlers:
                 handler.flush()
-                if close_handlers:
-                    handler.close()
+                handler.close()
                 log.removeHandler(handler)
             if LogConfig.applied is self and log_name in self._previous_level:
                 log.setLevel(self._previous_level[log_name])
