@@ -378,7 +378,7 @@ def test_just_the_step_from_cmdline_no_root_logger_changes(
     # By default, no log configuration is applied or available in the
     # parameters.  If apply_log_cfg is True, it *will* modify the
     # root logger.
-    stpipe.cmdline.just_the_step_from_cmdline(
+    stpipe.cmdline._just_the_step_from_cmdline(
         ["test_logger.LoggingPipeline"], apply_log_cfg=False
     )
 

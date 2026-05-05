@@ -223,7 +223,7 @@ def _override_config_from_args(config, args):
             set_value(config, key, val)
 
 
-def just_the_step_from_cmdline(args, apply_log_cfg=False):
+def _just_the_step_from_cmdline(args, apply_log_cfg=False):
     """
     Create a step from a configuration file and return it.  Don't run it.
 
@@ -428,7 +428,7 @@ def step_from_cmdline(args):
         instance.
     """
     try:
-        step, step_class, positional, debug_on_exception = just_the_step_from_cmdline(
+        step, step_class, positional, debug_on_exception = _just_the_step_from_cmdline(
             args,
             apply_log_cfg=True,
         )
