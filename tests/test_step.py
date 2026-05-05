@@ -293,15 +293,13 @@ def test_step_list_args(config_file_list_arg_step):
 
     c, *_ = cmdline.just_the_step_from_cmdline(
         [
+            returned_config_file,
             "filename.fits",
             "--output_shape",
             "1500,1300",
             "--crpix=123,456",
             "--pixel_scale=0.75",
-            "--config-file",
-            returned_config_file,
         ],
-        ListArgStep,
     )
     assert c.rotation is None
     assert c.pixel_scale == 0.75
@@ -317,15 +315,13 @@ def test_step_list_args(config_file_list_arg_step):
     with pytest.raises(ValueError, match=msg):
         cmdline.just_the_step_from_cmdline(
             [
+                returned_config_file,
                 "filename.fits",
                 "--output_shape",
                 "1500,1300,90",
                 "--crpix=123,456",
                 "--pixel_scale=0.75",
-                "--config-file",
-                returned_config_file,
             ],
-            ListArgStep,
         )
 
     msg = re.escape(
@@ -334,15 +330,13 @@ def test_step_list_args(config_file_list_arg_step):
     with pytest.raises(ValueError, match=msg):
         cmdline.just_the_step_from_cmdline(
             [
+                returned_config_file,
                 "filename.fits",
                 "--output_shape",
                 "1500,",
                 "--crpix=123,456",
                 "--pixel_scale=0.75",
-                "--config-file",
-                returned_config_file,
             ],
-            ListArgStep,
         )
 
     msg = re.escape(
@@ -351,15 +345,13 @@ def test_step_list_args(config_file_list_arg_step):
     with pytest.raises(ValueError, match=msg):
         cmdline.just_the_step_from_cmdline(
             [
+                returned_config_file,
                 "filename.fits",
                 "--output_shape",
                 "1500",
                 "--crpix=123,456",
                 "--pixel_scale=0.75",
-                "--config-file",
-                returned_config_file,
             ],
-            ListArgStep,
         )
 
     msg = re.escape(
@@ -368,15 +360,13 @@ def test_step_list_args(config_file_list_arg_step):
     with pytest.raises(ValueError, match=msg):
         cmdline.just_the_step_from_cmdline(
             [
+                returned_config_file,
                 "filename.fits",
                 "--output_shape",
                 "1500.5,1300.2",
                 "--crpix=123,456",
                 "--pixel_scale=0.75",
-                "--config-file",
-                returned_config_file,
             ],
-            ListArgStep,
         )
 
 

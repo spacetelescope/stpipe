@@ -230,7 +230,7 @@ def _override_config_from_args(config, args):
             set_value(config, key, val)
 
 
-def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
+def just_the_step_from_cmdline(args, apply_log_cfg=False):
     """
     Create a step from a configuration file and return it.  Don't run it.
 
@@ -240,10 +240,6 @@ def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
     ----------
     args : list of str
         Command line arguments
-
-    cls : Step class, optional
-        The step class to use.  If none is provided, the step is inferred
-        from the input arguments.
 
     apply_log_cfg : bool
         If True, apply the logging configuration. If False,
@@ -261,7 +257,7 @@ def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
         instance.
 
     step_class: Step class
-        As defined by `cls` parameter or .cfg file.
+        As defined by .cfg file.
 
     positional: list of strings
         Positional parameters after arg parsing
@@ -269,21 +265,13 @@ def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
     debug_on_exception : bool
         If True, the Python debugger will be invoked when an exception occurs.
     """
-    parser1 = _build_parent_arg_parser(cls, apply_log_cfg=apply_log_cfg)
+    parser1 = _build_parent_arg_parser(None, apply_log_cfg=apply_log_cfg)
     known, _ = parser1.parse_known_args(args)
 
     try:
-        if cls is None:
-            step_class, config, name, config_file = _get_config_and_class(
-                known.cfg_file_or_class[0]
-            )
-        else:
-            config_file = known.config_file
-            config = config_parser.load_config_file(config_file)
-            step_class, name = Step._parse_class_and_name(
-                config, config_file=config_file
-            )
-            step_class = cls
+        step_class, config, name, config_file = _get_config_and_class(
+            known.cfg_file_or_class[0]
+        )
 
         if apply_log_cfg:
             # Retrieve a log config file if specified
@@ -352,10 +340,7 @@ def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
 
     args = parser2.parse_args(args)
 
-    if cls is None:
-        del args.cfg_file_or_class
-    else:
-        del args.config_file
+    del args.cfg_file_or_class
     del args.debug
     del args.save_parameters
     del args.disable_crds_steppars
