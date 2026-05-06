@@ -83,6 +83,8 @@ class LogConfig:
         handler,
         level=logging.INFO,
         break_level=logging.NOTSET,
+        recording_level=logging.NOTSET,
+        recording_formatter=None,
         format=None,  # noqa: A002
     ):
         if isinstance(handler, str):
@@ -100,8 +102,18 @@ class LogConfig:
         if self.break_level != logging.NOTSET:
             self.handlers.append(BreakHandler(self.break_level))
 
+        # add recording handler
+        self._recording_handler = RecordingHandler(level=recording_level)
+        if recording_formatter is not None:
+            self._recording_handler.setFormatter(recording_formatter)
+        self.handlers.append(self._recording_handler)
+
         self._previous_level = {}
         self._previous_crds_console = False
+
+    @property
+    def log_records(self):
+        return self._recording_handler.log_records
 
     def get_handler(self, handler_str):
         """
@@ -124,7 +136,7 @@ class LogConfig:
 
         raise ValueError(f"Can't parse handler {handler_str!r}")
 
-    def apply(self, log_names=None):
+    def apply(self, log_names=None, recording_formatter=None):
         """
         Applies the configuration to known loggers.
 
@@ -144,6 +156,8 @@ class LogConfig:
             Log names to configure.  If not provided, only the
             STPIPE_ROOT_LOGGER is configured.
         """
+        if recording_formatter is not None:
+            self._recording_handler.setFormatter(recording_formatter)
         if log_names is None:
             log_names = [STPIPE_ROOT_LOGGER]
         if "py.warnings" in log_names:
@@ -211,7 +225,7 @@ class LogConfig:
             crds_log.add_console_handler()
 
     @contextmanager
-    def context(self, log_names=None):
+    def context(self, log_names=None, recording_formatter=None):
         """
         Context manager that applies the configuration to the known loggers.
 
@@ -220,7 +234,7 @@ class LogConfig:
         log_names : list of str or None, optional
             Log names to pass to `apply` and `undo` methods.
         """
-        self.apply(log_names)
+        self.apply(log_names, recording_formatter)
         try:
             yield
         finally:

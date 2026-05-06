@@ -395,7 +395,9 @@ def step_from_cmdline(args):
         raise e
 
     # set up logging context
-    with log_cfg.context(step_class.get_stpipe_loggers()):
+    with log_cfg.context(
+        step_class.get_stpipe_loggers(), step_class._log_records_formatter
+    ):
         # finish parsing args, make class
         step, positional = _build_step_from_args(
             step_class, config, name, config_file, parser, known, args

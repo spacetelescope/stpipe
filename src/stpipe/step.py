@@ -490,9 +490,15 @@ class Step:
         """
         gc.collect()
 
-        with log.record_logs(
-            log_names=self.get_stpipe_loggers(), formatter=self._log_records_formatter
-        ) as log_records:
+        # if run is called directly attach handlers to record logs
+        if log.LogConfig.applied is None:
+            ctx = log.record_logs(
+                log_names=self.get_stpipe_loggers(),
+                formatter=self._log_records_formatter,
+            )
+        else:
+            ctx = nullcontext(log.LogConfig.applied.log_records)
+        with ctx as log_records:
             self._log_records = log_records
 
             step_result = None
@@ -737,9 +743,13 @@ class Step:
             )
         else:
             log_cfg = None
-        ctx = nullcontext if log_cfg is None else log_cfg.context
+        ctx = (
+            nullcontext
+            if log_cfg is None
+            else lambda: log_cfg.context(log_names, cls._log_records_formatter)
+        )
 
-        with ctx(log_names):
+        with ctx():
             config, config_file = cls.build_config(filename, **kwargs)
 
             if "logcfg" in config:
@@ -749,7 +759,7 @@ class Step:
                 if log_cfg is not None:
                     log_cfg.undo(log_names)
                 log_cfg = log.load_configuration(config["logcfg"])
-                log_cfg.apply(log_names)
+                log_cfg.apply(log_names, cls._log_records_formatter)
 
             if "class" in config:
                 del config["class"]
