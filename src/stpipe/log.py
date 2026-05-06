@@ -136,7 +136,7 @@ class LogConfig:
 
         raise ValueError(f"Can't parse handler {handler_str!r}")
 
-    def apply(self, log_names=None, recording_formatter=None):
+    def apply(self, log_names, recording_formatter):
         """
         Applies the configuration to known loggers.
 
@@ -156,10 +156,7 @@ class LogConfig:
             Log names to configure.  If not provided, only the
             STPIPE_ROOT_LOGGER is configured.
         """
-        if recording_formatter is not None:
-            self._recording_handler.setFormatter(recording_formatter)
-        if log_names is None:
-            log_names = [STPIPE_ROOT_LOGGER]
+        self._recording_handler.setFormatter(recording_formatter)
         if "py.warnings" in log_names:
             logging.captureWarnings(True)
         if "CRDS" in log_names:
@@ -218,7 +215,7 @@ class LogConfig:
             crds_log.add_console_handler()
 
     @contextmanager
-    def context(self, log_names=None, recording_formatter=None):
+    def context(self, log_names, recording_formatter):
         """
         Context manager that applies the configuration to the known loggers.
 
@@ -227,7 +224,6 @@ class LogConfig:
         log_names : list of str or None, optional
             Log names to pass to `apply` and `undo` methods.
         """
-        log_names = log_names or [STPIPE_ROOT_LOGGER]
         self.apply(log_names, recording_formatter)
         try:
             yield self.log_records

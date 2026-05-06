@@ -146,7 +146,7 @@ format = '%(message)s'
         fd.seek(0)
         log_cfg = stpipe_log.load_configuration(fd)
 
-    with log_cfg.context():
+    with log_cfg.context(["stpipe"], ""):
         log = logging.getLogger(stpipe_log.STPIPE_ROOT_LOGGER)
 
         log.info("Hidden")
@@ -171,7 +171,7 @@ def test_configuration_apply(capsys):
     other_msg = "other message"
 
     # By default, only stpipe is configured
-    log_cfg.apply()
+    log_cfg.apply(["stpipe"], "")
     stpipe_logger.info(stpipe_msg)
     other_logger.info(other_msg)
     capt = capsys.readouterr()
@@ -179,7 +179,7 @@ def test_configuration_apply(capsys):
     assert capt.err.count(other_msg) == 0
 
     # Calling again does not attach a duplicate handler
-    log_cfg.apply()
+    log_cfg.apply(["stpipe"], "")
     stpipe_logger.info(stpipe_msg)
     other_logger.info(other_msg)
     capt = capsys.readouterr()
@@ -187,7 +187,7 @@ def test_configuration_apply(capsys):
     assert capt.err.count(other_msg) == 0
 
     # Other logger can be added to the configuration
-    log_cfg.apply(log_names=["other"])
+    log_cfg.apply(["other"], "")
     stpipe_logger.info(stpipe_msg)
     other_logger.info(other_msg)
     capt = capsys.readouterr()
@@ -195,7 +195,7 @@ def test_configuration_apply(capsys):
     assert capt.err.count(other_msg) == 1
 
     # Calling undo removes configuration from both
-    log_cfg.undo((*log_cfg._previous_level.keys(), "other"))
+    log_cfg.undo(["stpipe", "other"])
     stpipe_logger.info(stpipe_msg)
     other_logger.info(other_msg)
     capt = capsys.readouterr()
