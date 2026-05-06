@@ -55,8 +55,6 @@ class BreakHandler(logging.Handler):
     exceptions.
     """
 
-    _from_config = True
-
     def emit(self, record):
         raise LoggedException(record)
 
