@@ -203,26 +203,6 @@ def test_configuration_apply(capsys):
     assert capt.err.count(other_msg) == 0
 
 
-@pytest.mark.parametrize("log_names", [None, ["stpipe"]])
-def test_configuration_undo(capsys, log_names):
-    log_cfg = stpipe_log.LogConfig(["stderr"], level="INFO")
-    stpipe_logger = logging.getLogger("stpipe")
-    stpipe_msg = "stpipe message"
-
-    # If the log_cfg handler is attached to a logger without going
-    # through "apply", it can still be removed with undo.
-    stpipe_logger.addHandler(log_cfg.handlers[0])
-
-    stpipe_logger.info(stpipe_msg)
-    capt = capsys.readouterr()
-    assert capt.err.count(stpipe_msg) == 1
-
-    log_cfg.undo(log_names)
-    stpipe_logger.info(stpipe_msg)
-    capt = capsys.readouterr()
-    assert capt.err.count(stpipe_msg) == 0
-
-
 @pytest.mark.parametrize(
     "level, expected",
     (

@@ -177,13 +177,12 @@ class LogConfig:
                 log.addHandler(handler)
 
             # Set the log level
-            # we still track level since undo uses this to remove handlers
-            self._previous_level[log_name] = log.level
             if self.level is not logging.NOTSET:
+                self._previous_level[log_name] = log.level
                 log.setLevel(self.level)
         LogConfig.applied = self
 
-    def undo(self, log_names=None):
+    def undo(self, log_names):
         """
         Removes the configuration from known loggers.
 
@@ -197,18 +196,10 @@ class LogConfig:
 
         Parameters
         ----------
-        log_names : list of str or None, optional
-            If provided, handlers stored in this configuration
-            will be removed from each specified log name. If not
-            provided, they are removed from the STPIPE_ROOT_LOGGER.
-            This parameter is ignored if log configuration has been
-            previously applied by this instance: in that case,
-            only the previously affected logs are unconfigured.
+        log_names : list of str
+            The names of logs which will have any attached
+            handlers removed.
         """
-        if LogConfig.applied is self:
-            log_names = list(self._previous_level.keys())
-        elif log_names is None:
-            log_names = [STPIPE_ROOT_LOGGER]
         for log_name in log_names:
             log = logging.getLogger(log_name)
             for handler in self.handlers:
@@ -236,6 +227,7 @@ class LogConfig:
         log_names : list of str or None, optional
             Log names to pass to `apply` and `undo` methods.
         """
+        log_names = log_names or [STPIPE_ROOT_LOGGER]
         self.apply(log_names, recording_formatter)
         try:
             yield self.log_records
