@@ -394,10 +394,10 @@ def step_from_cmdline(args):
         _print_parser_error(parser, e)
         raise e
 
+    log_cfg.set_recording_formatter(step_class._log_records_formatter)
+
     # set up logging context
-    with log_cfg.context(
-        step_class.get_stpipe_loggers(), step_class._log_records_formatter
-    ):
+    with log_cfg.context(step_class.get_stpipe_loggers()):
         # finish parsing args, make class
         step, positional = _build_step_from_args(
             step_class, config, name, config_file, parser, known, args

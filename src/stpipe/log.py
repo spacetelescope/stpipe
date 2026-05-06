@@ -105,11 +105,14 @@ class LogConfig:
         # add recording handler
         self._recording_handler = RecordingHandler(level=recording_level)
         if recording_formatter is not None:
-            self._recording_handler.setFormatter(recording_formatter)
+            self.set_recording_formatter(recording_formatter)
         self.handlers.append(self._recording_handler)
 
         self._previous_level = {}
         self._previous_crds_console = False
+
+    def set_recording_formatter(self, formatter):
+        self._recording_handler.setFormatter(formatter)
 
     @property
     def log_records(self):
@@ -136,7 +139,7 @@ class LogConfig:
 
         raise ValueError(f"Can't parse handler {handler_str!r}")
 
-    def apply(self, log_names, recording_formatter):
+    def apply(self, log_names):
         """
         Applies the configuration to known loggers.
 
@@ -156,7 +159,6 @@ class LogConfig:
             Log names to configure.  If not provided, only the
             STPIPE_ROOT_LOGGER is configured.
         """
-        self._recording_handler.setFormatter(recording_formatter)
         if "py.warnings" in log_names:
             logging.captureWarnings(True)
         if "CRDS" in log_names:
@@ -215,7 +217,7 @@ class LogConfig:
             crds_log.add_console_handler()
 
     @contextmanager
-    def context(self, log_names, recording_formatter):
+    def context(self, log_names):
         """
         Context manager that applies the configuration to the known loggers.
 
@@ -224,7 +226,7 @@ class LogConfig:
         log_names : list of str or None, optional
             Log names to pass to `apply` and `undo` methods.
         """
-        self.apply(log_names, recording_formatter)
+        self.apply(log_names)
         try:
             yield self.log_records
         finally:
