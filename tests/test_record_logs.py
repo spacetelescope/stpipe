@@ -2,6 +2,7 @@ import logging
 
 import asdf
 
+import stpipe
 from stpipe import Step, config_parser
 
 logger = logging.getLogger("stpipe.tests.test_test_record_logs")
@@ -85,3 +86,23 @@ def test_from_cmdline(tmp_path):
     m = DataModel.from_asdf(fn)
     assert "message" in m.data["logs"]
     assert "get_config_from_reference" in m.data["logs"]
+
+
+def test_record_logs():
+    stpipe_logger = logging.getLogger(stpipe.log.STPIPE_ROOT_LOGGER)
+    root_logger = logging.getLogger()
+
+    for logger in (stpipe_logger, root_logger):
+        assert not any(
+            isinstance(h, stpipe.log.RecordingHandler) for h in logger.handlers
+        )
+
+    m = DataModel()
+    LoggingStep().run(m)
+
+    for logger in (stpipe_logger, root_logger):
+        assert not any(
+            isinstance(h, stpipe.log.RecordingHandler) for h in logger.handlers
+        )
+
+    assert "message" in m.data["logs"]

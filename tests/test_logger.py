@@ -195,7 +195,7 @@ def test_configuration_apply(capsys):
     assert capt.err.count(other_msg) == 1
 
     # Calling undo removes configuration from both
-    log_cfg.undo()
+    log_cfg.undo((*log_cfg._previous_level.keys(), "other"))
     stpipe_logger.info(stpipe_msg)
     other_logger.info(other_msg)
     capt = capsys.readouterr()
@@ -221,37 +221,6 @@ def test_configuration_undo(capsys, log_names):
     stpipe_logger.info(stpipe_msg)
     capt = capsys.readouterr()
     assert capt.err.count(stpipe_msg) == 0
-
-
-def test_record_logs():
-    """
-    Test that record_logs respects the default configuration
-    """
-    stpipe_logger = logging.getLogger(stpipe_log.STPIPE_ROOT_LOGGER)
-    root_logger = logging.getLogger()
-
-    assert not any(
-        isinstance(h, stpipe_log.RecordingHandler) for h in root_logger.handlers
-    )
-
-    with stpipe_log.record_logs(
-        log_names=[""], level=logging.ERROR, formatter=logging.Formatter("%(message)s")
-    ) as log_records:
-        stpipe_logger.warning("Warning from stpipe")
-        stpipe_logger.error("Error from stpipe")
-        root_logger.warning("Warning from root")
-        root_logger.error("Error from root")
-
-    assert not any(
-        isinstance(h, stpipe_log.RecordingHandler) for h in root_logger.handlers
-    )
-
-    stpipe_logger.error("Additional error from stpipe")
-    root_logger.error("Additional error from root")
-
-    assert len(log_records) == 2
-    assert log_records[0] == "Error from stpipe"
-    assert log_records[1] == "Error from root"
 
 
 @pytest.mark.parametrize(

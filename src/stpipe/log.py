@@ -177,8 +177,10 @@ class LogConfig:
                 log.addHandler(handler)
 
             # Set the log level
+            # we still track level since undo uses this to remove handlers
             self._previous_level[log_name] = log.level
-            log.setLevel(self.level)
+            if self.level is not logging.NOTSET:
+                log.setLevel(self.level)
         LogConfig.applied = self
 
     def undo(self, log_names=None):
@@ -236,7 +238,7 @@ class LogConfig:
         """
         self.apply(log_names, recording_formatter)
         try:
-            yield
+            yield self.log_records
         finally:
             self.undo(log_names)
 
@@ -355,21 +357,3 @@ class RecordingHandler(logging.Handler):
     def emit(self, record):
         if self.formatter is not None:
             self._log_records.append(self.formatter.format(record))
-
-
-@contextmanager
-def record_logs(log_names, level=logging.NOTSET, formatter=None):
-    if formatter is None:
-        yield []
-    else:
-        handler = RecordingHandler(level=level)
-        handler.setFormatter(formatter)
-        for log_name in log_names:
-            logger = logging.getLogger(log_name)
-            logger.addHandler(handler)
-        try:
-            yield handler.log_records
-        finally:
-            for log_name in log_names:
-                logger = logging.getLogger(log_name)
-                logger.removeHandler(handler)

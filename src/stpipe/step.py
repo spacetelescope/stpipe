@@ -492,9 +492,9 @@ class Step:
 
         # if run is called directly attach handlers to record logs
         if log.LogConfig.applied is None:
-            ctx = log.record_logs(
+            ctx = log.LogConfig([], level=logging.NOTSET).context(
                 log_names=self.get_stpipe_loggers(),
-                formatter=self._log_records_formatter,
+                recording_formatter=self._log_records_formatter,
             )
         else:
             ctx = nullcontext(log.LogConfig.applied.log_records)
