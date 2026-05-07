@@ -2,10 +2,6 @@
 This module defines functions that connect the core crds package
 to stpipe, tailoring it to provide results in the forms required
 by stpipe.
-
-WARNING:  stpipe and crds have circular dependencies.  Do not use crds imports
-directly in modules other than this crds_client so that dependency order and
-general integration can be managed here.
 """
 
 import re

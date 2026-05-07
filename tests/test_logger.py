@@ -3,6 +3,7 @@ import logging
 import warnings
 
 import pytest
+from crds.core import log as crds_log
 
 import stpipe.cmdline
 from stpipe import Step
@@ -49,7 +50,7 @@ logger = logging.getLogger("stpipe.tests.test_logger")
 
 
 class LoggingStep(Step):
-    """A Step that utilizes a local logger to log a warning."""
+    """A Step that uses a local and external logger to log messages."""
 
     spec = """
         str1 = string(default='default')
@@ -74,7 +75,7 @@ class LoggingStep(Step):
 
 
 class LoggingPipeline(Pipeline):
-    """A Pipeline that utilizes a local logger to log a warning."""
+    """A Pipeline that uses a local and external logger to log messages."""
 
     spec = """
         str1 = string(default='default')
@@ -589,3 +590,56 @@ def test_logging_capwarnings(caplog, recwarn):
     assert len(recwarn) == 1  # Unchanged from above assert
     assert MSG in caplog.text
     assert logging._warnings_showwarning is None
+
+
+@pytest.mark.parametrize("restore_console", [True, False])
+def test_crds_log(capsys, restore_console):
+    class CRDSLoggingStep(LoggingStep):
+        def process(self):
+            logger.info(STEP_INFO)
+            logger.warning(STEP_WARNING)
+            logger.debug(STEP_DEBUG)
+            crds_log.info(EXTERNAL_INFO)
+            crds_log.warning(EXTERNAL_WARNING)
+            crds_log.debug(EXTERNAL_DEBUG)
+
+        @staticmethod
+        def get_stpipe_loggers():
+            return ("stpipe", "CRDS")
+
+    crds_logger = logging.getLogger("CRDS")
+    if restore_console:
+        # Before the step call, the crds logger has a stream handler
+        assert len(crds_logger.handlers) == 1
+        assert isinstance(crds_logger.handlers[0], logging.StreamHandler)
+    else:
+        # remove any current console handler
+        crds_log.remove_console_handler()
+
+        # Before the step call, the crds logger has no handlers
+        assert len(crds_logger.handlers) == 0
+
+    # During the step call, the CRDS handler is removed if necessary and
+    # the stpipe handler is attached
+    CRDSLoggingStep.call()
+
+    # With default configuration, exactly one info and warning message is expected
+    # from each captured logger in the stderr stream
+    capt = capsys.readouterr()
+    for msg in ALL_MESSAGES:
+        assert capt.out == ""
+        if msg in [STEP_INFO, STEP_WARNING, EXTERNAL_INFO, EXTERNAL_WARNING]:
+            assert msg in capt.err
+            assert capt.err.count(msg) == 1
+        else:
+            assert capt.err.count(msg) == 0
+
+    # After the call is complete, the stpipe logger is removed and the CRDS
+    # stream logger is restored if it was previously present
+    if restore_console:
+        assert len(crds_logger.handlers) == 1
+        assert isinstance(crds_logger.handlers[0], logging.StreamHandler)
+    else:
+        assert len(crds_logger.handlers) == 0
+        # Clean up: restore a console logger
+        crds_log.add_console_handler()

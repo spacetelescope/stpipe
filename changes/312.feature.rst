@@ -1,0 +1,1 @@
+Add special handling for the CRDS logger to allow its messages to be captured by stpipe steps.

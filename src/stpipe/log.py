@@ -12,6 +12,7 @@ from contextlib import contextmanager
 
 from astropy.extern.configobj import validate
 from astropy.extern.configobj.configobj import ConfigObj
+from crds.core import log as crds_log
 
 from . import config_parser
 
@@ -102,6 +103,7 @@ class LogConfig:
             self.handlers.append(BreakHandler(self.break_level))
 
         self._previous_level = {}
+        self._previous_crds_console = False
 
     def get_handler(self, handler_str):
         """
@@ -131,6 +133,13 @@ class LogConfig:
         If a logger has already been configured and not undone,
         it will be skipped.
 
+        Special handling is applied for the following log names:
+
+        - "py.warnings": If provided, Python warnings are captured and
+          logged (``logging.captureWarnings(True)``).
+        - "CRDS": If provided, the default stream handler for the CRDS
+          logger is removed if needed.
+
         Parameters
         ----------
         log_names : tuple of str, list of str, or None, optional
@@ -141,6 +150,10 @@ class LogConfig:
             log_names = [STPIPE_ROOT_LOGGER]
         if "py.warnings" in log_names:
             logging.captureWarnings(True)
+        if "CRDS" in log_names:
+            self._previous_crds_console = crds_log.THE_LOGGER.console is not None
+            if self._previous_crds_console:
+                crds_log.remove_console_handler()
         for log_name in log_names:
             # Don't reapply configuration, to avoid overwriting the
             # previously recorded level.
@@ -159,6 +172,14 @@ class LogConfig:
     def undo(self, log_names=None, close_handlers=True):
         """
         Removes the configuration from known loggers.
+
+        Special handling is applied for the following log names:
+
+        - "py.warnings": If provided, Python warnings are no longer captured
+          and logged (``logging.captureWarnings(False)``).
+        - "CRDS": If provided and if the default stream handler for the CRDS
+          logger was present when configuration was applied, it will be
+          restored.
 
         Parameters
         ----------
@@ -191,6 +212,9 @@ class LogConfig:
             LogConfig.applied = None
         if "py.warnings" in log_names:
             logging.captureWarnings(False)
+        if "CRDS" in log_names and self._previous_crds_console:
+            self._previous_crds_console = False
+            crds_log.add_console_handler()
 
     @contextmanager
     def context(self, log_names=None):
