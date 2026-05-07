@@ -3,11 +3,11 @@ import logging
 import warnings
 
 import pytest
+from crds.core import log as crds_log
 
 import stpipe.cmdline
 from stpipe import Step
 from stpipe import log as stpipe_log
-from stpipe.crds_client import log as crds_log
 from stpipe.pipeline import Pipeline
 
 
@@ -592,7 +592,8 @@ def test_logging_capwarnings(caplog, recwarn):
     assert logging._warnings_showwarning is None
 
 
-def test_crds_log(capsys):
+@pytest.mark.parametrize("restore_console", [True, False])
+def test_crds_log(capsys, restore_console):
     class CRDSLoggingStep(LoggingStep):
         def process(self):
             logger.info(STEP_INFO)
@@ -606,12 +607,19 @@ def test_crds_log(capsys):
         def get_stpipe_loggers():
             return ("stpipe", "CRDS")
 
-    # Before the step call, the crds logger has a stream handler
     crds_logger = logging.getLogger("CRDS")
-    assert len(crds_logger.handlers) == 1
-    assert isinstance(crds_logger.handlers[0], logging.StreamHandler)
+    if restore_console:
+        # Before the step call, the crds logger has a stream handler
+        assert len(crds_logger.handlers) == 1
+        assert isinstance(crds_logger.handlers[0], logging.StreamHandler)
+    else:
+        # remove any current console handler
+        crds_log.remove_console_handler()
 
-    # During the step call, the CRDS handler is removed and
+        # Before the step call, the crds logger has no handlers
+        assert len(crds_logger.handlers) == 0
+
+    # During the step call, the CRDS handler is removed if necessary and
     # the stpipe handler is attached
     CRDSLoggingStep.call()
 
@@ -627,6 +635,11 @@ def test_crds_log(capsys):
             assert capt.err.count(msg) == 0
 
     # After the call is complete, the stpipe logger is removed and the CRDS
-    # stream logger is restored
-    assert len(crds_logger.handlers) == 1
-    assert isinstance(crds_logger.handlers[0], logging.StreamHandler)
+    # stream logger is restored if it was previously present
+    if restore_console:
+        assert len(crds_logger.handlers) == 1
+        assert isinstance(crds_logger.handlers[0], logging.StreamHandler)
+    else:
+        assert len(crds_logger.handlers) == 0
+        # Clean up: restore a console logger
+        crds_log.add_console_handler()

@@ -12,8 +12,9 @@ from contextlib import contextmanager
 
 from astropy.extern.configobj import validate
 from astropy.extern.configobj.configobj import ConfigObj
+from crds.core import log as crds_log
 
-from . import config_parser, crds_client
+from . import config_parser
 
 STPIPE_ROOT_LOGGER = "stpipe"
 DEFAULT_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -102,6 +103,7 @@ class LogConfig:
             self.handlers.append(BreakHandler(self.break_level))
 
         self._previous_level = {}
+        self._previous_crds_console = False
 
     def get_handler(self, handler_str):
         """
@@ -136,7 +138,7 @@ class LogConfig:
         - "py.warnings": If provided, Python warnings are captured and
           logged (``logging.captureWarnings(True)``).
         - "CRDS": If provided, the default stream handler for the CRDS
-          logger is removed.
+          logger is removed if needed.
 
         Parameters
         ----------
@@ -149,7 +151,9 @@ class LogConfig:
         if "py.warnings" in log_names:
             logging.captureWarnings(True)
         if "CRDS" in log_names:
-            crds_client.remove_crds_log_handler()
+            self._previous_crds_console = crds_log.THE_LOGGER.console is not None
+            if self._previous_crds_console:
+                crds_log.remove_console_handler()
         for log_name in log_names:
             # Don't reapply configuration, to avoid overwriting the
             # previously recorded level.
@@ -173,8 +177,9 @@ class LogConfig:
 
         - "py.warnings": If provided, Python warnings are no longer captured
           and logged (``logging.captureWarnings(False)``).
-        - "CRDS": If provided, the default stream handler for the CRDS
-          logger is restored.
+        - "CRDS": If provided and if the default stream handler for the CRDS
+          logger was present when configuration was applied, it will be
+          restored.
 
         Parameters
         ----------
@@ -207,8 +212,9 @@ class LogConfig:
             LogConfig.applied = None
         if "py.warnings" in log_names:
             logging.captureWarnings(False)
-        if "CRDS" in log_names:
-            crds_client.restore_crds_log_handler()
+        if "CRDS" in log_names and self._previous_crds_console:
+            self._previous_crds_console = False
+            crds_log.add_console_handler()
 
     @contextmanager
     def context(self, log_names=None):
