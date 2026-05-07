@@ -131,6 +131,13 @@ class LogConfig:
         If a logger has already been configured and not undone,
         it will be skipped.
 
+        Special handling is applied for the following log names:
+
+        - "py.warnings": If provided, Python warnings are captured and
+          logged (``logging.captureWarnings(True)``).
+        - "CRDS": If provided, the default stream handler for the CRDS
+          logger is removed.
+
         Parameters
         ----------
         log_names : tuple of str, list of str, or None, optional
@@ -161,6 +168,13 @@ class LogConfig:
     def undo(self, log_names=None, close_handlers=True):
         """
         Removes the configuration from known loggers.
+
+        Special handling is applied for the following log names:
+
+        - "py.warnings": If provided, Python warnings are no longer captured
+          and logged (``logging.captureWarnings(False)``).
+        - "CRDS": If provided, the default stream handler for the CRDS
+          logger is restored.
 
         Parameters
         ----------
