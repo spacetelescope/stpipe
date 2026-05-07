@@ -418,6 +418,7 @@ class Step:
         # A list of logging.LogRecord emitted to the stpipe root logger
         # during the most recent call to Step.run.
         self._log_records = []
+        self._external_log_context = None
         self._input_filename = None
         self._input_dir = None
         self._keywords = kws
@@ -487,7 +488,7 @@ class Step:
         """
         return self._log_records
 
-    def run(self, *args, _external_log_context=None):
+    def run(self, *args):
         """
         Run handles the generic setup and teardown that happens with
         the running of each step.  The real work that is unique to
@@ -495,7 +496,7 @@ class Step:
         """
         gc.collect()
 
-        if _external_log_context is not None:
+        if self._external_log_context is not None:
             ctx = nullcontext()
         else:
             ctx = log.record_logs(
@@ -504,8 +505,8 @@ class Step:
             )
 
         with ctx as log_records:
-            if _external_log_context is not None:
-                self._log_records = _external_log_context
+            if self._external_log_context is not None:
+                self._log_records = self._external_log_context
             else:
                 self._log_records = log_records
 
@@ -546,9 +547,9 @@ class Step:
 
             hook_args = args
             for pre_hook in self._pre_hooks:
-                hook_results = pre_hook.run(
-                    *hook_args, _external_log_context=_external_log_context
-                )
+                pre_hook._external_log_context = self._external_log_context
+                hook_results = pre_hook.run(*hook_args)
+                pre_hook._external_log_context = None
                 if hook_results is not None:
                     hook_args = (hook_results,)
             args = hook_args
@@ -589,9 +590,9 @@ class Step:
 
             # Run the post hooks
             for post_hook in self._post_hooks:
-                hook_results = post_hook.run(
-                    step_result, _external_log_context=_external_log_context
-                )
+                post_hook._external_log_context = self._external_log_context
+                hook_results = post_hook.run(step_result)
+                post_hook._external_log_context = None
                 if hook_results is not None:
                     step_result = hook_results
 
@@ -782,7 +783,10 @@ class Step:
                 config, name=name, config_file=config_file
             )
 
-            return instance.run(*args, _external_log_context=log_records)
+            instance._external_log_context = log_records
+            result = instance.run(*args)
+            instance._external_log_context = None
+            return result
 
     @property
     def input_dir(self):
