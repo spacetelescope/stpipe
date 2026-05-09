@@ -441,7 +441,6 @@ def step_from_cmdline(args, cls=None):
         The step class to use.  If none is provided, the step is inferred
         from the input arguments.
 
-
     Returns
     -------
     step : Step instance
@@ -466,7 +465,16 @@ def step_from_cmdline(args, cls=None):
         raise e
 
     try:
-        step.run(*positional)
+        with log.record_logs(
+            log_names=step_class.get_stpipe_loggers(),
+            formatter=step_class._log_records_formatter,
+        ) as log_records:
+            step, step_class, positional, debug_on_exception = (
+                just_the_step_from_cmdline(args, cls, apply_log_cfg=True)
+            )
+            step._external_log_context = log_records
+            step.run(*positional)
+            step._external_log_context = None
     except Exception as e:
         _print_important_message(f"ERROR RUNNING STEP {step_class.__name__!r}:", str(e))
 
