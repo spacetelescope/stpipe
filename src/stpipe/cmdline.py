@@ -482,12 +482,3 @@ def step_from_cmdline(args, cls=None):
             log.LogConfig.applied.undo()
 
     return step
-
-
-def step_script(cls):
-    import sys
-
-    if not issubclass(cls, Step):
-        raise AssertionError("cls must be a subclass of Step")
-
-    return step_from_cmdline(sys.argv[1:], cls=cls)
