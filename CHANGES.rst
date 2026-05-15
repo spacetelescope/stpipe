@@ -1,3 +1,23 @@
+0.13.0 (2026-05-15)
+===================
+
+Deprecations and Removals
+-------------------------
+
+- Remove unused ``cmdline.step_script``. (`#315
+  <https://github.com/spacetelescope/stpipe/issues/315>`_)
+
+
+New Features
+------------
+
+- Support URIs in member expnames in ModelLibrary. (`#305
+  <https://github.com/spacetelescope/stpipe/issues/305>`_)
+- Add special handling for the CRDS logger to allow its messages to be captured
+  by stpipe steps. (`#312
+  <https://github.com/spacetelescope/stpipe/issues/312>`_)
+
+
 0.12.0 (2026-03-25)
 ===================
 
