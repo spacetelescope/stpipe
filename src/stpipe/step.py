@@ -497,7 +497,12 @@ class Step:
                 level=logging.NOTSET,
                 recording_formatter=self._log_records_formatter,
             ).context(
-                log_names=self.get_stpipe_loggers(),
+                # skip applying py.warnings to reproduce the bug on stpipe main
+                # where warnings were not captured on logs when call
+                # is passed configure_log=False
+                log_names=[
+                    name for name in self.get_stpipe_loggers() if name != "py.warnings"
+                ],
             )
         else:
             ctx = nullcontext(log.LogConfig.applied.log_records)
