@@ -89,7 +89,7 @@ def hook_from_string(step, hooktype, num, command):
         return command
 
     # hook is a command-line script or system call
-    from .subproc import SystemCall
+    from ._subproc import SystemCall
 
     return SystemCall(name, parent=step, command=command, **kwargs)
 
