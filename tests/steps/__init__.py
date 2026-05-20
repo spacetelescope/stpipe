@@ -15,6 +15,13 @@ class BaseStep(Step):
         output_ext = string(default='asdf')
     """
 
+    def _datamodels_open(self, **kwargs):
+        pass
+
+
+class BasePipeline(Pipeline, BaseStep):
+    pass
+
 
 # class StepWithReference(Step):
 #     """Step that refers to a reference file."""
@@ -270,7 +277,7 @@ class MakeListStep(BaseStep):
 #         return r
 
 
-class MakeListPipeline(Pipeline):
+class MakeListPipeline(BasePipeline):
     """A pipeline that calls MakeListStep."""
 
     spec = """
