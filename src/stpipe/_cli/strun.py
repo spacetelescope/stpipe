@@ -1,7 +1,7 @@
 import sys
 
 from stpipe import _cmdline
-from stpipe.cli.main import _print_versions
+from stpipe._cli.main import _print_versions
 from stpipe.exceptions import StpipeExitException
 
 

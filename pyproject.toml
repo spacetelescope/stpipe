@@ -44,8 +44,8 @@ tracker = "https://github.com/spacetelescope/stpipe/issues"
 stpipe = "stpipe._integration:get_resource_mappings"
 
 [project.scripts]
-stpipe = "stpipe.cli.main:main"
-strun = "stpipe.cli.strun:main"
+stpipe = "stpipe._cli.main:main"
+strun = "stpipe._cli.strun:main"
 
 [build-system]
 requires = [
