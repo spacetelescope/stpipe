@@ -2,10 +2,12 @@
 
 import pathlib
 
+import asdf
 import pytest
 
 from steps import MakeListPipeline, MakeListStep
 from stpipe import Step
+from stpipe.config import StepConfig
 from stpipe.config_parser import ValidationError
 
 DEFAULT_PAR1 = 42.0
@@ -147,3 +149,21 @@ def test_step_from_asdf_noname():
 
     results = step.run()
     assert results == DEFAULT_RESULT
+
+
+def test_saving_pars(tmp_path):
+    """Save the step parameters from the commandline"""
+    cfg_path = get_pkg_data_filename("steps/jwst_generic_pars-makeliststep_0002.asdf")
+    saved_path = tmp_path / "savepars.asdf"
+    Step.from_cmdline([cfg_path, "--save-parameters", str(saved_path)])
+    assert saved_path.exists()
+
+    with asdf.open(
+        get_pkg_data_filename("steps/jwst_generic_pars-makeliststep_0002.asdf")
+    ) as af:
+        original_config = StepConfig.from_asdf(af)
+        original_config.parameters["par3"] = False
+
+    with asdf.open(str(saved_path)) as af:
+        config = StepConfig.from_asdf(af)
+        assert config.parameters == original_config.parameters
