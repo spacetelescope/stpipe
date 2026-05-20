@@ -34,12 +34,12 @@ class ValidationError(Exception):
 
 
 def _get_input_file_check(root_dir):
-    from . import cmdline
+    from . import _cmdline
 
     root_dir = root_dir or ""
 
     def _input_file_check(path):
-        if not isinstance(path, cmdline.FromCommandLine):
+        if not isinstance(path, _cmdline.FromCommandLine):
             try:
                 path = str(path)
             except ValueError:
@@ -57,12 +57,12 @@ def _get_input_file_check(root_dir):
 
 
 def _get_output_file_check(root_dir):
-    from . import cmdline
+    from . import _cmdline
 
     root_dir = root_dir or ""
 
     def _output_file_check(path):
-        if not isinstance(path, cmdline.FromCommandLine):
+        if not isinstance(path, _cmdline.FromCommandLine):
             try:
                 path = str(path)
             except ValueError:

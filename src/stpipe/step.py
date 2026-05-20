@@ -182,9 +182,9 @@ class Step:
             Any parameters found in the config file will be set
             as member variables on the returned `Step` instance.
         """
-        from . import cmdline
+        from . import _cmdline
 
-        return cmdline.step_from_cmdline(args)
+        return _cmdline.step_from_cmdline(args)
 
     @classmethod
     def _parse_class_and_name(
@@ -282,11 +282,11 @@ class Step:
 
         # cmdline.FromCommandLine instances should not be passed to
         # steps. Instead, convert them back to strings.
-        from . import cmdline
+        from . import _cmdline
 
         kwargs = {}
         for k in config:
-            if isinstance(config[k], cmdline.FromCommandLine):
+            if isinstance(config[k], _cmdline.FromCommandLine):
                 kwargs[k] = str(config[k])
             else:
                 kwargs[k] = config[k]
@@ -1338,7 +1338,7 @@ class Step:
         dict
             Keys are the parameters and values are the values.
         """
-        from . import cmdline
+        from . import _cmdline
 
         if full_spec:
             spec_file_func = config_parser.get_merged_spec_file
@@ -1357,7 +1357,7 @@ class Step:
         # Convert the config to a pure dict.
         pars_dict = {}
         for key, value in pars.items():
-            if isinstance(value, cmdline.FromCommandLine):
+            if isinstance(value, _cmdline.FromCommandLine):
                 pars_dict[key] = str(value)
             else:
                 pars_dict[key] = value

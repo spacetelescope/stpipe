@@ -5,7 +5,7 @@ import warnings
 import pytest
 from crds.core import log as crds_log
 
-import stpipe.cmdline
+import stpipe._cmdline
 from stpipe import Step
 from stpipe import log as stpipe_log
 from stpipe.pipeline import Pipeline
@@ -307,7 +307,7 @@ def test_from_cmdline_no_root_logger_changes_level_arg(
 
 def test_step_from_cmdline_no_root_logger_changes(log_cfg_path, root_logger_unchanged):
     with pytest.warns(DeprecationWarning, match="logcfg configuration file"):
-        stpipe.cmdline.step_from_cmdline(
+        stpipe._cmdline.step_from_cmdline(
             ["test_logger.LoggingPipeline", "--logcfg", str(log_cfg_path)]
         )
 
@@ -316,7 +316,7 @@ def test_step_from_cmdline_no_root_logger_changes(log_cfg_path, root_logger_unch
 def test_step_from_cmdline_no_root_logger_changes_level_arg(
     root_logger_unchanged, logging_level
 ):
-    stpipe.cmdline.step_from_cmdline(
+    stpipe._cmdline.step_from_cmdline(
         ["test_logger.LoggingPipeline", f"--log-level={logging_level!s}"]
     )
 
@@ -435,7 +435,7 @@ def test_command_line_arguments(
         cmdline_args.append(f"--log-file={str(log_file)}")
 
     # Run the step with the specified arguments
-    stpipe.cmdline.step_from_cmdline(cmdline_args)
+    stpipe._cmdline.step_from_cmdline(cmdline_args)
 
     # Check for a log file: it is not created if there are no messages logged
     if log_file is not None and log_level not in ["ERROR", "CRITICAL"]:
