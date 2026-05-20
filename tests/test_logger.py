@@ -435,7 +435,7 @@ def test_command_line_arguments(
         cmdline_args.append(f"--log-file={str(log_file)}")
 
     # Run the step with the specified arguments
-    stpipe._cmdline.step_from_cmdline(cmdline_args)
+    Step.from_cmdline(cmdline_args)
 
     # Check for a log file: it is not created if there are no messages logged
     if log_file is not None and log_level not in ["ERROR", "CRITICAL"]:

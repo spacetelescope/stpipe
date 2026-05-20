@@ -14,7 +14,7 @@ from crds.core.exceptions import CrdsLookupError
 
 import stpipe.config_parser as cp
 from steps import EmptyPipeline, MakeListPipeline, MakeListStep
-from stpipe import _cmdline, crds_client
+from stpipe import crds_client
 from stpipe.config import StepConfig
 from stpipe.datamodel import AbstractDataModel
 from stpipe.pipeline import Pipeline
@@ -294,7 +294,7 @@ def test_step_list_args(config_file_list_arg_step):
     # Command line tests below need the config file path to be a string
     returned_config_file = str(returned_config_file)
 
-    c = _cmdline.step_from_cmdline(
+    c = Step.from_cmdline(
         [
             returned_config_file,
             "filename.fits",
@@ -316,7 +316,7 @@ def test_step_list_args(config_file_list_arg_step):
         "is too long."
     )
     with pytest.raises(ValueError, match=msg):
-        _cmdline.step_from_cmdline(
+        Step.from_cmdline(
             [
                 returned_config_file,
                 "filename.fits",
@@ -331,7 +331,7 @@ def test_step_list_args(config_file_list_arg_step):
         "Config parameter 'output_shape': the value \"['1500']\" is too short."
     )
     with pytest.raises(ValueError, match=msg):
-        _cmdline.step_from_cmdline(
+        Step.from_cmdline(
             [
                 returned_config_file,
                 "filename.fits",
@@ -346,7 +346,7 @@ def test_step_list_args(config_file_list_arg_step):
         "Config parameter 'output_shape': the value \"1500\" is of the wrong type."
     )
     with pytest.raises(ValueError, match=msg):
-        _cmdline.step_from_cmdline(
+        Step.from_cmdline(
             [
                 returned_config_file,
                 "filename.fits",
@@ -361,7 +361,7 @@ def test_step_list_args(config_file_list_arg_step):
         "Config parameter 'output_shape': the value \"1500.5\" is of the wrong type."
     )
     with pytest.raises(ValueError, match=msg):
-        _cmdline.step_from_cmdline(
+        Step.from_cmdline(
             [
                 returned_config_file,
                 "filename.fits",
