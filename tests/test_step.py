@@ -9,9 +9,12 @@ from typing import ClassVar
 
 import asdf
 import pytest
+from astropy.extern.configobj.configobj import ConfigObj
+from crds.core.exceptions import CrdsLookupError
 
 import stpipe.config_parser as cp
 from stpipe import cmdline, crds_client
+from stpipe.config import StepConfig
 from stpipe.datamodel import AbstractDataModel
 from stpipe.pipeline import Pipeline
 from stpipe.step import Step
@@ -697,3 +700,180 @@ def test_get_stpipe_loggers():
     # The default Step class returns the root logger only
     # as the known logger.
     assert Step.get_stpipe_loggers() == ("root",)
+
+
+@pytest.mark.parametrize(
+    "command_line_pars, command_line_config_pars, reference_pars, expected_pars",
+    [
+        # If nothing else is present, we should use the spec defaults
+        (
+            None,
+            None,
+            None,
+            {
+                "par1": "default par1 value",
+                "par2": "default par2 value",
+                "par3": "default par3 value",
+                "par4": "default par4 value",
+            },
+        ),
+        # Reference file pars > spec defaults
+        (
+            None,
+            None,
+            {
+                "par1": "reference par1 value",
+                "par2": "reference par2 value",
+                "par3": "reference par3 value",
+                "par4": "reference par4 value",
+            },
+            {
+                "par1": "reference par1 value",
+                "par2": "reference par2 value",
+                "par3": "reference par3 value",
+                "par4": "reference par4 value",
+            },
+        ),
+        # Command line config pars > reference pars
+        (
+            None,
+            {
+                "par1": "config par1 value",
+                "par2": "config par2 value",
+                "par3": "config par3 value",
+                "par4": "config par4 value",
+            },
+            {
+                "par1": "reference par1 value",
+                "par2": "reference par2 value",
+                "par3": "reference par3 value",
+                "par4": "reference par4 value",
+            },
+            {
+                "par1": "config par1 value",
+                "par2": "config par2 value",
+                "par3": "config par3 value",
+                "par4": "config par4 value",
+            },
+        ),
+        # Command line override pars > all other pars
+        (
+            {
+                "par1": "override par1 value",
+                "par2": "override par2 value",
+                "par3": "override par3 value",
+                "par4": "override par4 value",
+            },
+            {
+                "par1": "config par1 value",
+                "par2": "config par2 value",
+                "par3": "config par3 value",
+                "par4": "config par4 value",
+            },
+            {
+                "par1": "reference par1 value",
+                "par2": "reference par2 value",
+                "par3": "reference par3 value",
+                "par4": "reference par4 value",
+            },
+            {
+                "par1": "override par1 value",
+                "par2": "override par2 value",
+                "par3": "override par3 value",
+                "par4": "override par4 value",
+            },
+        ),
+        # Test complex merging of parameters (one parameter per source)
+        (
+            {"par1": "override par1 value"},
+            {"par2": "config par2 value"},
+            {"par3": "reference par3 value"},
+            {
+                "par1": "override par1 value",
+                "par2": "config par2 value",
+                "par3": "reference par3 value",
+                "par4": "default par4 value",
+            },
+        ),
+        # Test complex merging of parameters (more parameters
+        # specified on the lower-precedence sources)
+        (
+            {"par1": "override par1 value"},
+            {"par1": "config par1 value", "par2": "config par2 value"},
+            {
+                "par1": "reference par1 value",
+                "par2": "reference par2 value",
+                "par3": "reference par3 value",
+            },
+            {
+                "par1": "override par1 value",
+                "par2": "config par2 value",
+                "par3": "reference par3 value",
+                "par4": "default par4 value",
+            },
+        ),
+    ],
+)
+def test_step_from_commandline_par_precedence(
+    command_line_pars,
+    command_line_config_pars,
+    reference_pars,
+    expected_pars,
+    tmp_path,
+    monkeypatch,
+):
+    args = []
+
+    class_name = "steps.WithDefaultsStep"
+    config_name = "WithDefaultsStep"
+    reference_type = f"pars-{config_name.lower()}"
+    input_path = str(tmp_path / "input.asdf")
+
+    if command_line_config_pars:
+        command_line_config_path = tmp_path / "with_defaults_step.cfg"
+        config = ConfigObj(str(command_line_config_path))
+        config["class"] = class_name
+        config["name"] = config_name
+        for key, value in command_line_config_pars.items():
+            config[key] = value
+        config.write()
+        args.append(str(command_line_config_path.absolute()))
+    else:
+        args.append(class_name)
+
+    args.append(input_path)
+
+    if command_line_pars:
+        for key, value in command_line_pars.items():
+            args.append(f"--{key}={value}")
+
+    reference_file_map = {}
+    if reference_pars:
+        reference_path = tmp_path / f"{reference_type}.asdf"
+        reference_config = StepConfig(class_name, config_name, reference_pars, [])
+        with reference_config.to_asdf() as af:
+            af.write_to(reference_path)
+
+        reference_file_map[reference_type] = str(reference_path)
+
+    def mock_get_reference_file(
+        dataset, reference_file_type, observatory=None, asn_exptypes=None
+    ):
+        if reference_file_type in reference_file_map:
+            return reference_file_map[reference_file_type]
+        else:
+            raise CrdsLookupError(
+                f"Error determining best reference for '{reference_file_type}'  = \
+  Unknown reference type '{reference_file_type}'"
+            )
+
+    def mock_get_parameters(dataset):
+        return {}, "jwst"
+
+    monkeypatch.setattr(Step, "_get_crds_parameters", mock_get_parameters)
+    monkeypatch.setattr(crds_client, "get_reference_file", mock_get_reference_file)
+
+    step = Step.from_cmdline(args)
+
+    for key, value in expected_pars.items():
+        assert getattr(step, key) == value
