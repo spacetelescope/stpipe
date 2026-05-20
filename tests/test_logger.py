@@ -6,8 +6,7 @@ import pytest
 from crds.core import log as crds_log
 
 import stpipe._cmdline
-from stpipe import Step
-from stpipe import log as stpipe_log
+from stpipe import Step, _log
 from stpipe.pipeline import Pipeline
 
 
@@ -144,15 +143,15 @@ format = '%(message)s'
     with io.StringIO() as fd:
         fd.write(configuration)
         fd.seek(0)
-        log_cfg = stpipe_log.load_configuration(fd)
+        log_cfg = _log.load_configuration(fd)
 
     with log_cfg.context(["stpipe"]):
-        log = logging.getLogger(stpipe_log.STPIPE_ROOT_LOGGER)
+        log = logging.getLogger(_log.STPIPE_ROOT_LOGGER)
 
         log.info("Hidden")
         log.warning("Shown")
 
-        with pytest.raises(stpipe_log.LoggedException):
+        with pytest.raises(_log.LoggedException):
             log.critical("Breaking")
 
     logging.shutdown()
@@ -164,7 +163,7 @@ format = '%(message)s'
 
 
 def test_configuration_apply(capsys):
-    log_cfg = stpipe_log.LogConfig(["stderr"], level="INFO")
+    log_cfg = _log.LogConfig(["stderr"], level="INFO")
     stpipe_logger = logging.getLogger("stpipe")
     other_logger = logging.getLogger("other")
     stpipe_msg = "stpipe message"

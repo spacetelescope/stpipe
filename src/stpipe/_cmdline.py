@@ -9,7 +9,7 @@ import os.path
 import textwrap
 import warnings
 
-from . import config_parser, log, utilities
+from . import _log, config_parser, utilities
 from .step import Step, get_disable_crds_steppars
 
 built_in_configuration_parameters = [
@@ -313,7 +313,7 @@ def _determine_log_configuration(known):
             raise OSError(f"Logging config {known.logcfg!r} not found")
         cfgfile = known.logcfg
     else:
-        cfgfile = log._find_logging_config_file()
+        cfgfile = _log._find_logging_config_file()
 
     # determine level
     if known.verbose:
@@ -324,7 +324,7 @@ def _determine_log_configuration(known):
         log_level = None
 
     try:
-        log_cfg = log.load_configuration(
+        log_cfg = _log.load_configuration(
             config_file=cfgfile,
             log_level=log_level,
             log_file=known.log_file,
