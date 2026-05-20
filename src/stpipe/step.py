@@ -452,10 +452,10 @@ class Step:
 
         # Setup the hooks
         if len(self.pre_hooks) or len(self.post_hooks):
-            from . import hooks
+            from . import _hooks
 
-            self._pre_hooks = hooks.get_hook_objects(self, "pre", self.pre_hooks)
-            self._post_hooks = hooks.get_hook_objects(self, "post", self.post_hooks)
+            self._pre_hooks = _hooks.get_hook_objects(self, "pre", self.pre_hooks)
+            self._post_hooks = _hooks.get_hook_objects(self, "post", self.post_hooks)
         else:
             self._pre_hooks = []
             self._post_hooks = []
