@@ -167,3 +167,54 @@ def test_saving_pars(tmp_path):
     with asdf.open(str(saved_path)) as af:
         config = StepConfig.from_asdf(af)
         assert config.parameters == original_config.parameters
+
+
+@pytest.mark.parametrize(
+    "step_obj, expected",
+    [
+        (
+            MakeListStep(par1=0.0, par2="from args"),
+            StepConfig(
+                "steps.MakeListStep",
+                "MakeListStep",
+                {
+                    "pre_hooks": [],
+                    "post_hooks": [],
+                    "output_ext": "asdf",
+                    "output_use_model": False,
+                    "output_use_index": True,
+                    "save_results": False,
+                    "skip": False,
+                    "search_output_file": True,
+                    "input_dir": "",
+                    "par1": 0.0,
+                    "par2": "from args",
+                    "par3": False,
+                },
+                [],
+            ),
+        ),
+    ],
+)
+def test_export_config(step_obj, expected, tmp_path):
+    """Test retrieving of configuration parameters"""
+    config_path = tmp_path / "config.asdf"
+    step_obj.export_config(config_path)
+
+    with asdf.open(config_path) as af:
+        # StepConfig has an __eq__ implementation but we can't use it
+        # due to differences between asdf 2.7 and 2.8 in serializing None
+        # values.  This can be simplified once the minimum asdf requirement
+        # is changed to >= 2.8.
+        # assert StepConfig.from_asdf(af) == expected
+        config = StepConfig.from_asdf(af)
+        assert config.class_name == expected.class_name
+        assert config.name == expected.name
+        assert config.steps == expected.steps
+        parameters = set(expected.parameters.keys()).union(
+            set(config.parameters.keys())
+        )
+        for parameter in parameters:
+            assert config.parameters.get(parameter) == expected.parameters.get(
+                parameter
+            )
