@@ -180,7 +180,7 @@ def test_saving_pars(tmp_path):
                 {
                     "pre_hooks": [],
                     "post_hooks": [],
-                    "output_ext": "asdf",
+                    "output_ext": ".asdf",
                     "output_use_model": False,
                     "output_use_index": True,
                     "save_results": False,

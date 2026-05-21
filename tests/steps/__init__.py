@@ -12,7 +12,7 @@ log = logging.getLogger("stpipe.tests.steps")
 
 class BaseStep(Step):
     spec = """
-        output_ext = string(default='asdf')
+        output_ext = string(default='.asdf')
     """
 
     def _datamodels_open(self, **kwargs):
@@ -219,17 +219,17 @@ class MakeListStep(BaseStep):
 #         return model
 #
 #
-# class EmptyPipeline(Pipeline):
-#     """A pipeline that has no substeps."""
-#
-#     spec = """
-#     par1 = string(default='Name the atomizer') # Control the frobulization
-#     """
-#
-#     def process(self, *args):  # noqa: D102
-#         return args
-#
-#
+class EmptyPipeline(BasePipeline):
+    """A pipeline that has no substeps."""
+
+    spec = """
+    par1 = string(default='Name the atomizer') # Control the frobulization
+    """
+
+    def process(self, *args):  # noqa: D102
+        return args
+
+
 # class ProperPipeline(Pipeline):
 #     """Pipeline with proper output setup."""
 #
@@ -282,7 +282,6 @@ class MakeListPipeline(BasePipeline):
 
     spec = """
     par1 = string(default='Name the atomizer') # Control the frobulization
-    output_ext = string(default='asdf')
     """
 
     step_defs = {
