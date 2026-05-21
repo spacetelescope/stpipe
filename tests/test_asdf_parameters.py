@@ -218,3 +218,17 @@ def test_export_config(step_obj, expected, tmp_path):
             assert config.parameters.get(parameter) == expected.parameters.get(
                 parameter
             )
+
+
+@pytest.mark.parametrize(
+    "cfg_file, expected_reftype",
+    [
+        ("local_class.cfg", "pars-withdefaultsstep"),
+        ("jwst_generic_pars-makeliststep_0002.asdf", "pars-makeliststep"),
+    ],
+)
+def test_reftype(cfg_file, expected_reftype):
+    """Test that reftype is produced as expected"""
+    step = Step.from_config_file(get_pkg_data_filename(f"steps/{cfg_file}"))
+    assert step.__class__.get_config_reftype() == expected_reftype
+    assert step.get_config_reftype() == expected_reftype
