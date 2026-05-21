@@ -232,3 +232,9 @@ def test_reftype(cfg_file, expected_reftype):
     step = Step.from_config_file(get_pkg_data_filename(f"steps/{cfg_file}"))
     assert step.__class__.get_config_reftype() == expected_reftype
     assert step.get_config_reftype() == expected_reftype
+
+
+def test_step_with_local_class():
+    step_fn = get_pkg_data_filename("steps/local_class.cfg")
+    step = Step.from_config_file(step_fn)
+    assert isinstance(step, Step)
