@@ -223,11 +223,47 @@ def _override_config_from_args(config, args):
 
 
 def _print_parser_error(parser, error):
+    """
+    Print a formatted error message and parser help text.
+
+    Parameters
+    ----------
+    parser : argparse.ArgumentParser
+        The argument parser whose help text will be printed.
+    error : Exception
+        The error object whose message will be displayed.
+    """
     _print_important_message("ERROR PARSING CONFIGURATION:", str(error))
     parser.print_help()
 
 
 def _config_and_class_from_cmdline(args):
+    """
+    Parse command line arguments and retrieve step configuration and class.
+
+    Extracts the configuration file or class identifier from command line
+    arguments and retrieves the corresponding Step class and configuration.
+
+    Parameters
+    ----------
+    args : list of str
+        Command line arguments.
+
+    Returns
+    -------
+    step_class : type
+        The Step class to be instantiated.
+    config : ConfigObj
+        The configuration object for the step.
+    name : str or None
+        The step name from the configuration file, or None.
+    config_file : str or None
+        Path to the configuration file, or None.
+    parser : argparse.ArgumentParser
+        The parent argument parser used for parsing.
+    known : argparse.Namespace
+        The parsed command line arguments.
+    """
     parser = _build_parent_arg_parser()
     known, _ = parser.parse_known_args(args)
     try:
@@ -238,6 +274,24 @@ def _config_and_class_from_cmdline(args):
 
 
 def _determine_log_configuration(known):
+    """
+    Determine and load logging configuration from arguments.
+
+    Parameters
+    ----------
+    known : argparse.Namespace
+        Parsed command line arguments containing logging-related parameters:
+        - logcfg: Path to logging configuration file (deprecated)
+        - verbose: Enable all logging messages
+        - log_level: Specific log level to set
+        - log_file: Path to log file
+        - log_stream: Output stream for logs
+
+    Returns
+    -------
+    log_cfg : logging configuration object
+        The loaded logging configuration ready for use.
+    """
     if known.logcfg is not None:
         msg = (
             "The logcfg configuration file is deprecated. "
@@ -282,6 +336,37 @@ def _determine_log_configuration(known):
 
 
 def _build_step_from_args(step_class, config, name, config_file, parser, known, args):
+    """
+    Build and configure a Step instance from parsed arguments.
+
+    Creates a Step instance using the provided class and configuration,
+    merges in command line overrides, retrieves reference parameters from
+    CRDS if an input file is provided, and handles configuration validation.
+
+    Parameters
+    ----------
+    step_class : type
+        The Step class to instantiate.
+    config : ConfigObj
+        The base configuration object.
+    name : str or None
+        The step name from configuration.
+    config_file : str or None
+        Path to the configuration file.
+    parser : argparse.ArgumentParser
+        The parent argument parser.
+    known : argparse.Namespace
+        Parsed parent-level command line arguments.
+    args : list of str
+        Remaining unparsed command line arguments.
+
+    Returns
+    -------
+    step : Step instance
+        The instantiated and configured Step object.
+    positional : list of str
+        Positional arguments remaining after parsing.
+    """
     # Determine whether CRDS should be queried for step parameters
     disable_crds_steppars = get_disable_crds_steppars(known.disable_crds_steppars)
 
