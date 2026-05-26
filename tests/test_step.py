@@ -15,7 +15,7 @@ from crds.core.exceptions import CrdsLookupError
 import stpipe.config_parser as cp
 from steps import EmptyPipeline, MakeListPipeline, MakeListStep
 from stpipe import crds_client
-from stpipe.config import StepConfig
+from stpipe._config import StepConfig
 from stpipe.datamodel import AbstractDataModel
 from stpipe.pipeline import Pipeline
 from stpipe.step import Step

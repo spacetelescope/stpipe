@@ -7,7 +7,7 @@ import pytest
 
 from steps import MakeListPipeline, MakeListStep
 from stpipe import Step
-from stpipe.config import StepConfig
+from stpipe._config import StepConfig
 from stpipe.config_parser import ValidationError
 
 DEFAULT_PAR1 = 42.0

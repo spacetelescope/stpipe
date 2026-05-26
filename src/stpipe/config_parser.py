@@ -20,7 +20,7 @@ from astropy.extern.configobj.configobj import (
 from astropy.extern.configobj.validate import ValidateError, Validator, VdtTypeError
 
 from . import utilities
-from .config import StepConfig
+from ._config import StepConfig
 from .datamodel import AbstractDataModel
 from .utilities import _not_set
 

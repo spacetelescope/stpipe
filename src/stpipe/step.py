@@ -26,7 +26,7 @@ from typing import ClassVar
 
 import yaml
 
-from . import _log, config, config_parser, crds_client, utilities
+from . import _config, _log, config_parser, crds_client, utilities
 from .datamodel import AbstractDataModel
 from .library import AbstractModelLibrary
 from .utilities import _not_set
@@ -1376,7 +1376,7 @@ class Step:
             Set to True to include metadata that is required
             for submission to CRDS.
         """
-        with config.export_config(self).to_asdf(
+        with _config.export_config(self).to_asdf(
             include_metadata=include_metadata
         ) as af:
             af.write_to(filename)
