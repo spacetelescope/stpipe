@@ -10,6 +10,7 @@ import textwrap
 import warnings
 
 from . import _log, config_parser, utilities
+from .exceptions import ValidationError
 from .step import Step, get_disable_crds_steppars
 
 built_in_configuration_parameters = [
@@ -426,7 +427,7 @@ def _build_step_from_args(step_class, config, name, config_file, parser, known, 
             name=name,
             config_file=config_file,
         )
-    except config_parser.ValidationError as e:
+    except ValidationError as e:
         # If the configobj validator failed, print usage information.
         _print_important_message("ERROR PARSING CONFIGURATION:", str(e))
         step_arg_parser.print_help()

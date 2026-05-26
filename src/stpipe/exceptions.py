@@ -17,3 +17,9 @@ class StpipeExitException(StpipeException):
     @property
     def exit_status(self):
         return self._exit_status
+
+
+class ValidationError(Exception):
+    """
+    Error indicating an invalid step configuration.
+    """

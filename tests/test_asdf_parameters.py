@@ -8,7 +8,7 @@ import pytest
 from steps import MakeListPipeline, MakeListStep
 from stpipe import Step
 from stpipe._config import StepConfig
-from stpipe.config_parser import ValidationError
+from stpipe.exceptions import ValidationError
 
 DEFAULT_PAR1 = 42.0
 DEFAULT_PAR2 = "Yes, a string"

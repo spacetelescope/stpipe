@@ -23,14 +23,11 @@ from . import utilities
 from ._config import StepConfig
 from .datamodel import AbstractDataModel
 from .utilities import _not_set
+from .exceptions import ValidationError
 
 # Configure logger
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
-
-
-class ValidationError(Exception):
-    pass
 
 
 def _get_input_file_check(root_dir):
