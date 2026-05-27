@@ -289,7 +289,7 @@ def _determine_log_configuration(known):
 
     Returns
     -------
-    log_cfg : logging configuration object
+    log_cfg : LogConfig
         The loaded logging configuration ready for use.
     """
     if known.logcfg is not None:
