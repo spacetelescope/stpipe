@@ -362,7 +362,7 @@ def _build_step_from_args(step_class, config, name, config_file, parser, known, 
 
     Returns
     -------
-    step : Step instance
+    step : Step
         The instantiated and configured Step object.
     positional : list of str
         Positional arguments remaining after parsing.
