@@ -146,7 +146,7 @@ format = '%(message)s'
         fd.seek(0)
         log_cfg = stpipe_log.load_configuration(fd)
 
-    with log_cfg.context():
+    with log_cfg.context(["stpipe"]):
         log = logging.getLogger(stpipe_log.STPIPE_ROOT_LOGGER)
 
         log.info("Hidden")
@@ -171,7 +171,7 @@ def test_configuration_apply(capsys):
     other_msg = "other message"
 
     # By default, only stpipe is configured
-    log_cfg.apply()
+    log_cfg.apply(["stpipe"])
     stpipe_logger.info(stpipe_msg)
     other_logger.info(other_msg)
     capt = capsys.readouterr()
@@ -179,7 +179,7 @@ def test_configuration_apply(capsys):
     assert capt.err.count(other_msg) == 0
 
     # Calling again does not attach a duplicate handler
-    log_cfg.apply()
+    log_cfg.apply(["stpipe"])
     stpipe_logger.info(stpipe_msg)
     other_logger.info(other_msg)
     capt = capsys.readouterr()
@@ -187,7 +187,7 @@ def test_configuration_apply(capsys):
     assert capt.err.count(other_msg) == 0
 
     # Other logger can be added to the configuration
-    log_cfg.apply(log_names=["other"])
+    log_cfg.apply(["other"])
     stpipe_logger.info(stpipe_msg)
     other_logger.info(other_msg)
     capt = capsys.readouterr()
@@ -195,63 +195,12 @@ def test_configuration_apply(capsys):
     assert capt.err.count(other_msg) == 1
 
     # Calling undo removes configuration from both
-    log_cfg.undo()
+    log_cfg.undo(["stpipe", "other"])
     stpipe_logger.info(stpipe_msg)
     other_logger.info(other_msg)
     capt = capsys.readouterr()
     assert capt.err.count(stpipe_msg) == 0
     assert capt.err.count(other_msg) == 0
-
-
-@pytest.mark.parametrize("log_names", [None, ["stpipe"]])
-def test_configuration_undo(capsys, log_names):
-    log_cfg = stpipe_log.LogConfig(["stderr"], level="INFO")
-    stpipe_logger = logging.getLogger("stpipe")
-    stpipe_msg = "stpipe message"
-
-    # If the log_cfg handler is attached to a logger without going
-    # through "apply", it can still be removed with undo.
-    stpipe_logger.addHandler(log_cfg.handlers[0])
-
-    stpipe_logger.info(stpipe_msg)
-    capt = capsys.readouterr()
-    assert capt.err.count(stpipe_msg) == 1
-
-    log_cfg.undo(log_names)
-    stpipe_logger.info(stpipe_msg)
-    capt = capsys.readouterr()
-    assert capt.err.count(stpipe_msg) == 0
-
-
-def test_record_logs():
-    """
-    Test that record_logs respects the default configuration
-    """
-    stpipe_logger = logging.getLogger(stpipe_log.STPIPE_ROOT_LOGGER)
-    root_logger = logging.getLogger()
-
-    assert not any(
-        isinstance(h, stpipe_log.RecordingHandler) for h in root_logger.handlers
-    )
-
-    with stpipe_log.record_logs(
-        log_names=[""], level=logging.ERROR, formatter=logging.Formatter("%(message)s")
-    ) as log_records:
-        stpipe_logger.warning("Warning from stpipe")
-        stpipe_logger.error("Error from stpipe")
-        root_logger.warning("Warning from root")
-        root_logger.error("Error from root")
-
-    assert not any(
-        isinstance(h, stpipe_log.RecordingHandler) for h in root_logger.handlers
-    )
-
-    stpipe_logger.error("Additional error from stpipe")
-    root_logger.error("Additional error from root")
-
-    assert len(log_records) == 2
-    assert log_records[0] == "Error from stpipe"
-    assert log_records[1] == "Error from root"
 
 
 @pytest.mark.parametrize(
@@ -369,17 +318,6 @@ def test_step_from_cmdline_no_root_logger_changes_level_arg(
 ):
     stpipe.cmdline.step_from_cmdline(
         ["test_logger.LoggingPipeline", f"--log-level={logging_level!s}"]
-    )
-
-
-def test_just_the_step_from_cmdline_no_root_logger_changes(
-    log_cfg_path, root_logger_unchanged
-):
-    # By default, no log configuration is applied or available in the
-    # parameters.  If apply_log_cfg is True, it *will* modify the
-    # root logger.
-    stpipe.cmdline.just_the_step_from_cmdline(
-        ["test_logger.LoggingPipeline"], apply_log_cfg=False
     )
 
 

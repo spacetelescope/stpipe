@@ -74,6 +74,9 @@ class ListArgStep(Step):
         output_ext = string(default='listargstep')
     """
 
+    def process(self, *args, **kwargs):
+        pass
+
 
 @pytest.fixture()
 def config_file_pipe(tmp_path):
@@ -291,17 +294,15 @@ def test_step_list_args(config_file_list_arg_step):
     # Command line tests below need the config file path to be a string
     returned_config_file = str(returned_config_file)
 
-    c, *_ = cmdline.just_the_step_from_cmdline(
+    c = cmdline.step_from_cmdline(
         [
+            returned_config_file,
             "filename.fits",
             "--output_shape",
             "1500,1300",
             "--crpix=123,456",
             "--pixel_scale=0.75",
-            "--config-file",
-            returned_config_file,
         ],
-        ListArgStep,
     )
     assert c.rotation is None
     assert c.pixel_scale == 0.75
@@ -315,68 +316,60 @@ def test_step_list_args(config_file_list_arg_step):
         "is too long."
     )
     with pytest.raises(ValueError, match=msg):
-        cmdline.just_the_step_from_cmdline(
+        cmdline.step_from_cmdline(
             [
+                returned_config_file,
                 "filename.fits",
                 "--output_shape",
                 "1500,1300,90",
                 "--crpix=123,456",
                 "--pixel_scale=0.75",
-                "--config-file",
-                returned_config_file,
             ],
-            ListArgStep,
         )
 
     msg = re.escape(
         "Config parameter 'output_shape': the value \"['1500']\" is too short."
     )
     with pytest.raises(ValueError, match=msg):
-        cmdline.just_the_step_from_cmdline(
+        cmdline.step_from_cmdline(
             [
+                returned_config_file,
                 "filename.fits",
                 "--output_shape",
                 "1500,",
                 "--crpix=123,456",
                 "--pixel_scale=0.75",
-                "--config-file",
-                returned_config_file,
             ],
-            ListArgStep,
         )
 
     msg = re.escape(
         "Config parameter 'output_shape': the value \"1500\" is of the wrong type."
     )
     with pytest.raises(ValueError, match=msg):
-        cmdline.just_the_step_from_cmdline(
+        cmdline.step_from_cmdline(
             [
+                returned_config_file,
                 "filename.fits",
                 "--output_shape",
                 "1500",
                 "--crpix=123,456",
                 "--pixel_scale=0.75",
-                "--config-file",
-                returned_config_file,
             ],
-            ListArgStep,
         )
 
     msg = re.escape(
         "Config parameter 'output_shape': the value \"1500.5\" is of the wrong type."
     )
     with pytest.raises(ValueError, match=msg):
-        cmdline.just_the_step_from_cmdline(
+        cmdline.step_from_cmdline(
             [
+                returned_config_file,
                 "filename.fits",
                 "--output_shape",
                 "1500.5,1300.2",
                 "--crpix=123,456",
                 "--pixel_scale=0.75",
-                "--config-file",
-                returned_config_file,
             ],
-            ListArgStep,
         )
 
 

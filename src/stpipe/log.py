@@ -55,8 +55,6 @@ class BreakHandler(logging.Handler):
     exceptions.
     """
 
-    _from_config = True
-
     def emit(self, record):
         raise LoggedException(record)
 
@@ -85,6 +83,8 @@ class LogConfig:
         handler,
         level=logging.INFO,
         break_level=logging.NOTSET,
+        recording_level=logging.NOTSET,
+        recording_formatter=None,
         format=None,  # noqa: A002
     ):
         if isinstance(handler, str):
@@ -102,8 +102,21 @@ class LogConfig:
         if self.break_level != logging.NOTSET:
             self.handlers.append(BreakHandler(self.break_level))
 
+        # add recording handler
+        self._recording_handler = RecordingHandler(level=recording_level)
+        if recording_formatter is not None:
+            self.set_recording_formatter(recording_formatter)
+        self.handlers.append(self._recording_handler)
+
         self._previous_level = {}
         self._previous_crds_console = False
+
+    def set_recording_formatter(self, formatter):
+        self._recording_handler.setFormatter(formatter)
+
+    @property
+    def log_records(self):
+        return self._recording_handler.log_records
 
     def get_handler(self, handler_str):
         """
@@ -126,7 +139,7 @@ class LogConfig:
 
         raise ValueError(f"Can't parse handler {handler_str!r}")
 
-    def apply(self, log_names=None):
+    def apply(self, log_names):
         """
         Applies the configuration to known loggers.
 
@@ -146,8 +159,6 @@ class LogConfig:
             Log names to configure.  If not provided, only the
             STPIPE_ROOT_LOGGER is configured.
         """
-        if log_names is None:
-            log_names = [STPIPE_ROOT_LOGGER]
         if "py.warnings" in log_names:
             logging.captureWarnings(True)
         if "CRDS" in log_names:
@@ -165,11 +176,12 @@ class LogConfig:
                 log.addHandler(handler)
 
             # Set the log level
-            self._previous_level[log_name] = log.level
-            log.setLevel(self.level)
+            if self.level is not logging.NOTSET:
+                self._previous_level[log_name] = log.level
+                log.setLevel(self.level)
         LogConfig.applied = self
 
-    def undo(self, log_names=None, close_handlers=True):
+    def undo(self, log_names):
         """
         Removes the configuration from known loggers.
 
@@ -183,27 +195,15 @@ class LogConfig:
 
         Parameters
         ----------
-        log_names : list of str or None, optional
-            If provided, handlers stored in this configuration
-            will be removed from each specified log name. If not
-            provided, they are removed from the STPIPE_ROOT_LOGGER.
-            This parameter is ignored if log configuration has been
-            previously applied by this instance: in that case,
-            only the previously affected logs are unconfigured.
-        close_handlers : bool, optional
-            If True, handlers will be closed as well as removed from
-            the named loggers.
+        log_names : list of str
+            The names of logs which will have any attached
+            handlers removed.
         """
-        if LogConfig.applied is self:
-            log_names = list(self._previous_level.keys())
-        elif log_names is None:
-            log_names = [STPIPE_ROOT_LOGGER]
         for log_name in log_names:
             log = logging.getLogger(log_name)
             for handler in self.handlers:
                 handler.flush()
-                if close_handlers:
-                    handler.close()
+                handler.close()
                 log.removeHandler(handler)
             if LogConfig.applied is self and log_name in self._previous_level:
                 log.setLevel(self._previous_level[log_name])
@@ -217,7 +217,7 @@ class LogConfig:
             crds_log.add_console_handler()
 
     @contextmanager
-    def context(self, log_names=None):
+    def context(self, log_names):
         """
         Context manager that applies the configuration to the known loggers.
 
@@ -228,7 +228,7 @@ class LogConfig:
         """
         self.apply(log_names)
         try:
-            yield
+            yield self.log_records
         finally:
             self.undo(log_names)
 
@@ -347,21 +347,3 @@ class RecordingHandler(logging.Handler):
     def emit(self, record):
         if self.formatter is not None:
             self._log_records.append(self.formatter.format(record))
-
-
-@contextmanager
-def record_logs(log_names, level=logging.NOTSET, formatter=None):
-    if formatter is None:
-        yield []
-    else:
-        handler = RecordingHandler(level=level)
-        handler.setFormatter(formatter)
-        for log_name in log_names:
-            logger = logging.getLogger(log_name)
-            logger.addHandler(handler)
-        try:
-            yield handler.log_records
-        finally:
-            for log_name in log_names:
-                logger = logging.getLogger(log_name)
-                logger.removeHandler(handler)

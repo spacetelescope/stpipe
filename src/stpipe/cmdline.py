@@ -65,25 +65,18 @@ def _get_config_and_class(identifier):
     return step_class, config, name, config_file
 
 
-def _build_parent_arg_parser(cls=None, apply_log_cfg=False):
+def _build_parent_arg_parser():
     """Build a top-level argument parser for the command line interface."""
     parser1 = argparse.ArgumentParser(
         description="Run an stpipe Step or Pipeline",
         add_help=False,
     )
-    if cls is None:
-        parser1.add_argument(
-            "cfg_file_or_class",
-            type=str,
-            nargs=1,
-            help="The configuration file or Python class to run",
-        )
-    else:
-        parser1.add_argument(
-            "--config-file",
-            type=str,
-            help="A configuration file to load parameters from",
-        )
+    parser1.add_argument(
+        "cfg_file_or_class",
+        type=str,
+        nargs=1,
+        help="The configuration file or Python class to run",
+    )
     parser1.add_argument(
         "--debug",
         action="store_true",
@@ -99,38 +92,37 @@ def _build_parent_arg_parser(cls=None, apply_log_cfg=False):
         action="store_true",
         help="Disable retrieval of step parameter references files from CRDS",
     )
-    if apply_log_cfg:
-        parser1.add_argument(
-            "--logcfg",
-            type=str,
-            help="DEPRECATED: The logging configuration file to load. "
-            "Ignored if verbose or other log arguments are set.",
-        )
-        parser1.add_argument(
-            "--verbose",
-            "-v",
-            action="store_true",
-            help="Turn on all logging messages",
-        )
-        parser1.add_argument(
-            "--log-level",
-            type=str,
-            default=None,
-            help="Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL). "
-            "Ignored if 'verbose' is specified.",
-        )
-        parser1.add_argument(
-            "--log-file",
-            type=str,
-            default=None,
-            help="Full path to a file name to record log messages",
-        )
-        parser1.add_argument(
-            "--log-stream",
-            type=str,
-            default=None,
-            help="Log stream for terminal messages (stdout, stderr, or null).",
-        )
+    parser1.add_argument(
+        "--logcfg",
+        type=str,
+        help="DEPRECATED: The logging configuration file to load. "
+        "Ignored if verbose or other log arguments are set.",
+    )
+    parser1.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Turn on all logging messages",
+    )
+    parser1.add_argument(
+        "--log-level",
+        type=str,
+        default=None,
+        help="Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL). "
+        "Ignored if 'verbose' is specified.",
+    )
+    parser1.add_argument(
+        "--log-file",
+        type=str,
+        default=None,
+        help="Full path to a file name to record log messages",
+    )
+    parser1.add_argument(
+        "--log-stream",
+        type=str,
+        default=None,
+        help="Log stream for terminal messages (stdout, stderr, or null).",
+    )
     return parser1
 
 
@@ -230,114 +222,151 @@ def _override_config_from_args(config, args):
             set_value(config, key, val)
 
 
-def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
+def _print_parser_error(parser, error):
     """
-    Create a step from a configuration file and return it.  Don't run it.
+    Print a formatted error message and parser help text.
 
-    DOES NOT RUN THE STEP.
+    Parameters
+    ----------
+    parser : argparse.ArgumentParser
+        The argument parser whose help text will be printed.
+    error : Exception
+        The error object whose message will be displayed.
+    """
+    _print_important_message("ERROR PARSING CONFIGURATION:", str(error))
+    parser.print_help()
+
+
+def _config_and_class_from_cmdline(args):
+    """
+    Parse command line arguments and retrieve step configuration and class.
+
+    Extracts the configuration file or class identifier from command line
+    arguments and retrieves the corresponding Step class and configuration.
 
     Parameters
     ----------
     args : list of str
-        Command line arguments
-
-    cls : Step class, optional
-        The step class to use.  If none is provided, the step is inferred
-        from the input arguments.
-
-    apply_log_cfg : bool
-        If True, apply the logging configuration. If False,
-        any provided log configuration will be ignored.
+        Command line arguments.
 
     Returns
     -------
-    step : Step instance
-        If the config file has a `class` parameter, or the commandline
-        specifies a class, the return value will be as instance of
-        that class.
-
-        Any parameters found in the config file or on the commandline
-        will be set as member variables on the returned `Step`
-        instance.
-
-    step_class: Step class
-        As defined by `cls` parameter or .cfg file.
-
-    positional: list of strings
-        Positional parameters after arg parsing
-
-    debug_on_exception : bool
-        If True, the Python debugger will be invoked when an exception occurs.
+    step_class : type
+        The Step class to be instantiated.
+    config : ConfigObj
+        The configuration object for the step.
+    name : str or None
+        The step name from the configuration file, or None.
+    config_file : str or None
+        Path to the configuration file, or None.
+    parser : argparse.ArgumentParser
+        The parent argument parser used for parsing.
+    known : argparse.Namespace
+        The parsed command line arguments.
     """
-    parser1 = _build_parent_arg_parser(cls, apply_log_cfg=apply_log_cfg)
-    known, _ = parser1.parse_known_args(args)
+    parser = _build_parent_arg_parser()
+    known, _ = parser.parse_known_args(args)
+    try:
+        return (*_get_config_and_class(known.cfg_file_or_class[0]), parser, known)
+    except Exception as e:
+        _print_parser_error(parser, e)
+        raise e
+
+
+def _determine_log_configuration(known):
+    """
+    Determine and load logging configuration from arguments.
+
+    Parameters
+    ----------
+    known : argparse.Namespace
+        Parsed command line arguments containing logging-related parameters:
+        - logcfg: Path to logging configuration file (deprecated)
+        - verbose: Enable all logging messages
+        - log_level: Specific log level to set
+        - log_file: Path to log file
+        - log_stream: Output stream for logs
+
+    Returns
+    -------
+    log_cfg : LogConfig
+        The loaded logging configuration ready for use.
+    """
+    if known.logcfg is not None:
+        msg = (
+            "The logcfg configuration file is deprecated. "
+            "Please use the log_* command line "
+            "arguments to configure logging."
+        )
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+
+    # if verbose is enabled
+    # or log_level log_file or log_stream are set (not None)
+    # then don't try to use the log configuration file (or any passed in log_cfg)
+    if known.verbose is True or any(
+        getattr(known, attr) is not None
+        for attr in ("log_level", "log_file", "log_stream")
+    ):
+        cfgfile = None
+    elif known.logcfg:
+        if not os.path.exists(known.logcfg):
+            raise OSError(f"Logging config {known.logcfg!r} not found")
+        cfgfile = known.logcfg
+    else:
+        cfgfile = log._find_logging_config_file()
+
+    # determine level
+    if known.verbose:
+        log_level = "DEBUG"
+    elif known.log_level is not None:
+        log_level = str(known.log_level).upper()
+    else:
+        log_level = None
 
     try:
-        if cls is None:
-            step_class, config, name, config_file = _get_config_and_class(
-                known.cfg_file_or_class[0]
-            )
-        else:
-            config_file = known.config_file
-            config = config_parser.load_config_file(config_file)
-            step_class, name = Step._parse_class_and_name(
-                config, config_file=config_file
-            )
-            step_class = cls
-
-        if apply_log_cfg:
-            # Retrieve a log config file if specified
-            use_log_cfg = True
-            log_args = [
-                known.log_level,
-                known.log_file,
-                known.log_stream,
-            ]
-            if known.verbose is True or any([arg is not None for arg in log_args]):
-                use_log_cfg = False
-
-            logcfg = None
-            if known.logcfg is not None:
-                msg = (
-                    "The logcfg configuration file is deprecated. "
-                    "Please use the log_* command line "
-                    "arguments to configure logging."
-                )
-                warnings.warn(msg, DeprecationWarning, stacklevel=2)
-                if use_log_cfg:
-                    if not os.path.exists(known.logcfg):
-                        raise OSError(f"Logging config {known.logcfg!r} not found")
-                    logcfg = known.logcfg
-            elif use_log_cfg:
-                logcfg = log._find_logging_config_file()
-
-            if known.verbose:
-                log_level = "DEBUG"
-            elif known.log_level is not None:
-                log_level = str(known.log_level).upper()
-            else:
-                log_level = None
-            try:
-                log_cfg = log.load_configuration(
-                    config_file=logcfg,
-                    log_level=log_level,
-                    log_file=known.log_file,
-                    log_stream=known.log_stream,
-                )
-            except Exception as e:
-                raise ValueError(f"Error parsing logging configuration:\n{e}") from e
-
-            # Apply the logging configuration to the stpipe logger to
-            # capture start up messages
-            log_cfg.apply()
-
+        log_cfg = log.load_configuration(
+            config_file=cfgfile,
+            log_level=log_level,
+            log_file=known.log_file,
+            log_stream=known.log_stream,
+        )
     except Exception as e:
-        _print_important_message("ERROR PARSING CONFIGURATION:", str(e))
-        parser1.print_help()
-        raise
+        raise ValueError(f"Error parsing logging configuration:\n{e}") from e
+    return log_cfg
 
-    debug_on_exception = known.debug
 
+def _build_step_from_args(step_class, config, name, config_file, parser, known, args):
+    """
+    Build and configure a Step instance from parsed arguments.
+
+    Creates a Step instance using the provided class and configuration,
+    merges in command line overrides, retrieves reference parameters from
+    CRDS if an input file is provided, and handles configuration validation.
+
+    Parameters
+    ----------
+    step_class : type
+        The Step class to instantiate.
+    config : ConfigObj
+        The base configuration object.
+    name : str or None
+        The step name from configuration.
+    config_file : str or None
+        Path to the configuration file.
+    parser : argparse.ArgumentParser
+        The parent argument parser.
+    known : argparse.Namespace
+        Parsed parent-level command line arguments.
+    args : list of str
+        Remaining unparsed command line arguments.
+
+    Returns
+    -------
+    step : Step
+        The instantiated and configured Step object.
+    positional : list of str
+        Positional arguments remaining after parsing.
+    """
     # Determine whether CRDS should be queried for step parameters
     disable_crds_steppars = get_disable_crds_steppars(known.disable_crds_steppars)
 
@@ -348,23 +377,19 @@ def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
     # load_spec_file is a method of both Step and Pipeline
     spec = step_class.load_spec_file()
 
-    parser2 = _build_arg_parser_from_spec(spec, step_class, parent=parser1)
+    step_arg_parser = _build_arg_parser_from_spec(spec, step_class, parent=parser)
 
-    args = parser2.parse_args(args)
+    args = step_arg_parser.parse_args(args)
 
-    if cls is None:
-        del args.cfg_file_or_class
-    else:
-        del args.config_file
+    del args.cfg_file_or_class
     del args.debug
     del args.save_parameters
     del args.disable_crds_steppars
-    if apply_log_cfg:
-        del args.logcfg
-        del args.verbose
-        del args.log_level
-        del args.log_file
-        del args.log_stream
+    del args.logcfg
+    del args.verbose
+    del args.log_level
+    del args.log_file
+    del args.log_stream
     positional = args.args
     del args.args
 
@@ -404,15 +429,8 @@ def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
     except config_parser.ValidationError as e:
         # If the configobj validator failed, print usage information.
         _print_important_message("ERROR PARSING CONFIGURATION:", str(e))
-        parser2.print_help()
+        step_arg_parser.print_help()
         raise ValueError(str(e)) from e
-
-    # Apply the log configuration to the step's known loggers
-    if apply_log_cfg:
-        # Undo the initial configuration without closing handlers
-        log_cfg.undo(close_handlers=False)
-        # Apply configuration to specified loggers
-        log_cfg.apply(step.get_stpipe_loggers())
 
     # Define the primary input file.
     # Always have an output_file set on the outermost step
@@ -425,10 +443,10 @@ def just_the_step_from_cmdline(args, cls=None, apply_log_cfg=False):
         step.export_config(known.save_parameters, include_metadata=True)
         logger.info(f"Step/Pipeline parameters saved to '{known.save_parameters}'")
 
-    return step, step_class, positional, debug_on_exception
+    return step, positional
 
 
-def step_from_cmdline(args, cls=None):
+def step_from_cmdline(args):
     """
     Create a step from a configuration file and run it.
 
@@ -436,10 +454,6 @@ def step_from_cmdline(args, cls=None):
     ----------
     args : list of str
         Commandline arguments
-
-    cls : Step class
-        The step class to use.  If none is provided, the step is inferred
-        from the input arguments.
 
 
     Returns
@@ -453,32 +467,40 @@ def step_from_cmdline(args, cls=None):
         will be set as member variables on the returned `Step`
         instance.
     """
+    # determine step class
+    step_class, config, name, config_file, parser, known = (
+        _config_and_class_from_cmdline(args)
+    )
+
+    # determine logging parameters
     try:
-        step, step_class, positional, debug_on_exception = just_the_step_from_cmdline(
-            args,
-            cls,
-            apply_log_cfg=True,
-        )
+        log_cfg = _determine_log_configuration(known)
     except Exception as e:
-        # since we applied a log config above, undo it
-        if log.LogConfig.applied is not None:
-            log.LogConfig.applied.undo()
+        _print_parser_error(parser, e)
         raise e
 
-    try:
-        step.run(*positional)
-    except Exception as e:
-        _print_important_message(f"ERROR RUNNING STEP {step_class.__name__!r}:", str(e))
+    log_cfg.set_recording_formatter(step_class._log_records_formatter)
 
-        if debug_on_exception:
-            import pdb  # noqa: T100
+    # set up logging context
+    with log_cfg.context(step_class.get_stpipe_loggers()):
+        # finish parsing args, make class
+        step, positional = _build_step_from_args(
+            step_class, config, name, config_file, parser, known, args
+        )
 
-            pdb.post_mortem()
-        else:
-            raise
-    finally:
-        # since we applied a log config above, undo it
-        if log.LogConfig.applied is not None:
-            log.LogConfig.applied.undo()
+        # run step
+        try:
+            step.run(*positional)
+        except Exception as e:
+            _print_important_message(
+                f"ERROR RUNNING STEP {step_class.__name__!r}:", str(e)
+            )
+
+            if known.debug:
+                import pdb  # noqa: T100
+
+                pdb.post_mortem()
+            else:
+                raise
 
     return step
