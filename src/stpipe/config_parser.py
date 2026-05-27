@@ -22,8 +22,8 @@ from astropy.extern.configobj.validate import ValidateError, Validator, VdtTypeE
 from . import utilities
 from ._config import StepConfig
 from .datamodel import AbstractDataModel
-from .utilities import _not_set
 from .exceptions import ValidationError
+from .utilities import _not_set
 
 # Configure logger
 logger = logging.getLogger(__name__)
