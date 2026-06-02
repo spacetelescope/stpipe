@@ -28,7 +28,6 @@ import yaml
 
 from . import config, config_parser, crds_client, log, utilities
 from .datamodel import AbstractDataModel
-from .format_template import FormatTemplate
 from .library import AbstractModelLibrary
 from .utilities import _not_set
 
@@ -1226,19 +1225,14 @@ class Step:
             suffix = None
             suffix_sep = None
 
-        # Setup formatting
-        formatter = FormatTemplate(
-            separator=separator,
-            remove_unused=True,
-        )
-
         if len(components):
-            component_str = formatter("", **components)
+            component_str = separator.join(
+                ["", *(str(v) for v in components.values() if v is not None)]
+            )
         else:
             component_str = ""
 
-        basename = formatter(
-            default_name_format,
+        basename = default_name_format.format(
             basename=basename,
             suffix=suffix,
             suffix_sep=suffix_sep,
