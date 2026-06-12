@@ -24,7 +24,7 @@ handler = stderr
 level = INFO
 """
 
-# used by cmdline "verbose"
+# used by _cmdline "verbose"
 MAX_CONFIGURATION = b"""
 [*]
 handler = stderr

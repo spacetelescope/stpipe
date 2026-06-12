@@ -20,8 +20,9 @@ from astropy.extern.configobj.configobj import (
 from astropy.extern.configobj.validate import ValidateError, Validator, VdtTypeError
 
 from . import utilities
-from .config import StepConfig
+from ._config import StepConfig
 from .datamodel import AbstractDataModel
+from .exceptions import ValidationError
 from .utilities import _not_set
 
 # Configure logger
@@ -29,17 +30,13 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-class ValidationError(Exception):
-    pass
-
-
 def _get_input_file_check(root_dir):
-    from . import cmdline
+    from . import _cmdline
 
     root_dir = root_dir or ""
 
     def _input_file_check(path):
-        if not isinstance(path, cmdline.FromCommandLine):
+        if not isinstance(path, _cmdline.FromCommandLine):
             try:
                 path = str(path)
             except ValueError:
@@ -57,12 +54,12 @@ def _get_input_file_check(root_dir):
 
 
 def _get_output_file_check(root_dir):
-    from . import cmdline
+    from . import _cmdline
 
     root_dir = root_dir or ""
 
     def _output_file_check(path):
-        if not isinstance(path, cmdline.FromCommandLine):
+        if not isinstance(path, _cmdline.FromCommandLine):
             try:
                 path = str(path)
             except ValueError:

@@ -5,7 +5,7 @@ Pre- and post-hooks
 import ast
 import inspect
 
-from . import function_wrapper, utilities
+from . import _function_wrapper, utilities
 from .step import Step
 
 
@@ -69,7 +69,7 @@ def hook_from_string(step, hooktype, num, command):
 
         # hook is a string of the fully-qualified name of a function
         if step_func is not None:
-            return function_wrapper.FunctionWrapper(
+            return _function_wrapper.FunctionWrapper(
                 step_func, parent=step, config_file=step.config_file, **kwargs
             )
 
@@ -89,7 +89,7 @@ def hook_from_string(step, hooktype, num, command):
         return command
 
     # hook is a command-line script or system call
-    from .subproc import SystemCall
+    from ._subproc import SystemCall
 
     return SystemCall(name, parent=step, command=command, **kwargs)
 

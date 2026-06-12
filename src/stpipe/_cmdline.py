@@ -9,7 +9,8 @@ import os.path
 import textwrap
 import warnings
 
-from . import config_parser, log, utilities
+from . import _log, config_parser, utilities
+from .exceptions import ValidationError
 from .step import Step, get_disable_crds_steppars
 
 built_in_configuration_parameters = [
@@ -313,7 +314,7 @@ def _determine_log_configuration(known):
             raise OSError(f"Logging config {known.logcfg!r} not found")
         cfgfile = known.logcfg
     else:
-        cfgfile = log._find_logging_config_file()
+        cfgfile = _log._find_logging_config_file()
 
     # determine level
     if known.verbose:
@@ -324,7 +325,7 @@ def _determine_log_configuration(known):
         log_level = None
 
     try:
-        log_cfg = log.load_configuration(
+        log_cfg = _log.load_configuration(
             config_file=cfgfile,
             log_level=log_level,
             log_file=known.log_file,
@@ -426,7 +427,7 @@ def _build_step_from_args(step_class, config, name, config_file, parser, known, 
             name=name,
             config_file=config_file,
         )
-    except config_parser.ValidationError as e:
+    except ValidationError as e:
         # If the configobj validator failed, print usage information.
         _print_important_message("ERROR PARSING CONFIGURATION:", str(e))
         step_arg_parser.print_help()

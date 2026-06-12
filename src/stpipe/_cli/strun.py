@@ -1,7 +1,7 @@
 import sys
 
-from stpipe import cmdline
-from stpipe.cli.main import _print_versions
+from stpipe import _cmdline
+from stpipe._cli.main import _print_versions
 from stpipe.exceptions import StpipeExitException
 
 
@@ -21,7 +21,7 @@ def main():
         sys.exit(0)
 
     try:
-        cmdline.step_from_cmdline(sys.argv[1:])
+        _cmdline.step_from_cmdline(sys.argv[1:])
     except StpipeExitException as e:
         sys.exit(e.exit_status)
     except Exception:

@@ -4,7 +4,7 @@ import asdf
 import pytest
 
 from steps import MakeListPipeline, WithDefaultsStep
-from stpipe.config import StepConfig, _validate_asdf, export_config
+from stpipe._config import StepConfig, _validate_asdf, export_config
 
 
 @pytest.fixture

@@ -26,7 +26,7 @@ from typing import ClassVar
 
 import yaml
 
-from . import config, config_parser, crds_client, log, utilities
+from . import _config, _log, config_parser, crds_client, utilities
 from .datamodel import AbstractDataModel
 from .library import AbstractModelLibrary
 from .utilities import _not_set
@@ -182,9 +182,9 @@ class Step:
             Any parameters found in the config file will be set
             as member variables on the returned `Step` instance.
         """
-        from . import cmdline
+        from . import _cmdline
 
-        return cmdline.step_from_cmdline(args)
+        return _cmdline.step_from_cmdline(args)
 
     @classmethod
     def _parse_class_and_name(
@@ -282,11 +282,11 @@ class Step:
 
         # cmdline.FromCommandLine instances should not be passed to
         # steps. Instead, convert them back to strings.
-        from . import cmdline
+        from . import _cmdline
 
         kwargs = {}
         for k in config:
-            if isinstance(config[k], cmdline.FromCommandLine):
+            if isinstance(config[k], _cmdline.FromCommandLine):
                 kwargs[k] = str(config[k])
             else:
                 kwargs[k] = config[k]
@@ -427,7 +427,7 @@ class Step:
             name = self.__class__.__name__
         self.name = name
         if parent is None:
-            self.qualified_name = f"{log.STPIPE_ROOT_LOGGER}.{self.name}"
+            self.qualified_name = f"{_log.STPIPE_ROOT_LOGGER}.{self.name}"
         else:
             self.qualified_name = f"{parent.qualified_name}.{self.name}"
         self.parent = parent
@@ -452,10 +452,10 @@ class Step:
 
         # Setup the hooks
         if len(self.pre_hooks) or len(self.post_hooks):
-            from . import hooks
+            from . import _hooks
 
-            self._pre_hooks = hooks.get_hook_objects(self, "pre", self.pre_hooks)
-            self._post_hooks = hooks.get_hook_objects(self, "post", self.post_hooks)
+            self._pre_hooks = _hooks.get_hook_objects(self, "pre", self.pre_hooks)
+            self._post_hooks = _hooks.get_hook_objects(self, "post", self.post_hooks)
         else:
             self._pre_hooks = []
             self._post_hooks = []
@@ -490,8 +490,8 @@ class Step:
         gc.collect()
 
         # if run is called directly attach handlers to record logs
-        if log.LogConfig.applied is None:
-            ctx = log.LogConfig(
+        if _log.LogConfig.applied is None:
+            ctx = _log.LogConfig(
                 [],
                 level=logging.NOTSET,
                 recording_formatter=self._log_records_formatter,
@@ -504,7 +504,7 @@ class Step:
                 ],
             )
         else:
-            ctx = nullcontext(log.LogConfig.applied.log_records)
+            ctx = nullcontext(_log.LogConfig.applied.log_records)
         with ctx as log_records:
             self._log_records = log_records
 
@@ -737,17 +737,17 @@ class Step:
         if "logcfg" in kwargs:
             warnings.warn(deprecation_msg, DeprecationWarning, stacklevel=2)
             try:
-                log_cfg = log.load_configuration(kwargs["logcfg"])
+                log_cfg = _log.load_configuration(kwargs["logcfg"])
             except Exception as e:
                 raise RuntimeError(
                     f"Error parsing logging config {kwargs['logcfg']}"
                 ) from e
             del kwargs["logcfg"]
             log_cfg.set_recording_formatter(cls._log_records_formatter)
-        elif configure_log and log.LogConfig.applied is None:
+        elif configure_log and _log.LogConfig.applied is None:
             # Load a default configuration
-            log_cfg = log.load_configuration(
-                config_file=log._find_logging_config_file()
+            log_cfg = _log.load_configuration(
+                config_file=_log._find_logging_config_file()
             )
             log_cfg.set_recording_formatter(cls._log_records_formatter)
         else:
@@ -763,7 +763,7 @@ class Step:
 
                 if log_cfg is not None:
                     log_cfg.undo(log_names)
-                log_cfg = log.load_configuration(config["logcfg"])
+                log_cfg = _log.load_configuration(config["logcfg"])
                 log_cfg.set_recording_formatter(cls._log_records_formatter)
                 log_cfg.apply(log_names)
 
@@ -1338,7 +1338,7 @@ class Step:
         dict
             Keys are the parameters and values are the values.
         """
-        from . import cmdline
+        from . import _cmdline
 
         if full_spec:
             spec_file_func = config_parser.get_merged_spec_file
@@ -1357,7 +1357,7 @@ class Step:
         # Convert the config to a pure dict.
         pars_dict = {}
         for key, value in pars.items():
-            if isinstance(value, cmdline.FromCommandLine):
+            if isinstance(value, _cmdline.FromCommandLine):
                 pars_dict[key] = str(value)
             else:
                 pars_dict[key] = value
@@ -1376,7 +1376,7 @@ class Step:
             Set to True to include metadata that is required
             for submission to CRDS.
         """
-        with config.export_config(self).to_asdf(
+        with _config.export_config(self).to_asdf(
             include_metadata=include_metadata
         ) as af:
             af.write_to(filename)

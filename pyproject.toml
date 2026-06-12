@@ -41,11 +41,11 @@ repository = "https://github.com/spacetelescope/stpipe"
 tracker = "https://github.com/spacetelescope/stpipe/issues"
 
 [project.entry-points."asdf.resource_mappings"]
-stpipe = "stpipe.integration:get_resource_mappings"
+stpipe = "stpipe._integration:get_resource_mappings"
 
 [project.scripts]
-stpipe = "stpipe.cli.main:main"
-strun = "stpipe.cli.strun:main"
+stpipe = "stpipe._cli.main:main"
+strun = "stpipe._cli.strun:main"
 
 [build-system]
 requires = [
