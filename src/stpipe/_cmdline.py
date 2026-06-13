@@ -399,7 +399,7 @@ def _build_step_from_args(step_class, config, name, config_file, parser, known, 
     # specified on command line
     _override_config_from_args(config, args)
 
-    config = step_class.merge_config(config, config_file)
+    config = step_class._merge_config(config, config_file)
 
     if len(positional):
         input_file = positional[0]

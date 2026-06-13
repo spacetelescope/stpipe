@@ -87,8 +87,17 @@ class Step:
         return f"pars-{cls.__name__.lower()}"
 
     @classmethod
-    def merge_config(cls, config, config_file):
+    def _merge_config(cls, config, config_file):
         return config
+
+    @classmethod
+    def merge_config(cls, config, config_file):
+        warnings.warn(
+            "merge_config is deprecated. Use _merge_config instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return cls._merge_config(config, config_file)
 
     @classmethod
     def load_spec_file(cls, preserve_comments=_not_set):
@@ -272,7 +281,7 @@ class Step:
             del config["config_file"]
 
         spec = cls.load_spec_file()
-        config = cls.merge_config(config, config_file)
+        config = cls._merge_config(config, config_file)
         config_parser.validate(config, spec, root_dir=dirname(config_file or ""))
 
         if "config_file" in config:

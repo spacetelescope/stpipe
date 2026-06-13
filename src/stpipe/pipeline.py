@@ -2,6 +2,7 @@
 Pipeline
 """
 
+import warnings
 import logging
 from os.path import dirname, join
 from typing import ClassVar
@@ -95,7 +96,7 @@ class Pipeline(Step):
         return None
 
     @classmethod
-    def merge_config(cls, config, config_file):
+    def _merge_config(cls, config, config_file):
         steps = config.get("steps", {})
 
         # Configure all of the steps
@@ -112,6 +113,15 @@ class Pipeline(Step):
                     config_parser.merge_config(cfg2, cfg)
                     steps[key] = cfg2
         return config
+
+    @classmethod
+    def merge_config(cls, config, config_file):
+        warnings.warn(
+            "merge_config is deprecated. Use _merge_config instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return cls._merge_config(config, config_file)
 
     @classmethod
     def load_spec_file(cls, preserve_comments=_not_set):
