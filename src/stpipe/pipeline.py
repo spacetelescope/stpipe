@@ -2,8 +2,8 @@
 Pipeline
 """
 
-import warnings
 import logging
+import warnings
 from os.path import dirname, join
 from typing import ClassVar
 
