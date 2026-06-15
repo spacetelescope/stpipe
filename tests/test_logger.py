@@ -545,16 +545,21 @@ def test_crds_log(capsys, restore_console):
             return ("stpipe", "CRDS")
 
     crds_logger = logging.getLogger("CRDS")
+
+    def get_crds_handlers():
+        return [h for h in crds_logger.handlers if "pytest" not in h.__module__]
+
     if restore_console:
         # Before the step call, the crds logger has a stream handler
-        assert len(crds_logger.handlers) == 1
-        assert isinstance(crds_logger.handlers[0], logging.StreamHandler)
+        handlers = get_crds_handlers()
+        assert len(handlers) == 1
+        assert isinstance(handlers[0], logging.StreamHandler)
     else:
         # remove any current console handler
         crds_log.remove_console_handler()
 
         # Before the step call, the crds logger has no handlers
-        assert len(crds_logger.handlers) == 0
+        assert len(get_crds_handlers()) == 0
 
     # During the step call, the CRDS handler is removed if necessary and
     # the stpipe handler is attached
@@ -574,9 +579,10 @@ def test_crds_log(capsys, restore_console):
     # After the call is complete, the stpipe logger is removed and the CRDS
     # stream logger is restored if it was previously present
     if restore_console:
-        assert len(crds_logger.handlers) == 1
-        assert isinstance(crds_logger.handlers[0], logging.StreamHandler)
+        handlers = get_crds_handlers()
+        assert len(handlers) == 1
+        assert isinstance(handlers[0], logging.StreamHandler)
     else:
-        assert len(crds_logger.handlers) == 0
+        assert len(get_crds_handlers()) == 0
         # Clean up: restore a console logger
         crds_log.add_console_handler()
