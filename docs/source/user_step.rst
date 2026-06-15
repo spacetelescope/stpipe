@@ -309,9 +309,7 @@ parameter file as follows::
     from stpipe import config_parser
     from mycode.steps import CleanupStep
 
-    config = CleanupStep.get_config_from_reference(input_data)
-    local_config = config_parser.load_config_file('my_config.asdf')
-    config_parser.merge_config(config, local_config)
+    config, _ = CleanupStep.build_config(input_data, config_file='my_config.asdf')
 
     mystep = CleanupStep.from_config_section(config)
     output = mystep.run(input_data)
