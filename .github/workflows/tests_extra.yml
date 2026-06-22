@@ -28,4 +28,6 @@ jobs:
         - macos: py312-xdist
         - macos: py313-xdist
         - linux: py314-devdeps-xdist
+        - linux: py315-devdeps-xdist
+          python-version: 3.15
         - macos: py314-devdeps-xdist
