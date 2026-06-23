@@ -1,1 +1,0 @@
-Rename a few undocumented/private submodules adding leading ``_`` and add ``ValidationError`` to exceptions.

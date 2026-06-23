@@ -1,1 +1,0 @@
-Switch internal use of format_template to f-strings. The plan is to deprecate format_template.

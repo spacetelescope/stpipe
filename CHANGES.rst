@@ -1,3 +1,32 @@
+1.0.0 (2026-06-23)
+==================
+
+New Features
+------------
+
+- Record log messages before pipeline/step creation. (`#317
+  <https://github.com/spacetelescope/stpipe/issues/317>`_)
+
+
+Bug Fixes
+---------
+
+- Switch internal use of format_template to f-strings. The plan is to deprecate
+  format_template. (`#320
+  <https://github.com/spacetelescope/stpipe/issues/320>`_)
+
+
+Misc
+----
+
+- Minor restructuring of private cmdline submodule to simplify log handling and
+  step class creation. (`#317
+  <https://github.com/spacetelescope/stpipe/issues/317>`_)
+- Rename a few undocumented/private submodules adding leading ``_`` and add
+  ``ValidationError`` to exceptions. (`#318
+  <https://github.com/spacetelescope/stpipe/issues/318>`_)
+
+
 0.13.0 (2026-05-15)
 ===================
 
