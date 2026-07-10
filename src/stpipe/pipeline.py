@@ -181,7 +181,7 @@ class Pipeline(Step):
         logger.debug("Retrieving all substep parameters from CRDS")
         #
         # Iterate over the steps in the pipeline
-        if isinstance(dataset, dict):
+        if isinstance(dataset, dict) and "products" not in dataset:
             # crds_parameters was passed as input from pipeline.py
             crds_parameters = dataset
             if crds_observatory is None:
