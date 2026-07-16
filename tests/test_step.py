@@ -1006,3 +1006,12 @@ def test_step_from_commandline_par_precedence(
 def test_getpars(step_obj, full_spec, expected):
     """Test retrieving of configuration parameters"""
     assert step_obj.get_pars(full_spec=full_spec) == expected
+
+
+def test_merge_pipeline_config_deprecation(tmp_path):
+    fn = tmp_path / "other.cfg"
+    cfg = ConfigObj()
+    with open(fn, "wb") as f:
+        cfg.write(f)
+    with pytest.warns(DeprecationWarning, match="merge_pipeline_config is deprecated"):
+        SimplePipe.merge_pipeline_config(cfg, str(fn))

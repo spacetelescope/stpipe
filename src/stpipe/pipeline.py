@@ -3,6 +3,7 @@ Pipeline
 """
 
 import logging
+import warnings
 from os.path import dirname, join
 from typing import ClassVar
 
@@ -226,7 +227,12 @@ class Pipeline(Step):
         ConfigObj of the merged parameters, with those from the pipeline cfg having
         precedence over those from the individual steps
         """
-
+        warnings.warn(
+            "merge_pipeline_config is deprecated. "
+            "Use config_parser.load_config_file and merge_config",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         pipeline_cfg = config_parser.load_config_file(ref_file)
         config_parser.merge_config(refcfg, pipeline_cfg)
         return refcfg
