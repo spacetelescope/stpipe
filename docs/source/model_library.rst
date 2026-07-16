@@ -63,7 +63,7 @@ Iteration is also supported (but don't forget to return your models!).
 
 .. _library_on_disk:
 
-On Disk Mode
+On-Disk Mode
 ------------
 
 For large associations (like those larger than memory) it is important
