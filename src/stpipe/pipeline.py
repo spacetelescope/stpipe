@@ -202,7 +202,8 @@ class Pipeline(Step):
         pipeline_cfg = cls._get_config_from_parameters(
             crds_parameters, crds_observatory
         )
-        return config_parser.merge_config(refcfg, pipeline_cfg)
+        config_parser.merge_config(refcfg, pipeline_cfg)
+        return refcfg
 
     @classmethod
     def merge_pipeline_config(cls, refcfg, ref_file):
