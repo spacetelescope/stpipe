@@ -922,6 +922,25 @@ class Step:
         return crds_client.check_reference_open(reference_name)
 
     @classmethod
+    def _get_config_from_parameters(cls, crds_parameters, crds_observatory):
+        reftype = cls.get_config_reftype()
+        refcfg = config_parser.ConfigObj()
+        try:
+            ref_file = crds_client.get_reference_file(
+                crds_parameters,
+                reftype,
+                crds_observatory,
+            )
+        except (AttributeError, crds_client.CrdsError):
+            logger.debug("%s: No parameters found", reftype.upper())
+            return refcfg
+        if ref_file == "N/A":
+            logger.debug("No %s reference files found.", reftype.upper())
+            return refcfg
+        logger.info("%s parameters found: %s", reftype.upper(), ref_file)
+        return config_parser.load_config_file(ref_file)
+
+    @classmethod
     def get_config_from_reference(cls, dataset, disable=None, crds_observatory=None):
         """Retrieve step parameters from reference database
 
@@ -945,7 +964,6 @@ class Step:
             The parameters as retrieved from CRDS. If there is an issue, log as such
             and return an empty config obj.
         """
-
         reftype = cls.get_config_reftype()
 
         if isinstance(dataset, dict):
@@ -973,30 +991,12 @@ class Step:
 
         # Retrieve step parameters from CRDS
         logger.debug("Retrieving step %s parameters from CRDS", reftype.upper())
-        try:
-            ref_file = crds_client.get_reference_file(
-                crds_parameters,
-                reftype,
-                crds_observatory,
-            )
-        except (AttributeError, crds_client.CrdsError):
-            logger.debug("%s: No parameters found", reftype.upper())
-            return config_parser.ConfigObj()
-        if ref_file != "N/A":
-            logger.info("%s parameters found: %s", reftype.upper(), ref_file)
-            ref = config_parser.load_config_file(ref_file)
-
-            ref_pars = {
-                par: value for par, value in ref.items() if par not in ["class", "name"]
-            }
-            logger.debug(
-                "%s parameters retrieved from CRDS: %s", reftype.upper(), ref_pars
-            )
-
-            return ref
-
-        logger.debug("No %s reference files found.", reftype.upper())
-        return config_parser.ConfigObj()
+        ref = cls._get_config_from_parameters(crds_parameters, crds_observatory)
+        ref_pars = {
+            par: value for par, value in ref.items() if par not in ["class", "name"]
+        }
+        logger.debug("%s parameters retrieved from CRDS: %s", reftype.upper(), ref_pars)
+        return ref
 
     @staticmethod
     def get_stpipe_loggers():

@@ -191,29 +191,17 @@ class Pipeline(Step):
 
         for cal_step in cls.step_defs.keys():
             cal_step_class = cls.step_defs[cal_step]
-            refcfg["steps"][cal_step] = cal_step_class.get_config_from_reference(
+            refcfg["steps"][cal_step] = cal_step_class._get_config_from_parameters(
                 crds_parameters,
-                crds_observatory=crds_observatory,
+                crds_observatory,
             )
         #
         # Now merge any config parameters from the step cfg file
         logger.debug("Retrieving pipeline %s parameters from CRDS", reftype.upper())
-        try:
-            ref_file = crds_client.get_reference_file(
-                crds_parameters,
-                reftype,
-                crds_observatory,
-            )
-        except (AttributeError, crds_client.CrdsError):
-            logger.debug("%s: No parameters found", reftype.upper())
-        else:
-            if ref_file != "N/A":
-                logger.info("%s parameters found: %s", reftype.upper(), ref_file)
-                refcfg = cls.merge_pipeline_config(refcfg, ref_file)
-            else:
-                logger.debug("No %s reference files found.", reftype.upper())
-
-        return refcfg
+        pipeline_cfg = cls._get_config_from_parameters(
+            crds_parameters, crds_observatory
+        )
+        return config_parser.merge_config(refcfg, pipeline_cfg)
 
     @classmethod
     def merge_pipeline_config(cls, refcfg, ref_file):
