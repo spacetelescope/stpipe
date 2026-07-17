@@ -10,7 +10,7 @@ from typing import ClassVar
 from astropy.extern.configobj.configobj import ConfigObj, Section
 
 from . import config_parser, crds_client
-from .step import Step, get_disable_crds_steppars
+from .step import Step
 from .utilities import _not_set
 
 logger = logging.getLogger(__name__)
@@ -140,8 +140,14 @@ class Pipeline(Step):
         return spec
 
     @classmethod
-    def _get_config_from_parameters(cls, crds_parameters, crds_observatory):
+    def _empty_config(cls):
         refcfg = ConfigObj()
+        refcfg["steps"] = Section(refcfg, refcfg.depth + 1, refcfg.main, name="steps")
+        return refcfg
+
+    @classmethod
+    def _get_config_from_parameters(cls, crds_parameters, crds_observatory):
+        refcfg = cls._empty_config()
         refcfg["steps"] = Section(refcfg, refcfg.depth + 1, refcfg.main, name="steps")
 
         # first apply step configs, then pipeline
@@ -152,74 +158,8 @@ class Pipeline(Step):
                 crds_observatory,
             )
         #
-        # Now merge any config parameters from the step cfg file
+        # Now merge any config parameters from the pipeline cfg file
         pipeline_cfg = super()._get_config_from_parameters(
-            crds_parameters, crds_observatory
-        )
-        config_parser.merge_config(refcfg, pipeline_cfg)
-        return refcfg
-
-    @classmethod
-    def get_config_from_reference(cls, dataset, disable=None, crds_observatory=None):
-        """Retrieve step parameters from reference database
-
-        Parameters
-        ----------
-        cls : `stpipe.step.Step`
-            Either a class or instance of a class derived
-            from `Step`.
-
-        dataset : `stpipe.datamodel.AbstractDataModel` or dict
-            A model of the input file.  Metadata on this input file will
-            be used by the CRDS "bestref" algorithm to obtain a reference
-            file. If dict, crds_observatory must be a non-None value.
-
-        disable: bool or None
-            Do not retrieve parameters from CRDS. If None, check global settings.
-
-        crds_observatory : str
-            Observatory name ('jwst' or 'roman').
-
-        Returns
-        -------
-        step_parameters : configobj
-            The parameters as retrieved from CRDS. If there is an issue, log as such
-            and return an empty config obj.
-        """
-        reftype = cls.get_config_reftype()
-        refcfg = ConfigObj()
-        refcfg["steps"] = Section(refcfg, refcfg.depth + 1, refcfg.main, name="steps")
-
-        # Check if retrieval should be attempted.
-        if disable is None:
-            disable = get_disable_crds_steppars()
-        if disable:
-            logger.debug(
-                "%s: CRDS parameter reference retrieval disabled.", reftype.upper()
-            )
-            return refcfg
-
-        logger.debug("Retrieving all substep parameters from CRDS")
-        #
-        # Iterate over the steps in the pipeline
-        if isinstance(dataset, dict):
-            # crds_parameters was passed as input from pipeline.py
-            crds_parameters = dataset
-            if crds_observatory is None:
-                raise ValueError("Need a valid name for crds_observatory.")
-        else:
-            crds_parameters, crds_observatory = cls._get_crds_parameters(dataset)
-
-        for cal_step in cls.step_defs.keys():
-            cal_step_class = cls.step_defs[cal_step]
-            refcfg["steps"][cal_step] = cal_step_class._get_config_from_parameters(
-                crds_parameters,
-                crds_observatory,
-            )
-        #
-        # Now merge any config parameters from the step cfg file
-        logger.debug("Retrieving pipeline %s parameters from CRDS", reftype.upper())
-        pipeline_cfg = cls._get_config_from_parameters(
             crds_parameters, crds_observatory
         )
         config_parser.merge_config(refcfg, pipeline_cfg)

@@ -922,6 +922,10 @@ class Step:
         return crds_client.check_reference_open(reference_name)
 
     @classmethod
+    def _empty_config(cls):
+        return config_parser.ConfigObj()
+
+    @classmethod
     def _get_config_from_parameters(cls, crds_parameters, crds_observatory):
         reftype = cls.get_config_reftype()
         refcfg = config_parser.ConfigObj()
@@ -965,6 +969,16 @@ class Step:
             and return an empty config obj.
         """
         reftype = cls.get_config_reftype()
+        refcfg = cls._empty_config()
+
+        # Check if retrieval should be attempted.
+        if disable is None:
+            disable = get_disable_crds_steppars()
+        if disable:
+            logger.debug(
+                "%s: CRDS parameter reference retrieval disabled.", reftype.upper()
+            )
+            return refcfg
 
         if isinstance(dataset, dict):
             # crds_parameters was passed as input from pipeline.py
@@ -978,16 +992,8 @@ class Step:
                 crds_parameters, crds_observatory = cls._get_crds_parameters(dataset)
             except (OSError, TypeError, ValueError):
                 logger.warning("Input dataset is not an instance of AbstractDataModel.")
+                return refcfg
                 disable = True
-
-        # Check if retrieval should be attempted.
-        if disable is None:
-            disable = get_disable_crds_steppars()
-        if disable:
-            logger.info(
-                "%s: CRDS parameter reference retrieval disabled.", reftype.upper()
-            )
-            return config_parser.ConfigObj()
 
         # Retrieve step parameters from CRDS
         logger.debug("Retrieving step %s parameters from CRDS", reftype.upper())
