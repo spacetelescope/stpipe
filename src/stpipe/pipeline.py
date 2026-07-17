@@ -140,6 +140,26 @@ class Pipeline(Step):
         return spec
 
     @classmethod
+    def _get_config_from_parameters(cls, crds_parameters, crds_observatory):
+        refcfg = ConfigObj()
+        refcfg["steps"] = Section(refcfg, refcfg.depth + 1, refcfg.main, name="steps")
+
+        # first apply step configs, then pipeline
+        for cal_step in cls.step_defs.keys():
+            cal_step_class = cls.step_defs[cal_step]
+            refcfg["steps"][cal_step] = cal_step_class._get_config_from_parameters(
+                crds_parameters,
+                crds_observatory,
+            )
+        #
+        # Now merge any config parameters from the step cfg file
+        pipeline_cfg = super()._get_config_from_parameters(
+            crds_parameters, crds_observatory
+        )
+        config_parser.merge_config(refcfg, pipeline_cfg)
+        return refcfg
+
+    @classmethod
     def get_config_from_reference(cls, dataset, disable=None, crds_observatory=None):
         """Retrieve step parameters from reference database
 
