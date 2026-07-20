@@ -35,6 +35,10 @@ class SimpleStep(Step):
         output_ext = string(default='simplestep')
     """
 
+    @classmethod
+    def _datamodels_open(cls, init, **kwargs):
+        return SimpleDataModel()
+
 
 class SimplePipe(Pipeline):
     """A Pipeline with parameters and one step"""
@@ -49,6 +53,10 @@ class SimplePipe(Pipeline):
 
     step_defs: ClassVar = {"step1": SimpleStep}
 
+    @classmethod
+    def _datamodels_open(cls, init, **kwargs):
+        return SimpleDataModel()
+
 
 class PipeWithPipe(Pipeline):
     """A Pipeline with a pipeline as a step"""
@@ -58,6 +66,10 @@ class PipeWithPipe(Pipeline):
     """
 
     step_defs: ClassVar = {"step1": SimpleStep, "pipe1": SimplePipe}
+
+    @classmethod
+    def _datamodels_open(cls, init, **kwargs):
+        return SimpleDataModel()
 
 
 class ListArgStep(Step):
@@ -76,6 +88,10 @@ class ListArgStep(Step):
 
     def process(self, *args, **kwargs):
         pass
+
+    @classmethod
+    def _datamodels_open(cls, init, **kwargs):
+        return SimpleDataModel()
 
 
 @pytest.fixture()
@@ -146,7 +162,9 @@ def config_file_list_arg_step(tmp_path):
 def _mock_step_crds(monkeypatch):
     """Mock various crds calls from Step"""
 
-    def mock_get_config_from_reference_pipe(dataset, disable=None):
+    def mock_get_config_from_reference_pipe(
+        dataset, disable=None, crds_observatory=None
+    ):
         return cp.config_from_dict(
             {
                 "str1": "from crds",
@@ -162,12 +180,16 @@ def _mock_step_crds(monkeypatch):
             }
         )
 
-    def mock_get_config_from_reference_step(dataset, disable=None):
+    def mock_get_config_from_reference_step(
+        dataset, disable=None, crds_observatory=None
+    ):
         return cp.config_from_dict(
             {"str1": "from crds", "str2": "from crds", "str3": "from crds"}
         )
 
-    def mock_get_config_from_reference_list_arg_step(dataset, disable=None):
+    def mock_get_config_from_reference_list_arg_step(
+        dataset, disable=None, crds_observatory=None
+    ):
         return cp.config_from_dict({"rotation": "15", "pixel_scale": "0.85"})
 
     monkeypatch.setattr(
@@ -457,6 +479,12 @@ class SimpleDataModel(AbstractDataModel):
         with open(path, "w") as f:
             f.write(f"{path}\n")
         return path
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        return
 
 
 def test_save_results(tmp_cwd):
@@ -1006,3 +1034,12 @@ def test_step_from_commandline_par_precedence(
 def test_getpars(step_obj, full_spec, expected):
     """Test retrieving of configuration parameters"""
     assert step_obj.get_pars(full_spec=full_spec) == expected
+
+
+def test_merge_pipeline_config_deprecation(tmp_path):
+    fn = tmp_path / "other.cfg"
+    cfg = ConfigObj()
+    with open(fn, "wb") as f:
+        cfg.write(f)
+    with pytest.warns(DeprecationWarning, match="merge_pipeline_config is deprecated"):
+        SimplePipe.merge_pipeline_config(cfg, str(fn))
