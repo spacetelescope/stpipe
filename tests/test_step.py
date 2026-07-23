@@ -10,10 +10,8 @@ from typing import ClassVar
 import asdf
 import pytest
 from astropy.extern.configobj.configobj import ConfigObj
-from crds.core.exceptions import CrdsLookupError
 
 from steps import EmptyPipeline, MakeListPipeline, MakeListStep
-from stpipe import crds_client
 from stpipe._config import StepConfig
 from stpipe.datamodel import AbstractDataModel
 from stpipe.pipeline import Pipeline
@@ -640,31 +638,25 @@ def test_get_filename(dataset, filename):
     "observatory, error",
     [
         (None, True),
-        (None, True),
-        ("jwst", False),
         ("jwst", False),
     ],
 )
-def test_get_config_from_reference_dict(monkeypatch, klass, observatory, error):
+def test_get_config_from_reference_dict(mock_crds, klass, observatory, error):
     """Test that config_from_reference accepts a dict"""
-    called = False
-
-    def always_na(*args):
-        nonlocal called
-        called = True
-        return "N/A"
-
-    monkeypatch.setattr(crds_client, "get_reference_file", always_na)
     if error:
         ctx = pytest.raises(ValueError, match="Need a valid name for crds_observatory")
     else:
         ctx = nullcontext()
 
+    mock_crds.add_config(
+        klass.get_config_reftype(),
+        StepConfig(klass.__name__, klass.__name__, {"foo": 1}, []),
+    )
     with ctx:
-        klass.get_config_from_reference({}, crds_observatory=observatory)
+        ref = klass.get_config_from_reference({}, crds_observatory=observatory)
 
     if not error:
-        assert called
+        assert ref["foo"] == 1
 
 
 @pytest.mark.parametrize("klass", (SimpleStep, SimplePipe, PipeWithPipe))
@@ -825,7 +817,7 @@ def test_step_from_commandline_par_precedence(
     reference_pars,
     expected_pars,
     tmp_path,
-    monkeypatch,
+    mock_crds,
 ):
     args = []
 
@@ -852,31 +844,10 @@ def test_step_from_commandline_par_precedence(
         for key, value in command_line_pars.items():
             args.append(f"--{key}={value}")
 
-    reference_file_map = {}
     if reference_pars:
-        reference_path = tmp_path / f"{reference_type}.asdf"
-        reference_config = StepConfig(class_name, config_name, reference_pars, [])
-        with reference_config.to_asdf() as af:
-            af.write_to(reference_path)
-
-        reference_file_map[reference_type] = str(reference_path)
-
-    def mock_get_reference_file(
-        dataset, reference_file_type, observatory=None, asn_exptypes=None
-    ):
-        if reference_file_type in reference_file_map:
-            return reference_file_map[reference_file_type]
-        else:
-            raise CrdsLookupError(
-                f"Error determining best reference for '{reference_file_type}'  = \
-  Unknown reference type '{reference_file_type}'"
-            )
-
-    def mock_get_parameters(dataset):
-        return {}, "jwst"
-
-    monkeypatch.setattr(Step, "_get_crds_parameters", mock_get_parameters)
-    monkeypatch.setattr(crds_client, "get_reference_file", mock_get_reference_file)
+        mock_crds.add_config(
+            reference_type, StepConfig(class_name, config_name, reference_pars, [])
+        )
 
     step = Step.from_cmdline(args)
 
