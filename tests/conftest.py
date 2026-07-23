@@ -29,6 +29,9 @@ def disable_crds_steppars(monkeypatch):
 
 @pytest.fixture()
 def mock_crds(monkeypatch, tmp_path):
+    """
+    Mock the used portion of the crds client so tests can be run without a crds server.
+    """
     crds_path = tmp_path / "crds"
     crds_path.mkdir()
 
@@ -38,6 +41,31 @@ def mock_crds(monkeypatch, tmp_path):
             self.mappings = {}
 
         def add_mapping(self, reftype, match=None, filename=None, observatory="jwst"):
+            """
+            Add a mapping to a reference in the mock crds.
+
+            Parameters
+            ---------
+            reftype : str
+                Reference type name.
+
+            match : callable
+                An optional callable with crds parameters as an argument and
+                returning True/False if the parameters should return the filename
+                for the added mapping.
+
+            filename : str
+                An optional filename to use for the reference. If not provided
+                reftype will be used as the filename.
+
+            observatory : str
+                An optional observatory for the reference mapping.
+
+            Returns
+            -------
+            path
+                Path to the reference (created as an empty file if it doesn't exist).
+            """
             if match is None:
 
                 def match(parameters):
@@ -60,6 +88,25 @@ def mock_crds(monkeypatch, tmp_path):
             return fn
 
         def lookup(self, observatory, reftype, parameters):
+            """
+            Look up a reference file (or "N/A" if it doesn't exist).
+
+            Parameters
+            ----------
+            observatory : str
+                Name of observatory.
+
+            reftype : str
+                Reference type name.
+
+            parameters : dict
+                Parameters to test against available mappings.
+
+            Returns
+            -------
+            str
+                Filename of reference or "N/A".
+            """
             for mapping in self.mappings.get(observatory, {}).get(reftype, []):
                 match, filename = mapping
                 if match(parameters):
@@ -67,6 +114,20 @@ def mock_crds(monkeypatch, tmp_path):
             return "N/A"
 
         def add_config(self, reftype, config, observatory="jwst"):
+            """
+            Add a step configuration reference mapping.
+
+            Parameters
+            ----------
+            reftype : str
+                Reference type name.
+
+            config : StepConfig
+                StepConfig instance to save as a reference file.
+
+            observatory : str
+                Name of observatory
+            """
             fn = self.add_mapping(reftype, observatory=observatory)
             config.to_asdf().write_to(fn)
 
