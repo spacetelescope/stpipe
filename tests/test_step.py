@@ -417,7 +417,7 @@ class StepWithGetCRDSParameters(Step):
 
     @classmethod
     def _get_crds_parameters(cls, dataset):
-        return cls._TEST_PARAMETERS, "fake"
+        return cls._TEST_PARAMETERS, "jwst"
 
     def process(self, input_model):
         # make a change to ensure step skip is working
@@ -603,20 +603,16 @@ def test_save_tuple_with_nested_list(tmp_cwd, model_list):
         assert not (tmp_cwd / f"test{i}-saved.txt").exists()
 
 
-def test_subclass_get_crds_parameters(monkeypatch):
+def test_subclass_get_crds_parameters(mock_crds):
     """Test that _get_crds_parameters for a subclass is called"""
+
+    def match(parameters):
+        return parameters == StepWithGetCRDSParameters._TEST_PARAMETERS
+
+    mock_crds.add_mapping("reftype", match=match, filename="bar")
     step = StepWithGetCRDSParameters()
-
-    called = False
-
-    def get_reference_file(parameters, reference_file_type, observatory):
-        nonlocal called
-        called = True
-        return "N/A"
-
-    monkeypatch.setattr(crds_client, "get_reference_file", get_reference_file)
-    step.get_reference_file("foo", "bar")
-    assert called
+    r = step.get_reference_file("some_file.asdf", "reftype")
+    assert "bar" in r
 
 
 @pytest.mark.parametrize(
@@ -645,8 +641,8 @@ def test_get_filename(dataset, filename):
     [
         (None, True),
         (None, True),
-        ("foo", False),
-        ("foo", False),
+        ("jwst", False),
+        ("jwst", False),
     ],
 )
 def test_get_config_from_reference_dict(monkeypatch, klass, observatory, error):
