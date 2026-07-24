@@ -1,0 +1,1 @@
+Deprecate ``Step.print_configspec``. Use ``print(Step.spec)`` instead.
