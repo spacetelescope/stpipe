@@ -928,19 +928,14 @@ class Step:
     @classmethod
     def _get_config_from_parameters(cls, crds_parameters, crds_observatory):
         reftype = cls.get_config_reftype()
-        refcfg = config_parser.ConfigObj()
-        try:
-            ref_file = crds_client.get_reference_file(
-                crds_parameters,
-                reftype,
-                crds_observatory,
-            )
-        except (AttributeError, crds_client.CrdsError):
-            logger.debug("%s: No parameters found", reftype.upper())
-            return refcfg
+        ref_file = crds_client.get_reference_file(
+            crds_parameters,
+            reftype,
+            crds_observatory,
+        )
         if ref_file == "N/A":
             logger.debug("No %s reference files found.", reftype.upper())
-            return refcfg
+            return config_parser.ConfigObj()
         logger.info("%s parameters found: %s", reftype.upper(), ref_file)
         return config_parser.load_config_file(ref_file)
 
