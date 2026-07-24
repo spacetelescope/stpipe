@@ -1434,13 +1434,10 @@ class Step:
         log_cls = logging.getLogger(logger_name)
         config = config_parser.ConfigObj()
         if input:
-            try:
-                crds_parameters, crds_observatory = cls._get_crds_parameters(input)
-                config = cls.get_config_from_reference(
-                    crds_parameters, crds_observatory=crds_observatory
-                )
-            except (OSError, TypeError, ValueError):
-                logger.warning("Input dataset is not an instance of AbstractDataModel.")
+            crds_parameters, crds_observatory = cls._get_crds_parameters(input)
+            config = cls.get_config_from_reference(
+                crds_parameters, crds_observatory=crds_observatory
+            )
         else:
             log_cls.info("No filename given, cannot retrieve config from CRDS")
 
