@@ -4,7 +4,7 @@ from functools import partial
 
 import pytest
 
-from stpipe.format_template import FormatTemplate
+from stpipe._format_template import FormatTemplate
 
 
 @pytest.mark.parametrize(
@@ -124,3 +124,8 @@ def test_allow_unknown():
     fmt = FormatTemplate(remove_unused=False)
     result = fmt(template)
     assert result == template
+
+
+def test_deprecation():
+    with pytest.raises(DeprecationWarning, match="format_template is deprecated"):
+        import stpipe.format_template  # noqa: F401
