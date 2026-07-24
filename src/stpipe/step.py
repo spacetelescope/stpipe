@@ -621,20 +621,9 @@ class Step:
                     if isinstance(result, (AbstractDataModel | AbstractModelLibrary)):
                         self.save_model(result, idx=idx)
                     elif hasattr(result, "save"):
-                        try:
-                            output_path = self.make_output_path(idx=idx)
-                        except AttributeError:
-                            logger.warning(
-                                "`save_results` has been requested, but cannot"
-                                " determine filename."
-                            )
-                            logger.warning(
-                                "Specify an output file with `--output_file` or set"
-                                " `--save_results=false`"
-                            )
-                        else:
-                            logger.info("Saving file %s", output_path)
-                            result.save(output_path, overwrite=True)
+                        output_path = self.make_output_path(idx=idx)
+                        logger.info("Saving file %s", output_path)
+                        result.save(output_path, overwrite=True)
 
             if not self.skip:
                 logger.info("Step %s done", self.name)
