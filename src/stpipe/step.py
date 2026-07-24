@@ -981,14 +981,7 @@ class Step:
             if crds_observatory is None:
                 raise ValueError("Need a valid name for crds_observatory.")
         else:
-            # If the dataset is not an operable instance of AbstractDataModel,
-            # log as such and return an empty config object
-            try:
-                crds_parameters, crds_observatory = cls._get_crds_parameters(dataset)
-            except (OSError, TypeError, ValueError):
-                logger.warning("Input dataset is not an instance of AbstractDataModel.")
-                return refcfg
-                disable = True
+            crds_parameters, crds_observatory = cls._get_crds_parameters(dataset)
 
         # Retrieve step parameters from CRDS
         logger.debug("Retrieving step %s parameters from CRDS", reftype.upper())
