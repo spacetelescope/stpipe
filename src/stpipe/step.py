@@ -106,6 +106,11 @@ class Step:
 
     @classmethod
     def print_configspec(cls):
+        warnings.warn(
+            "print_configspec is deprecated. Use print(Step.spec) instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         specfile = cls.load_spec_file()
         specfile.write(sys.stdout.buffer)
 
