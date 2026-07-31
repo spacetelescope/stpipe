@@ -1,0 +1,42 @@
+src = [
+  "src",
+  "tests",
+  "docs",
+  "setup.py",
+]
+line-length = 88
+extend-exclude = [
+  "docs",
+  "scripts/strun",
+]
+
+[lint]
+select = [
+  "S",  # flake8-bandit
+  "I",  # isort
+  "E",  # pycodestyle
+  "W",  # pycodestyle
+  "F",  # Pyflakes
+  "UP",  # pyupgrade
+]
+extend-select = [
+  "NPY",  # NumPy-specific checks (recommendations from NumPy)
+]
+
+[lint.extend-per-file-ignores]
+"tests/*.py" = [
+  "S101",
+  "S603",
+  "S607",
+  "INP001",
+  "ARG001",
+]
+"src/stpipe/tests/*.py" = [
+  "S101",
+]
+"src/stpipe/cli/*.py" = [
+  "T201",
+]
+"src/stpipe/cmdline.py" = [
+  "T201",
+]
