@@ -1213,8 +1213,7 @@ class Step:
             ext = step.output_ext
         if ext is None and len(basepath_ext):
             ext = basepath_ext
-        if ext.startswith("."):
-            ext = ext[1:]
+        ext = ext.removeprefix(".")
 
         # Suffix check. An explicit check on `False` is necessary
         # because `None` is also allowed.
@@ -1420,7 +1419,7 @@ class Step:
                 )
 
     @classmethod
-    def build_config(cls, input, **kwargs):  # noqa: A002
+    def build_config(cls, input, **kwargs):
         """Build the ConfigObj to initialize a Step
 
         A Step config is built in the following order:

@@ -184,7 +184,7 @@ class FormatTemplate(Formatter):
     # Make the instance callable
     __call__ = format
 
-    def get_value(self, key, args, kwargs):  # noqa: ARG002
+    def get_value(self, key, args, kwargs):
         """Return a given field value
 
         Parameters
