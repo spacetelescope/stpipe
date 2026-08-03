@@ -11,14 +11,14 @@ from crds.core import config, crds_cache_locking, heavy_client, log
 from crds.core.exceptions import CrdsError
 
 __all__ = [
-    "check_reference_open",
     "CrdsError",
+    "check_reference_open",
+    "get_context_used",
     "get_multiple_reference_paths",
     "get_override_name",
     "get_reference_file",
     "get_svn_version",
     "reference_uri_to_cache_path",
-    "get_context_used",
 ]
 
 

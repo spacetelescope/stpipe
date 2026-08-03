@@ -445,23 +445,21 @@ def test_double_borrow_by_index(example_library):
     """
     Test that double-borrowing a model results in an error
     """
-    with pytest.raises(BorrowError, match="1 un-returned models"):
-        with example_library:
-            model0 = example_library.borrow(0)  # noqa: F841
-            with pytest.raises(BorrowError, match="Attempt to double-borrow model"):
-                model1 = example_library.borrow(0)  # noqa: F841
+    with pytest.raises(BorrowError, match="1 un-returned models"), example_library:
+        model0 = example_library.borrow(0)  # noqa: F841
+        with pytest.raises(BorrowError, match="Attempt to double-borrow model"):
+            model1 = example_library.borrow(0)  # noqa: F841
 
 
 def test_double_borrow_during_iter(example_library):
     """
     Test that double-borrowing a model results in an error
     """
-    with pytest.raises(BorrowError, match="1 un-returned models"):
-        with example_library:
-            for index, model in enumerate(example_library):
-                with pytest.raises(BorrowError, match="Attempt to double-borrow model"):
-                    model1 = example_library.borrow(index)  # noqa: F841
-                break
+    with pytest.raises(BorrowError, match="1 un-returned models"), example_library:
+        for index, model in enumerate(example_library):
+            with pytest.raises(BorrowError, match="Attempt to double-borrow model"):
+                model1 = example_library.borrow(index)  # noqa: F841
+            break
 
 
 @pytest.mark.parametrize("modify", (True, False))
@@ -469,11 +467,13 @@ def test_non_borrowed(example_library, modify):
     """
     Test that attempting to shelve a non-borrowed item results in an error
     """
-    with example_library:
-        with pytest.raises(
+    with (
+        example_library,
+        pytest.raises(
             BorrowError, match="Attempt to shelve model at a non-borrowed index"
-        ):
-            example_library.shelve(None, 0, modify=modify)
+        ),
+    ):
+        example_library.shelve(None, 0, modify=modify)
 
 
 @pytest.mark.parametrize("n_borrowed", (1, 2))
@@ -482,12 +482,14 @@ def test_no_return_borrow(example_library, n_borrowed):
     Test that borrowing and not returning models results in an
     error noting the number of un-returned models.
     """
-    with pytest.raises(
-        BorrowError, match=f"ModelLibrary has {n_borrowed} un-returned models"
+    with (
+        pytest.raises(
+            BorrowError, match=f"ModelLibrary has {n_borrowed} un-returned models"
+        ),
+        example_library,
     ):
-        with example_library:
-            for i in range(n_borrowed):
-                example_library.borrow(i)
+        for i in range(n_borrowed):
+            example_library.borrow(i)
 
 
 def test_exception_while_open(example_library):
@@ -495,9 +497,8 @@ def test_exception_while_open(example_library):
     Test that the __exit__ implementation for the library
     passes exceptions that occur in the context
     """
-    with pytest.raises(Exception, match="test"):
-        with example_library:
-            raise Exception("test")
+    with pytest.raises(Exception, match="test"), example_library:
+        raise Exception("test")
 
 
 def test_exception_with_borrow(example_library):
@@ -506,10 +507,9 @@ def test_exception_with_borrow(example_library):
     model results in the exception being raised (and not an exception
     about a borrowed model not being returned).
     """
-    with pytest.raises(Exception, match="test"):
-        with example_library:
-            model = example_library.borrow(0)  # noqa: F841
-            raise Exception("test")
+    with pytest.raises(Exception, match="test"), example_library:
+        model = example_library.borrow(0)  # noqa: F841
+        raise Exception("test")
 
 
 def test_asn_data(example_library):
@@ -570,13 +570,12 @@ def test_shelve_wrong_index(example_library):
     Test that an error occurs if a model is shelved
     in the incorrect index.
     """
-    with pytest.raises(BorrowError, match="1 un-returned models"):
-        with example_library:
-            model = example_library.borrow(0)
-            with pytest.raises(
-                BorrowError, match="Attempt to shelve model at a non-borrowed index"
-            ):
-                example_library.shelve(model, 1)
+    with pytest.raises(BorrowError, match="1 un-returned models"), example_library:
+        model = example_library.borrow(0)
+        with pytest.raises(
+            BorrowError, match="Attempt to shelve model at a non-borrowed index"
+        ):
+            example_library.shelve(model, 1)
 
 
 @pytest.mark.parametrize("use_index", (True, False))

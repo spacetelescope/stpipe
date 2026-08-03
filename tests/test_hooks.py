@@ -99,7 +99,7 @@ class MyPipeline(Pipeline):
         result = self.shovelpixels.run(input_data)
         result = self.cancelnoise.run(result)
 
-        return result  # noqa: RET504
+        return result
 
 
 def hook_function(input_data):

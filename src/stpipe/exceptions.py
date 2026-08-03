@@ -1,4 +1,4 @@
-class StpipeException(Exception):  # noqa: N818
+class StpipeException(Exception):
     """
     Base class for exceptions from the stpipe package.
     """
