@@ -28,7 +28,7 @@ class WithDefaultsStep(BaseStep):
     par4 = string(default='default par4 value')
     """
 
-    def process(self, input_data):  # noqa: D102
+    def process(self, input_data):
         log.info(
             "Parameters par1=%s, par2=%s, par3=%s, par4=%s",
             self.par1,
@@ -49,7 +49,7 @@ class MakeListStep(BaseStep):
     par3 = boolean(default=False) # Does it blend?
     """
 
-    def process(self, a=None, b=None):  # noqa: D102
+    def process(self, a=None, b=None):
         log.info("Arguments a=%s b=%s", a, b)
         log.info(
             "Parameters par1=%s, par2=%s, par3=%s", self.par1, self.par2, self.par3
@@ -70,7 +70,7 @@ class EmptyPipeline(BasePipeline):
     par1 = string(default='Name the atomizer') # Control the frobulization
     """
 
-    def process(self, *args):  # noqa: D102
+    def process(self, *args):
         return args
 
 
@@ -85,5 +85,5 @@ class MakeListPipeline(BasePipeline):
         "make_list": MakeListStep,
     }
 
-    def process(self, *args):  # noqa: D102
+    def process(self, *args):
         return self.make_list.run(*args)

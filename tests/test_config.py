@@ -81,11 +81,10 @@ def test_step_config_to_asdf(config):
 
     # Expect failures from the metadata schema while <SPECIFY>
     # is still present:
-    with pytest.raises(asdf.ValidationError):
-        with asdf.AsdfFile(asdf_file.tree) as af:
-            _validate_asdf(
-                af, "http://stsci.edu/schemas/stpipe/step_config_with_metadata-1.0.0"
-            )
+    with pytest.raises(asdf.ValidationError), asdf.AsdfFile(asdf_file.tree) as af:
+        _validate_asdf(
+            af, "http://stsci.edu/schemas/stpipe/step_config_with_metadata-1.0.0"
+        )
 
     asdf_file["meta"]["author"] = "Yours Truly"
     asdf_file["meta"]["instrument"]["name"] = "EYEBALLS"

@@ -14,11 +14,11 @@ import asdf
 from .datamodel import AbstractDataModel
 
 __all__ = [
-    "LibraryError",
+    "AbstractModelLibrary",
     "BorrowError",
     "ClosedLibraryError",
+    "LibraryError",
     "NoGroupID",
-    "AbstractModelLibrary",
 ]
 
 

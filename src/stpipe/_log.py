@@ -36,7 +36,7 @@ level = DEBUG
 # LOGS AS EXCEPTIONS
 
 
-class LoggedException(Exception):  # noqa: N818
+class LoggedException(Exception):
     """
     This is an exception used when a log record is converted into an
     exception.
@@ -85,14 +85,14 @@ class LogConfig:
         break_level=logging.NOTSET,
         recording_level=logging.NOTSET,
         recording_formatter=None,
-        format=None,  # noqa: A002
+        format=None,
     ):
         if isinstance(handler, str):
             handler = handler.strip().split(",")
         self.handlers = [self.get_handler(x.strip()) for x in handler]
         self.level = level
         if format is None:
-            format = DEFAULT_FORMAT  # noqa: A001
+            format = DEFAULT_FORMAT
         self.format = logging.Formatter(format)
         for handler in self.handlers:
             handler.setLevel(self.level)

@@ -114,9 +114,7 @@ def is_configured(logger_instance):
         if handler.__class__.__name__ in (
             "LogCaptureHandler",
             "_LiveLoggingNullHandler",
-        ):
-            continue
-        elif (
+        ) or (
             isinstance(handler, logging.FileHandler)
             and handler.baseFilename == "/dev/null"
         ):
@@ -157,7 +155,7 @@ format = '%(message)s'
     logging.shutdown()
 
     with open(logfilename) as fd:
-        lines = [x.strip() for x in fd.readlines()]
+        lines = [x.strip() for x in fd]
 
     assert lines == ["Shown", "Breaking"]
 
@@ -431,7 +429,7 @@ def test_command_line_arguments(
         cmdline_args.append(f"--log-stream={log_stream}")
     if log_file is not None:
         log_file = tmp_path / log_file
-        cmdline_args.append(f"--log-file={str(log_file)}")
+        cmdline_args.append(f"--log-file={log_file!s}")
 
     # Run the step with the specified arguments
     Step.from_cmdline(cmdline_args)
