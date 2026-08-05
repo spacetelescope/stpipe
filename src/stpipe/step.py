@@ -621,20 +621,9 @@ class Step:
                     if isinstance(result, (AbstractDataModel | AbstractModelLibrary)):
                         self.save_model(result, idx=idx)
                     elif hasattr(result, "save"):
-                        try:
-                            output_path = self.make_output_path(idx=idx)
-                        except AttributeError:
-                            logger.warning(
-                                "`save_results` has been requested, but cannot"
-                                " determine filename."
-                            )
-                            logger.warning(
-                                "Specify an output file with `--output_file` or set"
-                                " `--save_results=false`"
-                            )
-                        else:
-                            logger.info("Saving file %s", output_path)
-                            result.save(output_path, overwrite=True)
+                        output_path = self.make_output_path(idx=idx)
+                        logger.info("Saving file %s", output_path)
+                        result.save(output_path, overwrite=True)
 
             if not self.skip:
                 logger.info("Step %s done", self.name)
@@ -928,19 +917,14 @@ class Step:
     @classmethod
     def _get_config_from_parameters(cls, crds_parameters, crds_observatory):
         reftype = cls.get_config_reftype()
-        refcfg = config_parser.ConfigObj()
-        try:
-            ref_file = crds_client.get_reference_file(
-                crds_parameters,
-                reftype,
-                crds_observatory,
-            )
-        except (AttributeError, crds_client.CrdsError):
-            logger.debug("%s: No parameters found", reftype.upper())
-            return refcfg
+        ref_file = crds_client.get_reference_file(
+            crds_parameters,
+            reftype,
+            crds_observatory,
+        )
         if ref_file == "N/A":
             logger.debug("No %s reference files found.", reftype.upper())
-            return refcfg
+            return config_parser.ConfigObj()
         logger.info("%s parameters found: %s", reftype.upper(), ref_file)
         return config_parser.load_config_file(ref_file)
 
@@ -986,14 +970,7 @@ class Step:
             if crds_observatory is None:
                 raise ValueError("Need a valid name for crds_observatory.")
         else:
-            # If the dataset is not an operable instance of AbstractDataModel,
-            # log as such and return an empty config object
-            try:
-                crds_parameters, crds_observatory = cls._get_crds_parameters(dataset)
-            except (OSError, TypeError, ValueError):
-                logger.warning("Input dataset is not an instance of AbstractDataModel.")
-                return refcfg
-                disable = True
+            crds_parameters, crds_observatory = cls._get_crds_parameters(dataset)
 
         # Retrieve step parameters from CRDS
         logger.debug("Retrieving step %s parameters from CRDS", reftype.upper())
@@ -1446,13 +1423,10 @@ class Step:
         log_cls = logging.getLogger(logger_name)
         config = config_parser.ConfigObj()
         if input:
-            try:
-                crds_parameters, crds_observatory = cls._get_crds_parameters(input)
-                config = cls.get_config_from_reference(
-                    crds_parameters, crds_observatory=crds_observatory
-                )
-            except (OSError, TypeError, ValueError):
-                logger.warning("Input dataset is not an instance of AbstractDataModel.")
+            crds_parameters, crds_observatory = cls._get_crds_parameters(input)
+            config = cls.get_config_from_reference(
+                crds_parameters, crds_observatory=crds_observatory
+            )
         else:
             log_cls.info("No filename given, cannot retrieve config from CRDS")
 

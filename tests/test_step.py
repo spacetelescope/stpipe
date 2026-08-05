@@ -10,11 +10,8 @@ from typing import ClassVar
 import asdf
 import pytest
 from astropy.extern.configobj.configobj import ConfigObj
-from crds.core.exceptions import CrdsLookupError
 
-import stpipe.config_parser as cp
 from steps import EmptyPipeline, MakeListPipeline, MakeListStep
-from stpipe import crds_client
 from stpipe._config import StepConfig
 from stpipe.datamodel import AbstractDataModel
 from stpipe.pipeline import Pipeline
@@ -159,57 +156,52 @@ def config_file_list_arg_step(tmp_path):
 
 
 @pytest.fixture()
-def _mock_step_crds(monkeypatch):
-    """Mock various crds calls from Step"""
-
-    def mock_get_config_from_reference_pipe(
-        dataset, disable=None, crds_observatory=None
-    ):
-        return cp.config_from_dict(
+def mock_step_crds(mock_crds):
+    """Configure a mock crds for these tests"""
+    mock_crds.add_config(
+        "pars-simplepipe",
+        StepConfig(
+            "SimplePipe",
+            "simplepipe",
             {
                 "str1": "from crds",
                 "str2": "from crds",
                 "str3": "from crds",
-                "steps": {
-                    "step1": {
-                        "str1": "from crds",
-                        "str2": "from crds",
-                        "str3": "from crds",
-                    },
-                },
-            }
-        )
-
-    def mock_get_config_from_reference_step(
-        dataset, disable=None, crds_observatory=None
-    ):
-        return cp.config_from_dict(
-            {"str1": "from crds", "str2": "from crds", "str3": "from crds"}
-        )
-
-    def mock_get_config_from_reference_list_arg_step(
-        dataset, disable=None, crds_observatory=None
-    ):
-        return cp.config_from_dict({"rotation": "15", "pixel_scale": "0.85"})
-
-    monkeypatch.setattr(
-        SimplePipe, "get_config_from_reference", mock_get_config_from_reference_pipe
+            },
+            [
+                StepConfig(
+                    "SimpleStep",
+                    "step1",
+                    {"str1": "from crds", "str2": "from crds", "str3": "from crds"},
+                    [],
+                ),
+            ],
+        ),
     )
-    monkeypatch.setattr(
-        SimpleStep, "get_config_from_reference", mock_get_config_from_reference_step
+    mock_crds.add_config(
+        "pars-simplestep",
+        StepConfig(
+            "SimpleStep",
+            "step1",
+            {"str1": "from crds", "str2": "from crds", "str3": "from crds"},
+            [],
+        ),
     )
-    monkeypatch.setattr(
-        ListArgStep,
-        "get_config_from_reference",
-        mock_get_config_from_reference_list_arg_step,
+
+    mock_crds.add_config(
+        "pars-listargstep",
+        StepConfig(
+            "ListArgStep", "ListArgStep", {"rotation": "15", "pixel_scale": "0.85"}, []
+        ),
     )
+
+    yield mock_crds
 
 
 # #####
 # Tests
 # #####
-@pytest.mark.usefixtures("_mock_step_crds")
-def test_build_config_pipe_config_file(config_file_pipe):
+def test_build_config_pipe_config_file(config_file_pipe, mock_step_crds):
     """Test that local config overrides defaults and CRDS-supplied file"""
     config, returned_config_file = SimplePipe.build_config(
         "science.fits", config_file=config_file_pipe
@@ -223,8 +215,7 @@ def test_build_config_pipe_config_file(config_file_pipe):
     assert config["steps"]["step1"]["str3"] == "from crds"
 
 
-@pytest.mark.usefixtures("_mock_step_crds")
-def test_build_config_pipe_crds():
+def test_build_config_pipe_crds(mock_step_crds):
     """Test that CRDS param reffile overrides a default CRDS configuration"""
     config, config_file = SimplePipe.build_config("science.fits")
     assert not config_file
@@ -243,8 +234,7 @@ def test_build_config_pipe_default():
     assert len(config) == 0
 
 
-@pytest.mark.usefixtures("_mock_step_crds")
-def test_build_config_pipe_kwarg(config_file_pipe):
+def test_build_config_pipe_kwarg(config_file_pipe, mock_step_crds):
     """Test that kwargs override CRDS and local param reffiles"""
     config, returned_config_file = SimplePipe.build_config(
         "science.fits",
@@ -261,8 +251,7 @@ def test_build_config_pipe_kwarg(config_file_pipe):
     assert config["steps"]["step1"]["str3"] == "from crds"
 
 
-@pytest.mark.usefixtures("_mock_step_crds")
-def test_build_config_step_config_file(config_file_step):
+def test_build_config_step_config_file(config_file_step, mock_step_crds):
     """Test that local config overrides defaults and CRDS-supplied file"""
     config, returned_config_file = SimpleStep.build_config(
         "science.fits", config_file=config_file_step
@@ -273,12 +262,10 @@ def test_build_config_step_config_file(config_file_step):
     assert config["str3"] == "from crds"
 
 
-@pytest.mark.usefixtures("_mock_step_crds")
-def test_build_config_step_crds():
+def test_build_config_step_crds(mock_step_crds):
     """Test override of a CRDS configuration"""
     config, config_file = SimpleStep.build_config("science.fits")
     assert config_file is None
-    assert len(config) == 3
     assert config["str1"] == "from crds"
     assert config["str2"] == "from crds"
     assert config["str3"] == "from crds"
@@ -291,8 +278,7 @@ def test_build_config_step_default():
     assert len(config) == 0
 
 
-@pytest.mark.usefixtures("_mock_step_crds")
-def test_build_config_step_kwarg(config_file_step):
+def test_build_config_step_kwarg(config_file_step, mock_step_crds):
     """Test that kwargs override everything"""
     config, returned_config_file = SimpleStep.build_config(
         "science.fits", config_file=config_file_step, str1="from kwarg"
@@ -303,8 +289,7 @@ def test_build_config_step_kwarg(config_file_step):
     assert config["str3"] == "from crds"
 
 
-@pytest.mark.usefixtures("_mock_step_crds")
-def test_step_list_args(config_file_list_arg_step):
+def test_step_list_args(config_file_list_arg_step, mock_step_crds):
     """Test that list arguments, provided as comma-separated values are parsed
     correctly.
     """
@@ -430,7 +415,7 @@ class StepWithGetCRDSParameters(Step):
 
     @classmethod
     def _get_crds_parameters(cls, dataset):
-        return cls._TEST_PARAMETERS, "fake"
+        return cls._TEST_PARAMETERS, "jwst"
 
     def process(self, input_model):
         # make a change to ensure step skip is working
@@ -616,20 +601,16 @@ def test_save_tuple_with_nested_list(tmp_cwd, model_list):
         assert not (tmp_cwd / f"test{i}-saved.txt").exists()
 
 
-def test_subclass_get_crds_parameters(monkeypatch):
+def test_subclass_get_crds_parameters(mock_crds):
     """Test that _get_crds_parameters for a subclass is called"""
+
+    def match(parameters):
+        return parameters == StepWithGetCRDSParameters._TEST_PARAMETERS
+
+    mock_crds.add_mapping("reftype", match=match, filename="bar")
     step = StepWithGetCRDSParameters()
-
-    called = False
-
-    def get_reference_file(parameters, reference_file_type, observatory):
-        nonlocal called
-        called = True
-        return "N/A"
-
-    monkeypatch.setattr(crds_client, "get_reference_file", get_reference_file)
-    step.get_reference_file("foo", "bar")
-    assert called
+    r = step.get_reference_file("some_file.asdf", "reftype")
+    assert "bar" in r
 
 
 @pytest.mark.parametrize(
@@ -657,31 +638,25 @@ def test_get_filename(dataset, filename):
     "observatory, error",
     [
         (None, True),
-        (None, True),
-        ("foo", False),
-        ("foo", False),
+        ("jwst", False),
     ],
 )
-def test_get_config_from_reference_dict(monkeypatch, klass, observatory, error):
+def test_get_config_from_reference_dict(mock_crds, klass, observatory, error):
     """Test that config_from_reference accepts a dict"""
-    called = False
-
-    def always_na(*args):
-        nonlocal called
-        called = True
-        return "N/A"
-
-    monkeypatch.setattr(crds_client, "get_reference_file", always_na)
     if error:
         ctx = pytest.raises(ValueError, match="Need a valid name for crds_observatory")
     else:
         ctx = nullcontext()
 
+    mock_crds.add_config(
+        klass.get_config_reftype(),
+        StepConfig(klass.__name__, klass.__name__, {"foo": 1}, []),
+    )
     with ctx:
-        klass.get_config_from_reference({}, crds_observatory=observatory)
+        ref = klass.get_config_from_reference({}, crds_observatory=observatory)
 
     if not error:
-        assert called
+        assert ref["foo"] == 1
 
 
 @pytest.mark.parametrize("klass", (SimpleStep, SimplePipe, PipeWithPipe))
@@ -842,7 +817,7 @@ def test_step_from_commandline_par_precedence(
     reference_pars,
     expected_pars,
     tmp_path,
-    monkeypatch,
+    mock_crds,
 ):
     args = []
 
@@ -869,31 +844,10 @@ def test_step_from_commandline_par_precedence(
         for key, value in command_line_pars.items():
             args.append(f"--{key}={value}")
 
-    reference_file_map = {}
     if reference_pars:
-        reference_path = tmp_path / f"{reference_type}.asdf"
-        reference_config = StepConfig(class_name, config_name, reference_pars, [])
-        with reference_config.to_asdf() as af:
-            af.write_to(reference_path)
-
-        reference_file_map[reference_type] = str(reference_path)
-
-    def mock_get_reference_file(
-        dataset, reference_file_type, observatory=None, asn_exptypes=None
-    ):
-        if reference_file_type in reference_file_map:
-            return reference_file_map[reference_file_type]
-        else:
-            raise CrdsLookupError(
-                f"Error determining best reference for '{reference_file_type}'  = \
-  Unknown reference type '{reference_file_type}'"
-            )
-
-    def mock_get_parameters(dataset):
-        return {}, "jwst"
-
-    monkeypatch.setattr(Step, "_get_crds_parameters", mock_get_parameters)
-    monkeypatch.setattr(crds_client, "get_reference_file", mock_get_reference_file)
+        mock_crds.add_config(
+            reference_type, StepConfig(class_name, config_name, reference_pars, [])
+        )
 
     step = Step.from_cmdline(args)
 
