@@ -10,8 +10,7 @@ import sys
 import warnings
 from contextlib import contextmanager
 
-from astropy.extern.configobj import validate
-from astropy.extern.configobj.configobj import ConfigObj
+from configobj import ConfigObj, validate
 from crds.core import log as crds_log
 
 from . import config_parser

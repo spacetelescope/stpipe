@@ -11,13 +11,13 @@ from inspect import isclass
 
 from asdf import ValidationError as AsdfValidationError
 from asdf import open as asdf_open
-from astropy.extern.configobj.configobj import (
+from configobj import (
     ConfigObj,
     Section,
     flatten_errors,
     get_extra_values,
 )
-from astropy.extern.configobj.validate import ValidateError, Validator, VdtTypeError
+from configobj.validate import ValidateError, Validator, VdtTypeError
 
 from . import utilities
 from ._config import StepConfig
