@@ -9,7 +9,7 @@ from typing import ClassVar
 
 import asdf
 import pytest
-from astropy.extern.configobj.configobj import ConfigObj
+from configobj import ConfigObj
 from crds.core.exceptions import CrdsLookupError
 
 import stpipe.config_parser as cp

@@ -7,7 +7,7 @@ import warnings
 from os.path import dirname, join
 from typing import ClassVar
 
-from astropy.extern.configobj.configobj import ConfigObj, Section
+from configobj import ConfigObj, Section
 
 from . import config_parser, crds_client
 from .step import Step
