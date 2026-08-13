@@ -1,3 +1,13 @@
+1.1.0 (2026-08-13)
+==================
+
+Misc
+----
+
+- Use configobj instead of private astropy.extern.configobj. Remove astropy
+  dependency. (`#358 <https://github.com/spacetelescope/stpipe/issues/358>`_)
+
+
 1.0.1 (2026-08-10)
 ==================
 

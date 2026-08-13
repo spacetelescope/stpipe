@@ -1,1 +1,0 @@
-Use configobj instead of private astropy.extern.configobj. Remove astropy dependency.
