@@ -1,0 +1,1 @@
+Issue a ``UserWarning`` when ``call`` is used on a step/pipeline instance. ``call`` is a classemthod that creates a new step/pipeline instance and using it on an existing instance can result in silently ignoring the parameters and configuration of the original instance and incorrect results. In the future this will be an error.
