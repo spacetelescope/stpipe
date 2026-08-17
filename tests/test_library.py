@@ -202,12 +202,13 @@ def test_load_asn(example_library):
     assert len(example_library) == _N_MODELS
 
 
-def test_init_from_asn(example_asn_path):
+def test_init_from_asn(example_asn_path, tmp_cwd):
     """
     Test creating a library from an association dictionary.
     """
     asn = _load_asn(example_asn_path)
     # as association filenames are local we must be in the same directory
+    # we chdir here and tmp_cwd will reset the cwd
     os.chdir(example_asn_path.parent)
     lib = ModelLibrary(asn)
     assert len(lib) == _N_MODELS
