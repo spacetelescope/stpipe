@@ -1002,3 +1002,11 @@ def test_merge_pipeline_config_deprecation(tmp_path):
 def test_print_configspec_deprecation():
     with pytest.warns(DeprecationWarning, match="print_configspec is deprecated"):
         SimpleStep.print_configspec()
+
+
+def test_instance_call_warning(disable_crds_steppars):
+    step = ListArgStep()
+    with pytest.warns(
+        UserWarning, match="parameters of the original instance are silently ignored"
+    ):
+        step.call()
