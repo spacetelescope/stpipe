@@ -40,7 +40,12 @@ class _DeprecateInstanceCall:
 
     def __get__(self, instance, owner):
         if instance:
-            raise Exception(f"{self.func.__name__} on {instance} which was not a class")
+            msg = (
+                "Using call (a class method) on an instance creates a new "
+                "instance and parameters of the original instance are silently "
+                "ignored. In the future this will become an error."
+            )
+            warnings.warn(msg, UserWarning)
         return self.func.__get__(owner, owner)
 
 
