@@ -2,7 +2,7 @@
 name = "stpipe"
 description = "Framework for calibration pipeline software"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [
     { name = "STScI" },
 ]
@@ -29,7 +29,6 @@ docs = [
     "sphinx",
     "sphinx-automodapi",
     "sphinx-rtd-theme",
-    "tomli; python_version <\"3.11\"",
 ]
 test = [
     "pytest >=9.0.0",
