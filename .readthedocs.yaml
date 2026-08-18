@@ -1,7 +1,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/readthedocs/readthedocs.org/refs/heads/main/readthedocs/rtd_tests/fixtures/spec/v2/schema.json
 # https://docs.readthedocs.io/en/stable/config-file/v2.html
 
-# Required
 version: 2
 
 build:
@@ -12,23 +11,10 @@ build:
     - graphviz
   jobs:
     post_checkout:
-      - git fetch --unshallow || true
-      - git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' || true
-      - git fetch --all --tags || true
-    pre_install:
-      - git update-index --assume-unchanged docs/source/conf.py
-    post_install:
-      - pip install towncrier
+      - git fetch --unshallow --tags
+    pre_build:
       - git describe --exact-match || towncrier build --keep
 
-# Build documentation in the docs/ directory with Sphinx
-sphinx:
-  builder: html
-  configuration: docs/source/conf.py
-  fail_on_warning: true
-
-# Install regular dependencies.
-# Then, install special pinning for RTD.
 python:
   install:
     - method: pip
@@ -36,7 +22,11 @@ python:
       extra_requirements:
         - docs
 
-# Optionally build your docs in additional formats such as PDF and ePub
+sphinx:
+  builder: html
+  configuration: docs/conf.py
+  fail_on_warning: true
+
 formats:
   - htmlzip
   - pdf
