@@ -39,6 +39,10 @@ class WithDefaultsStep(BaseStep):
 
         return input_data
 
+    @classmethod
+    def _get_crds_parameters(self, dataset):
+        return {}, "jwst"
+
 
 class MakeListStep(BaseStep):
     """Make a list of all arguments and parameters."""
