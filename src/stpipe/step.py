@@ -45,7 +45,7 @@ class _DeprecateInstanceCall:
                 "instance and parameters of the original instance are silently "
                 "ignored. In the future this will become an error."
             )
-            warnings.warn(msg, UserWarning)
+            warnings.warn(msg, UserWarning, stacklevel=2)
         return self.func.__get__(owner, owner)
 
 
