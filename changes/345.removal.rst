@@ -1,0 +1,1 @@
+Deprecate ``stpipe.format_template``. Use f-strings instead.
