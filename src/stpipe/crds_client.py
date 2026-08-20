@@ -7,7 +7,7 @@ by stpipe.
 import re
 
 import crds
-from crds.core import config, crds_cache_locking, heavy_client, log
+from crds.core import config, heavy_client, log
 from crds.core.exceptions import CrdsError
 
 __all__ = [
@@ -57,12 +57,11 @@ def _get_refpaths(data_dict, reference_file_types, observatory):
     """
     if not reference_file_types:  # [] interpreted as *all types*.
         return {}
-    with crds_cache_locking.get_cache_lock():
-        bestrefs = crds.getreferences(
-            data_dict,
-            reftypes=reference_file_types,
-            observatory=observatory,
-        )
+    bestrefs = crds.getreferences(
+        data_dict,
+        reftypes=reference_file_types,
+        observatory=observatory,
+    )
     return {
         filetype: filepath if "N/A" not in filepath.upper() else "N/A"
         for (filetype, filepath) in bestrefs.items()
