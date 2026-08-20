@@ -997,3 +997,8 @@ def test_merge_pipeline_config_deprecation(tmp_path):
         cfg.write(f)
     with pytest.warns(DeprecationWarning, match="merge_pipeline_config is deprecated"):
         SimplePipe.merge_pipeline_config(cfg, str(fn))
+
+
+def test_print_configspec_deprecation():
+    with pytest.warns(DeprecationWarning, match="print_configspec is deprecated"):
+        SimpleStep.print_configspec()
