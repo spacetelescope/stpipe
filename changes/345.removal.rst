@@ -1,1 +1,1 @@
-Deprecate ``stpipe.format_template``. Use fstrings instead.
+Deprecate ``stpipe.format_template``. Use f-strings instead.
