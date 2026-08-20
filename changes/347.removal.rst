@@ -1,1 +1,1 @@
-Deprecate ``Step.print_configspec``. Use ``print(Step.spec)`` instead.
+Deprecate ``Step.print_configspec``. Use ``print(Step.spec)`` or ``print(Step.load_spec_file())`` instead.
