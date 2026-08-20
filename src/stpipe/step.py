@@ -46,7 +46,7 @@ class _DeprecateInstanceCall:
                 "ignored. In the future this will become an error."
             )
             warnings.warn(msg, UserWarning, stacklevel=2)
-        return self.func.__get__(owner, owner)
+        return self.func.__get__(instance, owner)
 
 
 class Step:
