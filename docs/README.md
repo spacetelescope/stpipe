@@ -1,7 +1,10 @@
 # Writing and maintaining documentation
 
 Documentation for `stpipe` is written in [Sphinx reStructuredText (`.rst`)](https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html)
-in this `docs/` directory, and is hosted online athttps://stpipe.readthedocs.io### Building documentation locally
+in this `docs/` directory, and is hosted online at https://stpipe.readthedocs.io
+
+### Building documentation locally
+
 ReadTheDocs will automatically build documentation for your branch when you push a commit to a pull request on this GitHub repository, and host a temporary build with a visual diff.
 However, it is also good practice to build the docs locally if you are editing them, to reduce frustration from small errors.
 
