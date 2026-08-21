@@ -442,10 +442,6 @@ class Step:
         for key, val in kws.items():
             setattr(self, key, val)
 
-        # For transition purposes, create and store a logger
-        # for this step.  If used, it will raise a DeprecationWarning.
-        self._log = logging.getLogger(self.qualified_name)
-
         # Log the fact that we have been init-ed.
         logger.info(
             "%s instance created.",
@@ -465,16 +461,6 @@ class Step:
         else:
             self._pre_hooks = []
             self._post_hooks = []
-
-    @property
-    def log(self):
-        msg = (
-            "The Step.log attribute is deprecated and will be "
-            "removed in a future release. "
-            "Please use a local logger, retrieved via logging.getLogger."
-        )
-        warnings.warn(msg, DeprecationWarning, stacklevel=2)
-        return self._log
 
     @property
     def log_records(self):
