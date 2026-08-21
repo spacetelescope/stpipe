@@ -102,7 +102,7 @@ def _build_parent_arg_parser():
         default="INFO",
         type=str,
         help="Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL) "
-        "or a numerical logging level."
+        "or a numerical logging level. "
         "Ignored if 'verbose' is specified.",
     )
     parser1.add_argument(
