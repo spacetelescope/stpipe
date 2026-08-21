@@ -99,9 +99,10 @@ def _build_parent_arg_parser():
     )
     parser1.add_argument(
         "--log-level",
-        type=str,
         default="INFO",
-        help="Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL). "
+        type=str,
+        help="Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL) "
+        "or a numerical logging level."
         "Ignored if 'verbose' is specified.",
     )
     parser1.add_argument(
@@ -285,16 +286,16 @@ def _determine_log_configuration(known):
         The loaded logging configuration ready for use.
     """
     # Get log parameters from command line arguments
-    kwargs = {
-        "log_level": known.log_level,
-        "log_stream": known.log_stream,
-        "log_file": known.log_file,
-    }
     if known.verbose:
-        kwargs["log_level"] = "DEBUG"
+        log_level = "DEBUG"
+    else:
+        # allow for "10" as 10 to support numeric log levels
+        log_level = (
+            int(known.log_level) if known.log_level.isnumeric() else known.log_level
+        )
 
     try:
-        log_cfg = _log.load_configuration(**kwargs)
+        log_cfg = _log.load_configuration(log_level, known.log_file, known.log_stream)
     except Exception as e:
         raise ValueError(f"Error parsing logging configuration:\n{e}") from e
     return log_cfg

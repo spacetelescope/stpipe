@@ -349,7 +349,20 @@ def test_call_configure_log(capsys, root_logger_unchanged):
 
 
 @pytest.mark.parametrize(
-    "log_level", [None, "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+    "log_level",
+    [
+        None,
+        "DEBUG",
+        "INFO",
+        "WARNING",
+        "ERROR",
+        "CRITICAL",
+        str(logging.DEBUG),
+        str(logging.INFO),
+        str(logging.WARNING),
+        str(logging.ERROR),
+        str(logging.CRITICAL),
+    ],
 )
 @pytest.mark.parametrize("log_stream", [None, "stdout", "stderr", "null"])
 @pytest.mark.parametrize("log_file", [None, "test_log.txt"])
@@ -369,8 +382,16 @@ def test_command_line_arguments(
     # Run the step with the specified arguments
     Step.from_cmdline(cmdline_args)
 
+    # convert log level to numerical value or None to simplify checks below
+    if log_level is None:
+        level = None
+    elif log_level.isnumeric():
+        level = int(log_level)
+    else:
+        level = getattr(logging, log_level)
+
     # Check for a log file: it is not created if there are no messages logged
-    if log_file is not None and log_level not in ["ERROR", "CRITICAL"]:
+    if log_file is not None and level not in [logging.ERROR, logging.CRITICAL]:
         assert log_file.exists()
         with log_file.open() as fh:
             log_lines = fh.readlines()
@@ -389,11 +410,11 @@ def test_command_line_arguments(
         terminal_messages = capt.err
 
     # Default level is INFO, unless otherwise specified
-    if log_level is None or log_level == "INFO":
+    if level is None or level == logging.INFO:
         expected_messages = ALL_MESSAGES_EXCEPT_DEBUG
-    elif log_level == "DEBUG":
+    elif level == logging.DEBUG:
         expected_messages = ALL_MESSAGES
-    elif log_level == "WARNING":
+    elif level == logging.WARNING:
         expected_messages = ALL_WARNINGS
     else:
         # No messages expected, regardless of other settings
