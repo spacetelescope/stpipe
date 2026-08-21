@@ -73,7 +73,7 @@ numpydoc_show_class_members = False
 autoclass_content = "both"
 
 html_theme = "sphinx_rtd_theme"
-html_logo = "_static/stsci_pri_combo_mark_white.png"
+html_logo = "https://github.com/spacetelescope/stsci-package-template/blob/0c4b13779e02ff9b8fb3585615e26d51cadcc14b/docs/_static/stsci_pri_combo_mark_dark_bkgd.png"
 html_theme_options = {
     "collapse_navigation": True,
 }
