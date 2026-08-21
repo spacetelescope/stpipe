@@ -34,6 +34,21 @@ from .utilities import _not_set
 logger = logging.getLogger(__name__)
 
 
+class _DeprecateInstanceCall:
+    def __init__(self, func):
+        self.func = func
+
+    def __get__(self, instance, owner):
+        if instance:
+            msg = (
+                "Using call (a class method) on an instance creates a new "
+                "instance and parameters of the original instance are silently "
+                "ignored. In the future this will become an error."
+            )
+            warnings.warn(msg, UserWarning, stacklevel=2)
+        return self.func.__get__(instance, owner)
+
+
 class Step:
     """
     Step
@@ -686,6 +701,7 @@ class Step:
         """
         raise NotImplementedError("Steps have to override process().")
 
+    @_DeprecateInstanceCall
     @classmethod
     def call(cls, *args, **kwargs):
         """
