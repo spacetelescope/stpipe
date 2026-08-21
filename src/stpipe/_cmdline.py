@@ -100,7 +100,7 @@ def _build_parent_arg_parser():
     parser1.add_argument(
         "--log-level",
         type=str,
-        default=None,
+        default="INFO",
         help="Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL). "
         "Ignored if 'verbose' is specified.",
     )
@@ -113,7 +113,7 @@ def _build_parent_arg_parser():
     parser1.add_argument(
         "--log-stream",
         type=str,
-        default=None,
+        default="stderr",
         help="Log stream for terminal messages (stdout, stderr, or null).",
     )
     return parser1
@@ -284,20 +284,17 @@ def _determine_log_configuration(known):
     log_cfg : LogConfig
         The loaded logging configuration ready for use.
     """
-    # determine level
+    # Get log parameters from command line arguments
+    kwargs = {
+        "log_level": known.log_level,
+        "log_stream": known.log_stream,
+        "log_file": known.log_file,
+    }
     if known.verbose:
-        log_level = "DEBUG"
-    elif known.log_level is not None:
-        log_level = str(known.log_level).upper()
-    else:
-        log_level = None
+        kwargs["log_level"] = "DEBUG"
 
     try:
-        log_cfg = _log.load_configuration(
-            log_level=log_level,
-            log_file=known.log_file,
-            log_stream=known.log_stream,
-        )
+        log_cfg = _log.load_configuration(**kwargs)
     except Exception as e:
         raise ValueError(f"Error parsing logging configuration:\n{e}") from e
     return log_cfg

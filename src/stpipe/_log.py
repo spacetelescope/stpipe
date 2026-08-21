@@ -52,9 +52,18 @@ class LogConfig:
     ----------
     name : str
         The `fnmatch` pattern used to match the logging class
-
-    handler, level, break_level, format : str
-        See LogConfig.spec for a description of these values.
+    handler : list of str
+        List of handler specifications.
+    level : str or int
+        Default log level.
+    break_level : str or int
+        Breaking log level.
+    recording_level : str or int
+        Recording log level.
+    recording_formatter : `logging.Formatter`
+        Formatter for recorded log messages.
+    format : str
+        Format string for log messages.
     """
 
     applied = None
@@ -214,7 +223,7 @@ class LogConfig:
             self.undo(log_names)
 
 
-def load_configuration(log_level=None, log_file=None, log_stream=None):
+def load_configuration(log_level="INFO", log_file=None, log_stream="stderr"):
     """
     Load a logging configuration.
 
@@ -224,37 +233,32 @@ def load_configuration(log_level=None, log_file=None, log_stream=None):
 
     Parameters
     ----------
-    log_level : str, int, or None, optional
-        Logging level.  If None, and config_file is not provided, will default
-        to INFO level.
+    log_level : str or int, optional
+        Logging level.
     log_file : str or None, optional
         Full path to a file name to write log messages to, if desired.
-    log_stream : {"stdout", "stderr", "null", None}
+    log_stream : {"stdout", "stderr", "null"}, optional
         Stream for terminal messages.  If "null", no stream handler is added.
-        If None, and config_file is not provided, will default to "stderr".
 
     Returns
     -------
     LogConfig
-        The configuration object or None if no valid config is found.
+        The configuration object.
     """
 
     def _level_check(value):
+        # Allow log level numbers passed in as strings
         try:
             value = int(value)
         except ValueError:
             pass
+
+        # Validate string values
         try:
             value = logging._checkLevel(value)
         except ValueError as err:
             raise validate.VdtTypeError(value) from err
         return value
-
-    # Provide appropriate defaults for level and stream
-    if log_level is None:
-        log_level = "INFO"
-    if log_stream is None:
-        log_stream = "stderr"
 
     # Add stream or log handlers
     handlers = [log_stream]
