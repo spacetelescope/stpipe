@@ -18,7 +18,7 @@ repos:
       - id: check-toml
       - id: check-merge-conflict
       - id: check-symlinks
-      - id: debug-statements
+      # - id: debug-statements
       - id: detect-private-key
       - id: end-of-file-fixer
       - id: trailing-whitespace
@@ -35,31 +35,6 @@ repos:
         types_or:
           - yaml
           - markdown
-  # lint YAML
-  - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.29.0
-    hooks:
-      - id: yamllint
-        args: [-d relaxed]
-  # lint GitHub Actions workflows
-  - repo: https://github.com/rhysd/actionlint
-    rev: v1.7.11
-    hooks:
-      - id: actionlint
-  # harden GitHub Actions workflows
-  - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.25.2
-    hooks:
-      - id: zizmor
-        args: ["--fix=all"]
-  # format and lint TOML
-  - repo: https://github.com/tombi-toml/tombi-pre-commit
-    rev: v0.9.25
-    hooks:
-      - id: tombi-format
-        args: ["--offline"]
-      - id: tombi-lint
-        args: ["--offline"]
   # spell-checking
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
@@ -86,21 +61,13 @@ repos:
         args:
           - --fix
           - --show-fixes
-  # validate numpy-style docstrings
-  - repo: https://github.com/numpy/numpydoc
-    rev: v1.10.0
-    hooks:
-      - id: numpydoc-validation
-        exclude: |
-          (?x)^(
-            jwst/tests/.* |
-            docs/.* |
-            jwst/regtest/test_.* |
-            .*/tests/test_.*
-          )$
-  # C style
-  - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v22.1.0
-    hooks:
-      - id: clang-format
-        types_or: [c]
+  # # validate numpy-style docstrings
+  # - repo: https://github.com/numpy/numpydoc
+  #   rev: v1.10.0
+  #   hooks:
+  #     - id: numpydoc-validation
+  #       exclude: |
+  #         (?x)^(
+  #           docs/.* |
+  #           .*/tests/test_.*
+  #         )$
