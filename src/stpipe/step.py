@@ -736,27 +736,9 @@ class Step:
         # fully loaded
         log_names = cls.get_stpipe_loggers()
         configure_log = kwargs.pop("configure_log", True)
-        deprecation_msg = (
-            "The 'logcfg' configuration option is deprecated. "
-            "In future releases, it will be ignored, and logging "
-            "should be directly configured via command line arguments "
-            "or the logging module."
-        )
-        if "logcfg" in kwargs:
-            warnings.warn(deprecation_msg, DeprecationWarning, stacklevel=2)
-            try:
-                log_cfg = _log.load_configuration(kwargs["logcfg"])
-            except Exception as e:
-                raise RuntimeError(
-                    f"Error parsing logging config {kwargs['logcfg']}"
-                ) from e
-            del kwargs["logcfg"]
-            log_cfg.set_recording_formatter(cls._log_records_formatter)
-        elif configure_log and _log.LogConfig.applied is None:
+        if configure_log and _log.LogConfig.applied is None:
             # Load a default configuration
-            log_cfg = _log.load_configuration(
-                config_file=_log._find_logging_config_file()
-            )
+            log_cfg = _log.load_configuration()
             log_cfg.set_recording_formatter(cls._log_records_formatter)
         else:
             log_cfg = None
@@ -764,16 +746,6 @@ class Step:
 
         with ctx():
             config, config_file = cls.build_config(filename, **kwargs)
-
-            if "logcfg" in config:
-                # a logcfg is in the configuration file
-                warnings.warn(deprecation_msg, DeprecationWarning, stacklevel=2)
-
-                if log_cfg is not None:
-                    log_cfg.undo(log_names)
-                log_cfg = _log.load_configuration(config["logcfg"])
-                log_cfg.set_recording_formatter(cls._log_records_formatter)
-                log_cfg.apply(log_names)
 
             if "class" in config:
                 del config["class"]

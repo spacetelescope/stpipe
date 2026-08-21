@@ -1,4 +1,3 @@
-import io
 import logging
 import warnings
 
@@ -12,9 +11,7 @@ from stpipe.pipeline import Pipeline
 
 @pytest.fixture(autouse=True)
 def _clean_up_logging():
-    """
-    Reset logging configuration to DEFAULT_CONFIGURATION
-    """
+    """Reset logging configuration to default."""
     yield
     logging.shutdown()
 
@@ -127,23 +124,16 @@ def is_configured(logger_instance):
 
 
 def test_configuration(tmp_path):
-    """
-    Test that load_configuration configures the stpipe root logger
-    """
+    """Test that LogConfig configures the stpipe root logger."""
     logfilename = tmp_path / "output.log"
+    configuration = {
+        "handler": f"file:{logfilename}",
+        "break_level": "ERROR",
+        "level": "WARNING",
+        "format": "%(message)s",
+    }
 
-    configuration = f"""
-[.]
-handler = file:{logfilename}
-break_level = ERROR
-level = WARNING
-format = '%(message)s'
-"""
-
-    with io.StringIO() as fd:
-        fd.write(configuration)
-        fd.seek(0)
-        log_cfg = _log.load_configuration(fd)
+    log_cfg = _log.LogConfig(**configuration)
 
     with log_cfg.context(["stpipe"]):
         log = logging.getLogger(_log.STPIPE_ROOT_LOGGER)
@@ -160,6 +150,30 @@ format = '%(message)s'
         lines = [x.strip() for x in fd.readlines()]
 
     assert lines == ["Shown", "Breaking"]
+
+
+def test_load_configuration(tmp_path):
+    """Test that load_configuration configures a simple stpipe logger."""
+    logfilename = tmp_path / "output.log"
+    configuration = {
+        "log_file": logfilename,
+        "log_level": "WARNING",
+    }
+
+    log_cfg = _log.load_configuration(**configuration)
+
+    with log_cfg.context(["stpipe"]):
+        log = logging.getLogger(_log.STPIPE_ROOT_LOGGER)
+        log.info("Hidden")
+        log.warning("Shown")
+
+    logging.shutdown()
+
+    with open(logfilename) as fd:
+        lines = [x.strip() for x in fd.readlines()]
+
+    assert len(lines) == 1
+    assert "Shown" in lines[0]
 
 
 def test_configuration_apply(capsys):
@@ -202,34 +216,6 @@ def test_configuration_apply(capsys):
     assert capt.err.count(other_msg) == 0
 
 
-@pytest.mark.parametrize(
-    "level, expected",
-    (
-        ("INFO", ALL_MESSAGES_EXCEPT_DEBUG),
-        ("WARNING", ALL_WARNINGS),
-    ),
-)
-def test_logcfg_routing(tmp_path, level, expected):
-    cfg = f"[*]\nlevel = {level}\nhandler = file:{tmp_path}/myrun.log"
-
-    logcfg_file = tmp_path / "stpipe-log.cfg"
-
-    with open(logcfg_file, "w") as f:
-        f.write(cfg)
-
-    with pytest.warns(DeprecationWarning, match="'logcfg' configuration option"):
-        LoggingPipeline.call(logcfg=logcfg_file)
-
-    with open(tmp_path / "myrun.log") as f:
-        fulltext = "\n".join(list(f))
-
-    for msg in ALL_MESSAGES:
-        if msg in expected:
-            assert msg in fulltext
-        else:
-            assert msg not in fulltext
-
-
 def test_log_records():
     pipeline = LoggingPipeline()
     pipeline.run()
@@ -248,24 +234,6 @@ def root_logger_unchanged():
     yield
     assert root_logger.level == original_level
     assert not is_configured(root_logger), "Unexpected handler in root logger"
-
-
-@pytest.fixture(params=LOGLEVELS)
-def log_cfg_path(request, tmp_path):
-    config_level = logging.CRITICAL - request.param
-    cfg = f"[*]\nlevel = {config_level}\nhandler = file:{tmp_path}/myrun.log, stderr"
-
-    log_cfg_path = tmp_path / "stpipe-log.cfg"
-
-    with log_cfg_path.open("w") as f:
-        f.write(cfg)
-
-    yield log_cfg_path
-
-
-def test_call_no_root_logger_changes(log_cfg_path, root_logger_unchanged):
-    with pytest.warns(DeprecationWarning, match="'logcfg' configuration option"):
-        LoggingPipeline.call(logcfg=str(log_cfg_path))
 
 
 def test_default_call(capsys, root_logger_unchanged):
@@ -288,13 +256,6 @@ def test_default_cmdline(capsys, root_logger_unchanged):
         assert msg not in capt.err
 
 
-def test_from_cmdline_no_root_logger_changes(log_cfg_path, root_logger_unchanged):
-    with pytest.warns(DeprecationWarning, match="logcfg configuration file"):
-        LoggingPipeline.from_cmdline(
-            ["test_logger.LoggingPipeline", f"--logcfg={log_cfg_path!s}"]
-        )
-
-
 @pytest.mark.parametrize("logging_level", LOGLEVELS)
 def test_from_cmdline_no_root_logger_changes_level_arg(
     root_logger_unchanged, logging_level
@@ -302,13 +263,6 @@ def test_from_cmdline_no_root_logger_changes_level_arg(
     LoggingPipeline.from_cmdline(
         ["test_logger.LoggingPipeline", f"--log-level={logging_level!s}"]
     )
-
-
-def test_step_from_cmdline_no_root_logger_changes(log_cfg_path, root_logger_unchanged):
-    with pytest.warns(DeprecationWarning, match="logcfg configuration file"):
-        stpipe._cmdline.step_from_cmdline(
-            ["test_logger.LoggingPipeline", "--logcfg", str(log_cfg_path)]
-        )
 
 
 @pytest.mark.parametrize("logging_level", LOGLEVELS)

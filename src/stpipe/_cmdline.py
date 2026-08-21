@@ -7,7 +7,6 @@ import logging
 import os
 import os.path
 import textwrap
-import warnings
 
 from . import _log, config_parser, utilities
 from .exceptions import ValidationError
@@ -15,7 +14,6 @@ from .step import Step, get_disable_crds_steppars
 
 built_in_configuration_parameters = [
     "debug",
-    "logcfg",
     "verbose",
     "log-level",
     "log-file",
@@ -92,12 +90,6 @@ def _build_parent_arg_parser():
         "--disable-crds-steppars",
         action="store_true",
         help="Disable retrieval of step parameter references files from CRDS",
-    )
-    parser1.add_argument(
-        "--logcfg",
-        type=str,
-        help="DEPRECATED: The logging configuration file to load. "
-        "Ignored if verbose or other log arguments are set.",
     )
     parser1.add_argument(
         "--verbose",
@@ -282,7 +274,6 @@ def _determine_log_configuration(known):
     ----------
     known : argparse.Namespace
         Parsed command line arguments containing logging-related parameters:
-        - logcfg: Path to logging configuration file (deprecated)
         - verbose: Enable all logging messages
         - log_level: Specific log level to set
         - log_file: Path to log file
@@ -293,29 +284,6 @@ def _determine_log_configuration(known):
     log_cfg : LogConfig
         The loaded logging configuration ready for use.
     """
-    if known.logcfg is not None:
-        msg = (
-            "The logcfg configuration file is deprecated. "
-            "Please use the log_* command line "
-            "arguments to configure logging."
-        )
-        warnings.warn(msg, DeprecationWarning, stacklevel=2)
-
-    # if verbose is enabled
-    # or log_level log_file or log_stream are set (not None)
-    # then don't try to use the log configuration file (or any passed in log_cfg)
-    if known.verbose is True or any(
-        getattr(known, attr) is not None
-        for attr in ("log_level", "log_file", "log_stream")
-    ):
-        cfgfile = None
-    elif known.logcfg:
-        if not os.path.exists(known.logcfg):
-            raise OSError(f"Logging config {known.logcfg!r} not found")
-        cfgfile = known.logcfg
-    else:
-        cfgfile = _log._find_logging_config_file()
-
     # determine level
     if known.verbose:
         log_level = "DEBUG"
@@ -326,7 +294,6 @@ def _determine_log_configuration(known):
 
     try:
         log_cfg = _log.load_configuration(
-            config_file=cfgfile,
             log_level=log_level,
             log_file=known.log_file,
             log_stream=known.log_stream,
@@ -386,7 +353,6 @@ def _build_step_from_args(step_class, config, name, config_file, parser, known, 
     del args.debug
     del args.save_parameters
     del args.disable_crds_steppars
-    del args.logcfg
     del args.verbose
     del args.log_level
     del args.log_file
