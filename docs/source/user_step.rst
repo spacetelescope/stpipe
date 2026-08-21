@@ -231,7 +231,6 @@ For example, given the following command-line:
 .. code-block:: shell
 
     strun cleanup myfile.asdf --threshold=86
-    strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.linearity.override_linearity='my_lin.fits'
 
 the equivalent ``from_cmdline`` call would be::
 
@@ -285,8 +284,8 @@ example is::
     from mycode.steps import CleanupStep
 
     mystep = CleanupStep()
-    cleanup.threshold = 26
-    cleanup.run(input_data)
+    mystep.threshold = 26
+    mystep.run(input_data)
 
 ``input_data`` in this case can be a file containing the appropriate data, or the output
 of a previously run step/pipeline, which is an instance of a particular

@@ -1,0 +1,1 @@
+Remove deprecated support for log config files. Use the ``log_*`` arguments to configure logging from the command line, or the ``logging`` module to configure logging from Python.

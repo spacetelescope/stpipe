@@ -2,33 +2,15 @@
 Logging setup etc.
 """
 
-import io
 import logging
-import os
-import pathlib
 import sys
-import warnings
 from contextlib import contextmanager
 
-from configobj import ConfigObj, validate
+from configobj import validate
 from crds.core import log as crds_log
-
-from . import config_parser
 
 STPIPE_ROOT_LOGGER = "stpipe"
 DEFAULT_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-DEFAULT_CONFIGURATION = b"""
-[*]
-handler = stderr
-level = INFO
-"""
-
-# used by _cmdline "verbose"
-MAX_CONFIGURATION = b"""
-[*]
-handler = stderr
-level = DEBUG
-"""
 
 
 ###########################################################################
@@ -70,9 +52,18 @@ class LogConfig:
     ----------
     name : str
         The `fnmatch` pattern used to match the logging class
-
-    handler, level, break_level, format : str
-        See LogConfig.spec for a description of these values.
+    handler : list of str
+        List of handler specifications.
+    level : str or int
+        Default log level.
+    break_level : str or int
+        Breaking log level.
+    recording_level : str or int
+        Recording log level.
+    recording_formatter : `logging.Formatter`
+        Formatter for recorded log messages.
+    format : str
+        Format string for log messages.
     """
 
     applied = None
@@ -232,102 +223,49 @@ class LogConfig:
             self.undo(log_names)
 
 
-def load_configuration(
-    config_file=None, log_level=None, log_file=None, log_stream=None
-):
+def load_configuration(log_level="INFO", log_file=None, log_stream="stderr"):
     """
-    Loads a logging configuration file.  The format of this file is
-    defined in LogConfig.spec.
+    Load a logging configuration.
+
+    This function provides basic options for configuration, for use with
+    the command line interface. More options are available for full configuration
+    by directly calling LogConfig.
 
     Parameters
     ----------
-    config_file : str, pathlib.Path instance, file-like object, or None, optional
-        DEPRECATED. Log configuration file. Ignored if log_level, log_file,
-        or log_stream are provided.
-    log_level : str, int, or None, optional
-        Logging level.  If None, and config_file is not provided, will default
-        to INFO level.
+    log_level : str or int, optional
+        Logging level.
     log_file : str or None, optional
         Full path to a file name to write log messages to, if desired.
-    log_stream : {"stdout", "stderr", "null", None}
+    log_stream : {"stdout", "stderr", "null"}, optional
         Stream for terminal messages.  If "null", no stream handler is added.
-        If None, and config_file is not provided, will default to "stderr".
 
     Returns
     -------
     LogConfig
-        The configuration object or None if no valid config is found.
+        The configuration object.
     """
 
     def _level_check(value):
+        # Allow log level numbers passed in as strings
         try:
             value = int(value)
         except ValueError:
             pass
 
+        # Validate string values
         try:
             value = logging._checkLevel(value)
         except ValueError as err:
             raise validate.VdtTypeError(value) from err
         return value
 
-    # Ignore config file if other arguments are provided
-    log_args = [log_level, log_file, log_stream]
-    if any([arg is not None for arg in log_args]):
-        config_file = None
+    # Add stream or log handlers
+    handlers = [log_stream]
+    if log_file is not None:
+        handlers.append(f"file:{log_file}")
 
-    if config_file is not None:
-        # Load the config file
-        spec = config_parser.load_spec_file(LogConfig)
-        if isinstance(config_file, pathlib.Path):
-            config_file = str(config_file)
-        config = ConfigObj(config_file, raise_errors=True, interpolation=False)
-        val = validate.Validator()
-        val.functions["level"] = _level_check
-        config_parser.validate(config, spec, validator=val)
-    else:
-        # Provide appropriate defaults for level and format
-        if log_level is None:
-            log_level = "INFO"
-        if log_stream is None:
-            log_stream = "stderr"
-
-        # Add stream or log handlers
-        handlers = [log_stream]
-        if log_file is not None:
-            handlers.append(f"file:{log_file}")
-
-        config = {
-            "*": {
-                "handler": ",".join(handlers),
-                "level": _level_check(log_level),
-            }
-        }
-
-    for key, val in config.items():
-        if key in ("", ".", "root", "*"):
-            return LogConfig(**val)
-        else:
-            msg = "non-* log configuration never worked and will be removed"
-            warnings.warn(msg, UserWarning)
-    return None
-
-
-def _find_logging_config_file():
-    files = ["stpipe-log.cfg", "~/.stpipe-log.cfg", "/etc/stpipe-log.cfg"]
-
-    for file in files:
-        file = os.path.expanduser(file)
-        if os.path.exists(file):
-            msg = (
-                "The logcfg configuration file is deprecated. "
-                "In future releases, the configuration file at "
-                f"{os.path.abspath(file)} will be ignored."
-            )
-            warnings.warn(msg, DeprecationWarning, stacklevel=2)
-            return os.path.abspath(file)
-
-    return io.BytesIO(DEFAULT_CONFIGURATION)
+    return LogConfig(handler=",".join(handlers), level=_level_check(log_level))
 
 
 class RecordingHandler(logging.Handler):
