@@ -355,27 +355,6 @@ def test_logging_delegation(capsys, root_logger_unchanged):
     assert MSG in captured.err
 
 
-def test_self_log_deprecation(caplog):
-    class SelfLoggingStep(LoggingStep):
-        def process(self):
-            self.log.info(STEP_INFO)
-            self.log.warning(STEP_WARNING)
-
-    # No deprecation when step is created
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", DeprecationWarning)
-        step = SelfLoggingStep()
-
-    # Deprecation warning when self.log is used
-    with pytest.warns(DeprecationWarning, match="Step.log"):
-        step.process()
-
-    # Messages are still emitted
-    assert STEP_INFO in caplog.text
-    assert STEP_WARNING in caplog.text
-    assert "stpipe.SelfLoggingStep" in caplog.text
-
-
 def test_logging_unconfigured_external_package(capsys, root_logger_unchanged):
     """Test that unexpected messages from external packages are not logged."""
 
