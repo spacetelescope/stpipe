@@ -6,7 +6,6 @@ import logging
 import sys
 from contextlib import contextmanager
 
-from configobj import validate
 from crds.core import log as crds_log
 
 STPIPE_ROOT_LOGGER = "stpipe"
@@ -246,26 +245,12 @@ def load_configuration(log_level="INFO", log_file=None, log_stream="stderr"):
         The configuration object.
     """
 
-    def _level_check(value):
-        # Allow log level numbers passed in as strings
-        try:
-            value = int(value)
-        except ValueError:
-            pass
-
-        # Validate string values
-        try:
-            value = logging._checkLevel(value)
-        except ValueError as err:
-            raise validate.VdtTypeError(value) from err
-        return value
-
     # Add stream or log handlers
     handlers = [log_stream]
     if log_file is not None:
         handlers.append(f"file:{log_file}")
 
-    return LogConfig(handler=",".join(handlers), level=_level_check(log_level))
+    return LogConfig(handler=",".join(handlers), level=log_level)
 
 
 class RecordingHandler(logging.Handler):
