@@ -1,7 +1,7 @@
 {
   "template": "https://github.com/spacetelescope/stsci-package-template.git",
-  "commit": "74d9b40d17a3ec8db902c540d201c23d0776933a",
-  "checkout": "scsb",
+  "commit": "5dd6b672eccd8b10567eebf1dfa9c1264d218b34",
+  "checkout": "main",
   "context": {
     "cookiecutter": {
       "project_name": "stpipe",
@@ -17,7 +17,7 @@
       "python_build_backend": "setuptools",
       "crds_observatory": "none",
       "_template": "https://github.com/spacetelescope/stsci-package-template.git",
-      "_commit": "74d9b40d17a3ec8db902c540d201c23d0776933a"
+      "_commit": "5dd6b672eccd8b10567eebf1dfa9c1264d218b34"
     }
   },
   "directory": "python-package"
