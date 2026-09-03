@@ -5,6 +5,8 @@ by stpipe.
 """
 
 import re
+from contextlib import nullcontext
+from importlib.metadata import version
 
 import crds
 from crds.core import config, heavy_client, log
@@ -20,6 +22,17 @@ __all__ = [
     "reference_uri_to_cache_path",
     "get_context_used",
 ]
+
+
+# crds 14 deprecates get_cache_lock and makes it a noop.
+# Check the crds version and only use get_cache_lock for old versions.
+# We can remove this when the minimum crds version is 14.
+if int(version("crds").split(".")[0]) < 14:
+    from crds.core import crds_cache_locking
+
+    _lock_cache = crds_cache_locking.get_cache_lock
+else:
+    _lock_cache = nullcontext
 
 
 def get_multiple_reference_paths(parameters, reference_file_types, observatory):
@@ -57,11 +70,12 @@ def _get_refpaths(data_dict, reference_file_types, observatory):
     """
     if not reference_file_types:  # [] interpreted as *all types*.
         return {}
-    bestrefs = crds.getreferences(
-        data_dict,
-        reftypes=reference_file_types,
-        observatory=observatory,
-    )
+    with _lock_cache():
+        bestrefs = crds.getreferences(
+            data_dict,
+            reftypes=reference_file_types,
+            observatory=observatory,
+        )
     return {
         filetype: filepath if "N/A" not in filepath.upper() else "N/A"
         for (filetype, filepath) in bestrefs.items()
