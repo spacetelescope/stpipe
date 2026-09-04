@@ -5,9 +5,11 @@ by stpipe.
 """
 
 import re
+from contextlib import nullcontext
+from importlib.metadata import version
 
 import crds
-from crds.core import config, crds_cache_locking, heavy_client, log
+from crds.core import config, heavy_client, log
 from crds.core.exceptions import CrdsError
 
 __all__ = [
@@ -20,6 +22,17 @@ __all__ = [
     "reference_uri_to_cache_path",
     "get_context_used",
 ]
+
+
+# crds 14 deprecates get_cache_lock and makes it a noop.
+# Check the crds version and only use get_cache_lock for old versions.
+# We can remove this when the minimum crds version is 14.
+if int(version("crds").split(".")[0]) < 14:
+    from crds.core import crds_cache_locking
+
+    _lock_cache = crds_cache_locking.get_cache_lock
+else:
+    _lock_cache = nullcontext
 
 
 def get_multiple_reference_paths(parameters, reference_file_types, observatory):
@@ -51,13 +64,13 @@ def get_multiple_reference_paths(parameters, reference_file_types, observatory):
 
 def _get_refpaths(data_dict, reference_file_types, observatory):
     """Tailor the CRDS core library getreferences() call to the stpipe code by
-    adding locking and truncating expected exceptions.   Also simplify 'NOT FOUND n/a'
+    adding truncating expected exceptions.   Also simplify 'NOT FOUND n/a'
     to 'N/A'.  Re-interpret empty reference_file_types as "no types" instead of core
     library default of "all types."
     """
     if not reference_file_types:  # [] interpreted as *all types*.
         return {}
-    with crds_cache_locking.get_cache_lock():
+    with _lock_cache():
         bestrefs = crds.getreferences(
             data_dict,
             reftypes=reference_file_types,

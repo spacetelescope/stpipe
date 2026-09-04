@@ -1,0 +1,1 @@
+Add version check and conditional locking of crds cache to work around upcoming deprecation warning.

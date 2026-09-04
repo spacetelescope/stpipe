@@ -4,7 +4,8 @@ from pathlib import Path
 
 import crds
 import pytest
-from crds.core import crds_cache_locking
+
+from stpipe import crds_client
 
 
 @pytest.fixture()
@@ -139,7 +140,10 @@ def mock_crds(monkeypatch, tmp_path):
 
     mock = MockCRDSClient(crds_path)
 
-    # mock cache locking, this fixture is function scoped so no need for locking
-    monkeypatch.setattr(crds_cache_locking, "get_cache_lock", nullcontext)
+    # Mock cache locking, this fixture is function scoped so no need for locking.
+    # We mock crds_client here since crds 14 removes the need for cache locking.
+    # We can remove this when the minimum crds version is 14.
+    monkeypatch.setattr(crds_client, "_lock_cache", nullcontext)
+
     monkeypatch.setattr(crds, "getreferences", mock._getreferences)
     yield mock
