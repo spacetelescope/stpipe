@@ -30,7 +30,7 @@ repos:
       - id: text-unicode-replacement-char
   # lint and format
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.20
+    rev: v0.16.6
     hooks:
       - id: ruff-check
         args:
@@ -44,7 +44,7 @@ repos:
   #     - id: mypy
   # spell-checking
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.2
+    rev: v2.4.3
     hooks:
       - id: codespell
         args:
@@ -54,7 +54,7 @@ repos:
           - tomli
   # validate change log and fragments in `changes/`
   - repo: https://github.com/twisted/towncrier
-    rev: 25.8.0
+    rev: 26.9.0
     hooks:
       - id: towncrier-check
   # # format YAML and Markdown
