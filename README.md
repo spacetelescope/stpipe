@@ -12,4 +12,4 @@
 base classes and command-line tools for implementing calibration pipeline software
 
 > [!NOTE]
-> Linux and MacOS platforms are tested and supported.  Windows is not currently supported.
+> Linux and MacOS platforms are tested and supported. Windows is not currently supported.

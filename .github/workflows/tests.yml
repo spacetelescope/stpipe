@@ -82,7 +82,7 @@ jobs:
       artifact-path: |
         results.xml
   test_downstream:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@8c8bb6c6c962542921f993d47d26df38dccd50b1  # v3.0.2
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@8c8bb6c6c962542921f993d47d26df38dccd50b1 # v3.0.2
     with:
       setenv: |
         CRDS_PATH: /tmp/data/crds_cache
