@@ -1,10 +1,11 @@
+line-length = 88
+
 src = [
   "src",
   "tests",
   "docs",
   "setup.py",
 ]
-line-length = 88
 extend-exclude = [
   "docs",
   "scripts/strun",
@@ -24,19 +25,11 @@ extend-select = [
 ]
 
 [lint.extend-per-file-ignores]
-"tests/*.py" = [
-  "S101",
+"tests/*" = [
+  "S101",  # Use of `assert` detected
   "S603",
   "S607",
-  "INP001",
-  "ARG001",
 ]
 "src/stpipe/tests/*.py" = [
   "S101",
-]
-"src/stpipe/cli/*.py" = [
-  "T201",
-]
-"src/stpipe/cmdline.py" = [
-  "T201",
 ]
