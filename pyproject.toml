@@ -30,6 +30,7 @@ docs = [
   "sphinx-automodapi",
   "sphinx-rtd-theme",
   "tomli; python_version <\"3.11\"",
+  "towncrier",
 ]
 test = [
   "pytest >=9.0.0",
