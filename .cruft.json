@@ -1,0 +1,24 @@
+{
+  "template": "https://github.com/spacetelescope/stsci-package-template.git",
+  "commit": "5dd6b672eccd8b10567eebf1dfa9c1264d218b34",
+  "checkout": "main",
+  "context": {
+    "cookiecutter": {
+      "project_name": "stpipe",
+      "package_name": "stpipe",
+      "repository_url": "https://github.com/spacetelescope/stpipe",
+      "git_username": "spacetelescope/stpipe-maintainers",
+      "project_description": "base classes and command-line tools for implementing calibration pipeline software",
+      "manage_changelog_with_towncrier": true,
+      "publish_docs_to": "readthedocs.io",
+      "task_runner": "tox",
+      "python_version": ">=3.10",
+      "python_c_extensions": false,
+      "python_build_backend": "setuptools",
+      "crds_observatory": "none",
+      "_template": "https://github.com/spacetelescope/stsci-package-template.git",
+      "_commit": "5dd6b672eccd8b10567eebf1dfa9c1264d218b34"
+    }
+  },
+  "directory": "python-package"
+}
