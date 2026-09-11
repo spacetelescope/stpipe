@@ -20,4 +20,3 @@ name = "Documentation"
 name = "Deprecations and Removals"
 
 [tool.towncrier.fragment.misc]
-
