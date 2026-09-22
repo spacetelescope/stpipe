@@ -1,0 +1,1 @@
+Separate ``output_file`` handling from ``save_results`` so that output from a step is not automatically saved if an output filename is specified.

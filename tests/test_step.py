@@ -503,6 +503,22 @@ def test_save_with_output_dir_env(tmp_cwd, monkeypatch):
     assert (outpath / "foo_stepwithmodel.simplestep").exists()
 
 
+@pytest.mark.parametrize("save_results", [True, False])
+def test_save_with_output_file(tmp_cwd, save_results):
+    """Ensure output is saved only when save_results=True with output_file specified."""
+    model = SimpleDataModel()
+    model.saveid = "stdatamodels"
+    step = StepWithModel()
+    step.output_file = "other_filename"
+    step.save_results = save_results
+    step.run(model)
+    expected = tmp_cwd / "other_filename_stepwithmodel.simplestep"
+    if save_results:
+        assert expected.exists()
+    else:
+        assert not expected.exists()
+
+
 def test_skip():
     """Ensure that standalone step runs even when skip=True"""
     model = SimpleDataModel()

@@ -540,9 +540,6 @@ class Step:
                 self.set_primary_input(args[0])
 
             # Default output file configuration
-            if self.output_file is not None:
-                self.save_results = True
-
             if self.output_dir:
                 output_dir = expandvars(expanduser(self.output_dir))
                 os.makedirs(output_dir, exist_ok=True)
@@ -1084,7 +1081,7 @@ class Step:
             output_file = self.output_file
 
         # Check if saving is even specified.
-        if not force and not self.save_results and not output_file:
+        if not force and not self.save_results:
             return None
 
         if isinstance(model, AbstractModelLibrary):
