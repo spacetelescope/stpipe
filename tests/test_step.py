@@ -505,18 +505,52 @@ def test_save_with_output_dir_env(tmp_cwd, monkeypatch):
 
 @pytest.mark.parametrize("save_results", [True, False])
 def test_save_with_output_file(tmp_cwd, save_results):
-    """Ensure output is saved only when save_results=True with output_file specified."""
+    """
+    Ensure output is saved only when save_results=True with output_file specified.
+
+    Currently, the file is still saved but a deprecation warning is issued.
+    """
     model = SimpleDataModel()
     model.saveid = "stdatamodels"
     step = StepWithModel()
     step.output_file = "other_filename"
     step.save_results = save_results
-    step.run(model)
     expected = tmp_cwd / "other_filename_stepwithmodel.simplestep"
     if save_results:
+        step.run(model)
         assert expected.exists()
     else:
-        assert not expected.exists()
+        with pytest.warns(
+            DeprecationWarning, match="output_file is specified, but save_results=False"
+        ):
+            step.run(model)
+        assert expected.exists()
+
+
+@pytest.mark.parametrize("save_results", [True, False])
+@pytest.mark.parametrize("force", [True, False])
+def test_save_model_with_output_file(tmp_cwd, save_results, force):
+    """
+    Ensure output is saved only with save_results or force.
+
+    Currently, the file is still saved but a deprecation warning
+    is issued if only the output file is specified.
+    """
+    model = SimpleDataModel()
+    model.saveid = "stdatamodels"
+    step = StepWithModel()
+    step.output_file = "other_filename"
+    step.save_results = save_results
+    expected = tmp_cwd / "other_filename_stepwithmodel.simplestep"
+    if save_results or force:
+        step.save_model(model, force=force)
+        assert expected.exists()
+    else:
+        with pytest.warns(
+            DeprecationWarning, match="output_file is specified, but save_results=False"
+        ):
+            step.save_model(model, force=force)
+        assert expected.exists()
 
 
 def test_skip():
