@@ -1,0 +1,1 @@
+Deprecate saving a file automatically with ``Step.save_model`` if ``output_file`` is specified but ``save_results`` and ``force`` are False.
