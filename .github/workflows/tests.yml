@@ -24,9 +24,8 @@ jobs:
       id-token: write
     with:
       envs: |
-        - linux: py310-oldestdeps-cov-xdist
+        - linux: py311-oldestdeps-cov-xdist
           coverage: codecov-oidc
-        - linux: py310-xdist
         - linux: py311-xdist
         - linux: py311-downstreamdeps-cov-xdist
           coverage: codecov-oidc

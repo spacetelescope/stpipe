@@ -5,7 +5,7 @@ both until we replace configobj with traitlets.
 """
 
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import asdf
 
@@ -112,7 +112,7 @@ class StepConfig:
             meta = deepcopy(_META_TEMPLATE)
             meta["date"] = meta["date"].replace(
                 _TEMPLATE_PLACEHOLDER,
-                datetime.now(timezone.utc)
+                datetime.now(UTC)
                 .replace(microsecond=0)
                 .isoformat()
                 .removesuffix("+00:00"),
