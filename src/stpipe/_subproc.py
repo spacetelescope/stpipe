@@ -47,7 +47,7 @@ class SystemCall(Step):
         # Start the process and wait for it to finish.
         logger.info("Spawning %r", cmd_str)
         try:
-            p = subprocess.Popen(
+            p = subprocess.Popen(  # noqa: S602
                 args=[cmd_str],
                 stdin=None,
                 stdout=subprocess.PIPE,
