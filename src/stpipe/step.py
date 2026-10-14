@@ -540,7 +540,14 @@ class Step:
                 self.set_primary_input(args[0])
 
             # Default output file configuration
-            if self.output_file is not None:
+            if self.output_file is not None and not self.save_results:
+                warnings.warn(
+                    "An output_file is specified, but save_results=False. "
+                    "Setting save_results=True, but in the future, results will not "
+                    "be automatically saved for this condition.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
                 self.save_results = True
 
             if self.output_dir:
@@ -1084,8 +1091,17 @@ class Step:
             output_file = self.output_file
 
         # Check if saving is even specified.
-        if not force and not self.save_results and not output_file:
-            return None
+        if not force and not self.save_results:
+            if output_file:
+                warnings.warn(
+                    "An output_file is specified, but save_results=False and "
+                    "force=False. Saving the model, but in the future, results "
+                    "will not be automatically saved for this condition.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+            else:
+                return None
 
         if isinstance(model, AbstractModelLibrary):
             output_paths = []

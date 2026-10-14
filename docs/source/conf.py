@@ -3,10 +3,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
+import tomllib
 
 from sphinx.ext.autodoc import AttributeDocumenter
 

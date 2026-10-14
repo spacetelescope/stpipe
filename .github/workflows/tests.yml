@@ -20,20 +20,20 @@ concurrency:
 jobs:
   test:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@22ddf09dfabb443adddfb9f861b7d41a787d6b1a  # v3.0.3
+    permissions:
+      id-token: write
     with:
       envs: |
-        - linux: py310-oldestdeps-cov-xdist
-        - linux: py310-xdist
+        - linux: py311-oldestdeps-cov-xdist
+          coverage: codecov-oidc
         - linux: py311-xdist
         - linux: py311-downstreamdeps-cov-xdist
-          coverage: 'codecov'
+          coverage: codecov-oidc
         - linux: py312-xdist-nolegacypath
         - linux: py313-xdist
         - linux: py314-cov-xdist
-          coverage: 'codecov'
+          coverage: codecov-oidc
         - macos: py314-xdist
-    secrets:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   test_downstream:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@22ddf09dfabb443adddfb9f861b7d41a787d6b1a  # v3.0.3
     with:
