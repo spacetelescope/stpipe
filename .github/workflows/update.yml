@@ -1,4 +1,4 @@
-name: template
+name: upstream template sync
 
 on:
   schedule:
