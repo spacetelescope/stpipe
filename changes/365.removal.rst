@@ -1,1 +1,0 @@
-Remove deprecated support for ``Step.log``. Downstream steps should use a local logger, retrieved via ``logging.getLogger``.
