@@ -1,3 +1,49 @@
+2.0.0 (2026-11-04)
+==================
+
+Bug Fixes
+---------
+
+- Add version check and conditional locking of crds cache to work around
+  upcoming deprecation warning. (`#368
+  <https://github.com/spacetelescope/stpipe/issues/368>`_)
+
+
+New Features
+------------
+
+- Add support for passing numerical log levels to strun. (`#366
+  <https://github.com/spacetelescope/stpipe/issues/366>`_)
+
+
+Deprecations and Removals
+-------------------------
+
+- Deprecate ``stpipe.format_template``. Use f-strings instead. (`#345
+  <https://github.com/spacetelescope/stpipe/issues/345>`_)
+- Deprecate ``Step.print_configspec``. Use ``print(Step.spec)`` or
+  ``print(Step.load_spec_file())`` instead. (`#347
+  <https://github.com/spacetelescope/stpipe/issues/347>`_)
+- Issue a ``UserWarning`` when ``call`` is used on a step/pipeline instance.
+  ``call`` is a class method that creates a new step/pipeline instance and
+  using it on an existing instance can result in silently ignoring the
+  parameters and configuration of the original instance and incorrect results.
+  In the future this will be an error. (`#360
+  <https://github.com/spacetelescope/stpipe/issues/360>`_)
+- Drop support for python 3.10. (`#361
+  <https://github.com/spacetelescope/stpipe/issues/361>`_)
+- Remove deprecated support for log config files. Use the ``log_*`` arguments
+  to configure logging from the command line, or the ``logging`` module to
+  configure logging from Python. (`#364
+  <https://github.com/spacetelescope/stpipe/issues/364>`_)
+- Remove deprecated support for ``Step.log``. Downstream steps should use a
+  local logger, retrieved via ``logging.getLogger``. (`#365
+  <https://github.com/spacetelescope/stpipe/issues/365>`_)
+- Deprecate saving a file automatically with ``Step.save_model`` if
+  ``output_file`` is specified but ``save_results`` and ``force`` are False.
+  (`#376 <https://github.com/spacetelescope/stpipe/issues/376>`_)
+
+
 1.1.0 (2026-08-13)
 ==================
 
