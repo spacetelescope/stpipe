@@ -37,32 +37,31 @@ def hook_from_string(step, hooktype, num, command):
 
     # hook is a string of the fully-qualified name of a class or function
     if isinstance(command, str):
+        # A Step may be followed by its parameters, as in
+        # "package.module.StepClass(param=1.5)". Split them off before importing,
+        # so that a "." in a parameter value is not read as part of the module path.
+        class_string, paren, params = command.partition("(")
         try:
             # String points to a Step subclass
             step_class = utilities.import_class(
-                command, subclassof=Step, config_file=step.config_file
+                class_string, subclassof=Step, config_file=step.config_file
             )
         except ImportError:
             # String is possibly a subproc, so handle this later
             pass
-        except AttributeError:
-            # String points to an instance of a Step
-            # So import the class
-            class_string, _, params = command.partition("(")
-            step_class = utilities.import_class(
-                class_string, subclassof=Step, config_file=step.config_file
-            )
-            # Then convert rest of string to args and instantiate the class
-            kwargs_string = params.strip(")")
-            expr = ast.parse(f"dict({kwargs_string}\n)", mode="eval")
-            kwargs.update(
-                {kw.arg: ast.literal_eval(kw.value) for kw in expr.body.keywords}
-            )
-            return step_class(**kwargs)
         except TypeError:
             # String points to a function
             step_func = utilities.import_func(command)
         else:
+            if paren:
+                # String points to an instance of a Step, so convert the rest of
+                # the string to args and instantiate the class
+                kwargs_string = params.strip(")")
+                expr = ast.parse(f"dict({kwargs_string}\n)", mode="eval")
+                kwargs.update(
+                    {kw.arg: ast.literal_eval(kw.value) for kw in expr.body.keywords}
+                )
+                return step_class(**kwargs)
             if step_class.class_alias is not None:
                 name = step_class.class_alias
             return step_class(name, parent=step, config_file=step.config_file, **kwargs)

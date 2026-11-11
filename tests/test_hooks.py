@@ -182,6 +182,32 @@ def test_hook_as_string_of_step_instance(hook_type, caplog, disable_crds_steppar
 
 
 @pytest.mark.parametrize("hook_type", ["pre_hooks", "post_hooks"])
+@pytest.mark.parametrize(
+    "hook, expected",
+    [
+        ("test_hooks.HookStep(param1='foo', param2=2.5)", "foo and 2.5"),
+        ("test_hooks.HookStep(param1='foo.bar', param2=2)", "foo.bar and 2"),
+    ],
+)
+def test_hook_as_string_of_step_instance_with_dot_in_params(
+    hook_type, hook, expected, caplog, disable_crds_steppars
+):
+    """Test a "." in a parameter value of a Step instance string"""
+    model = FakeDataModel()
+
+    steps = {
+        "shovelpixels": {
+            hook_type: [
+                hook,
+            ]
+        }
+    }
+    MyPipeline.call(model, steps=steps)
+
+    assert f"Running HookStep with {expected}" in caplog.text
+
+
+@pytest.mark.parametrize("hook_type", ["pre_hooks", "post_hooks"])
 def test_hook_as_string_of_importable_function(
     hook_type, caplog, disable_crds_steppars
 ):
