@@ -50,6 +50,10 @@ def hook_from_string(step, hooktype, num, command):
             # String is possibly a subproc, so handle this later
             pass
         except TypeError:
+            if paren:
+                # Only a Step can take parameters, so keep the error that says
+                # the class is not a Step
+                raise
             # String points to a function
             step_func = utilities.import_func(command)
         else:
@@ -58,6 +62,10 @@ def hook_from_string(step, hooktype, num, command):
                 # the string to args and instantiate the class
                 kwargs_string = params.strip(")")
                 expr = ast.parse(f"dict({kwargs_string}\n)", mode="eval")
+                if expr.body.args:
+                    raise ValueError(
+                        f"Hook {command!r}: only keyword arguments are supported"
+                    )
                 kwargs.update(
                     {kw.arg: ast.literal_eval(kw.value) for kw in expr.body.keywords}
                 )

@@ -1,1 +1,1 @@
-Fix hook strings whose Step parameter values contain a ".", such as ``"pkg.Step(param=2.5)"``, which were run as shell commands instead of as the Step.
+Fix hook strings whose Step parameter values contain a ".", such as ``"pkg.Step(param=2.5)"``, which were run as shell commands instead of as the Step. Positional parameters in a Step hook string now raise a ``ValueError`` instead of being ignored.
