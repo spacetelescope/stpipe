@@ -182,6 +182,73 @@ def test_hook_as_string_of_step_instance(hook_type, caplog, disable_crds_steppar
 
 
 @pytest.mark.parametrize("hook_type", ["pre_hooks", "post_hooks"])
+@pytest.mark.parametrize(
+    "hook, expected",
+    [
+        ("test_hooks.HookStep(param1='foo', param2=2.5)", "foo and 2.5"),
+        ("test_hooks.HookStep(param1='foo.bar', param2=2)", "foo.bar and 2"),
+    ],
+)
+def test_hook_as_string_of_step_instance_with_dot_in_params(
+    hook_type, hook, expected, caplog, disable_crds_steppars
+):
+    """Test a "." in a parameter value of a Step instance string"""
+    model = FakeDataModel()
+
+    steps = {
+        "shovelpixels": {
+            hook_type: [
+                hook,
+            ]
+        }
+    }
+    MyPipeline.call(model, steps=steps)
+
+    assert f"Running HookStep with {expected}" in caplog.text
+
+
+@pytest.mark.parametrize("hook_type", ["pre_hooks", "post_hooks"])
+@pytest.mark.parametrize(
+    "hook",
+    [
+        "test_hooks.HookStep('foo', 2.5)",
+        "test_hooks.HookStep('foo', 2)",
+    ],
+)
+def test_hook_as_string_of_step_instance_with_positional_args(
+    hook_type, hook, disable_crds_steppars
+):
+    """Test that positional parameters in a Step instance string raise"""
+    model = FakeDataModel()
+
+    steps = {
+        "shovelpixels": {
+            hook_type: [
+                hook,
+            ]
+        }
+    }
+    with pytest.raises(ValueError, match="only keyword arguments are supported"):
+        MyPipeline.call(model, steps=steps)
+
+
+@pytest.mark.parametrize("hook_type", ["pre_hooks", "post_hooks"])
+def test_hook_as_string_of_non_step_class_with_params(hook_type, disable_crds_steppars):
+    """Test that a class that is not a Step keeps its error when given parameters"""
+    model = FakeDataModel()
+
+    steps = {
+        "shovelpixels": {
+            hook_type: [
+                "test_hooks.FakeDataModel(data_id=1)",
+            ]
+        }
+    }
+    with pytest.raises(TypeError, match="is not a subclass of Step"):
+        MyPipeline.call(model, steps=steps)
+
+
+@pytest.mark.parametrize("hook_type", ["pre_hooks", "post_hooks"])
 def test_hook_as_string_of_importable_function(
     hook_type, caplog, disable_crds_steppars
 ):
@@ -219,3 +286,23 @@ def test_hook_as_systemcall(hook_type, caplog, tmp_cwd, disable_crds_steppars):
     # Logs from fitsinfo
     assert "SystemCall instance created" in caplog.text
     assert "Spawning 'asdftool info stpipe.MyPipeline.shovelpixels" in caplog.text
+
+
+@pytest.mark.parametrize("hook_type", ["pre_hooks", "post_hooks"])
+def test_hook_as_systemcall_with_parenthesis(
+    hook_type, caplog, tmp_cwd, disable_crds_steppars
+):
+    """Test that a terminal command containing "(" is still a system call"""
+    model = FakeDataModel()
+
+    steps = {
+        "shovelpixels": {
+            hook_type: [
+                "echo $(echo hello) {0}",
+            ]
+        }
+    }
+    MyPipeline.call(model, steps=steps)
+
+    assert "SystemCall instance created" in caplog.text
+    assert "Spawning 'echo $(echo hello)" in caplog.text
