@@ -1,6 +1,7 @@
 import logging
 import os
 import subprocess
+import warnings
 
 from .datamodel import AbstractDataModel
 from .step import Step
@@ -28,6 +29,11 @@ class SystemCall(Step):
     """  # noqa: E501
 
     def process(self, *args):
+        warnings.warn(
+            "SystemCall and subprocess hooks are deprecated. "
+            "Use a custom python class hook instead",
+            DeprecationWarning,
+        )
         newargs = []
         for i, arg in enumerate(args):
             if isinstance(arg, AbstractDataModel):
