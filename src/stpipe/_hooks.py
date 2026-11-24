@@ -4,6 +4,7 @@ Pre- and post-hooks
 
 import ast
 import inspect
+import warnings
 
 from . import _function_wrapper, utilities
 from .step import Step
@@ -91,6 +92,11 @@ def hook_from_string(step, hooktype, num, command):
     # hook is a command-line script or system call
     from ._subproc import SystemCall
 
+    warnings.warn(
+        "Handling unknown strings as system calls is deprecated. "
+        "Use a custom python class hook instead.",
+        UserWarning,
+    )
     return SystemCall(name, parent=step, command=command, **kwargs)
 
 

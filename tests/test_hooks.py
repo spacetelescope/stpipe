@@ -214,7 +214,13 @@ def test_hook_as_systemcall(hook_type, caplog, tmp_cwd, disable_crds_steppars):
             ]
         }
     }
-    MyPipeline.call(model, steps=steps)
+    with (
+        pytest.warns(
+            UserWarning, match="unknown strings as system calls is deprecated"
+        ),
+        pytest.deprecated_call(),
+    ):
+        MyPipeline.call(model, steps=steps)
 
     # Logs from fitsinfo
     assert "SystemCall instance created" in caplog.text

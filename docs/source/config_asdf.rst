@@ -83,10 +83,8 @@ There are two required keys at the top level: ``class`` and ``parameters``.
 ``class`` specifies the Python class to run.  It should be a
 fully-qualified Python path to the class.  Step classes can ship with
 ``stpipe`` itself, they may be part of other Python packages, or they
-exist in freestanding modules alongside the configuration file.  For
-example, to use the ``SystemCall`` step included with ``stpipe``, set
-``class`` to ``stpipe.subproc.SystemCall``.  To use a class called
-``Custom`` defined in a file ``mysteps.py`` in the same directory as
+exist in freestanding modules alongside the configuration file. To use a class
+called ``Custom`` defined in a file ``mysteps.py`` in the same directory as
 the configuration file, set ``class`` to ``mysteps.Custom``.
 
 ``name`` defines the name of the step.  This is distinct from the
