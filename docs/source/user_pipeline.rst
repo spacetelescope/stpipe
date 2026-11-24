@@ -166,14 +166,14 @@ they are run in the order they are given. There can also be ``pre_hooks`` and
 ``post_hooks`` on the Pipeline as a whole (since a Pipeline is also a Step).
 Each of these parameters is a list of strings, where each entry is one of:
 
-* An external commandline application.  The arguments can be
+* DEPRECATED: An external commandline application.  The arguments can be
   accessed using {0}, {1} etc.  (See
   ``stpipe.subproc.SystemCall``).
 * A dot-separated path to a Python Step class.
 * A dot-separated path to a Python function.
 
 
-For example, here's a ``post_hook`` that runs ``stat`` on our output file
+For example, here's a ``post_hook`` that runs the ``CleanupStep`` on our output file
 after the denoise step:
 
 .. code-block:: yaml
@@ -182,4 +182,4 @@ after the denoise step:
    - class: mycode.steps.DenoiseStep
      name: denoise
      parameters:
-        post_hooks = "stat {0}",
+        post_hooks = "mycode.steps.CleanupStep",
