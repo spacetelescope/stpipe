@@ -1,0 +1,1 @@
+Deprecate handling unknown strings in hooks as system calls. Define a custom step class instead.
