@@ -95,7 +95,7 @@ def hook_from_string(step, hooktype, num, command):
     warnings.warn(
         "Handling unknown strings as system calls is deprecated. "
         "Use a custom python class hook instead.",
-        DeprecationWarning,
+        UserWarning,
     )
     return SystemCall(name, parent=step, command=command, **kwargs)
 

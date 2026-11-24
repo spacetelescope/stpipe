@@ -214,7 +214,12 @@ def test_hook_as_systemcall(hook_type, caplog, tmp_cwd, disable_crds_steppars):
             ]
         }
     }
-    with pytest.deprecated_call():
+    with (
+        pytest.warns(
+            UserWarning, match="unknown strings as system calls is deprecated"
+        ),
+        pytest.deprecated_call(),
+    ):
         MyPipeline.call(model, steps=steps)
 
     # Logs from fitsinfo
