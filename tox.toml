@@ -1,0 +1,75 @@
+# Native TOML factor conditions require tox 4.42 or newer.
+requires = ["tox>=4.42"]
+env_list = ["py"]
+
+[env_run_base]
+description = "Run tests for {env_name}"
+change_dir = { replace = "if", condition = "factor.jwst or factor.romancal", then = "{env_tmp_dir}", else = "{tox_root}" }
+allowlist_externals = [
+    "git",
+    { replace = "if", condition = "factor.jwst or factor.romancal", then = ["bash"], extend = true },
+]
+extras = ["test"]
+deps = [
+    { replace = "if", condition = "factor.xdist", then = ["pytest-xdist"], extend = true },
+    { replace = "if", condition = "factor.cov", then = ["pytest-cov"], extend = true },
+    { replace = "if", condition = "factor.oldestdeps", then = ["minimum_dependencies"], extend = true },
+    { replace = "if", condition = "factor.datamodels", then = ["stdatamodels", "roman_datamodels"], extend = true },
+]
+pass_env = ["CRDS_*", "CI"]
+set_env = [
+    { replace = "if", condition = "factor.devdeps", then = { PIP_EXTRA_INDEX_URL = "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple" }, else = {} },
+    { replace = "if", condition = "factor.jwst", then = { CRDS_SERVER_URL = "https://jwst-crds.stsci.edu" }, else = {} },
+    { replace = "if", condition = "factor.jwst or factor.romancal", then = { CRDS_PATH = "{package_root}/crds_cache", CRDS_CLIENT_RETRY_COUNT = "3", CRDS_CLIENT_RETRY_DELAY_SECONDS = "20" }, else = {} },
+    { replace = "if", condition = "factor.romancal", then = { CRDS_SERVER_URL = "https://roman-crds.stsci.edu" }, else = {} },
+    { replace = "if", condition = "factor.cov", then = { COVERAGE_FILE = "{tox_root}/.coverage" }, else = {} },
+]
+package = { replace = "if", condition = "factor.cov", then = "editable", else = "wheel" }
+commands_pre = [
+    { replace = "if", condition = "factor.oldestdeps", then = [
+        ["minimum_dependencies", "stpipe", "--filename", "requirements-min.txt"],
+        ["pip", "install", "-r", "requirements-min.txt"],
+    ], extend = true },
+    { replace = "if", condition = "factor.jwst or factor.romancal", then = [
+        ["bash", "-c", "pip freeze -q | grep 'stpipe @' > {env_tmp_dir}/requirements.txt"],
+    ], extend = true },
+    { replace = "if", condition = "factor.jwst", then = [
+        ["git", "clone", "https://github.com/spacetelescope/jwst.git"],
+    ], extend = true },
+    { replace = "if", condition = "factor.romancal", then = [
+        ["git", "clone", "https://github.com/spacetelescope/romancal.git"],
+    ], extend = true },
+    { replace = "if", condition = "factor.jwst", then = [
+        ["pip", "install", "-e", "jwst[test]"],
+    ], extend = true },
+    { replace = "if", condition = "factor.romancal", then = [
+        ["pip", "install", "-e", "romancal[test]"],
+    ], extend = true },
+    { replace = "if", condition = "factor.jwst or factor.romancal", then = [
+        ["pip", "install", "-r", "{env_tmp_dir}/requirements.txt"],
+    ], extend = true },
+    ["pip", "freeze"],
+]
+commands = [[
+    "pytest",
+    { replace = "if", condition = "factor.oldestdeps", then = ["-p", "no:asdf_schema_tester"], extend = true },
+    { replace = "if", condition = "factor.xdist", then = ["-n", "auto"], extend = true },
+    { replace = "if", condition = "factor.jwst", then = ["jwst"], extend = true },
+    { replace = "if", condition = "factor.romancal", then = ["romancal"], extend = true },
+    { replace = "if", condition = "factor.cov", then = [
+        "--cov={package_root}",
+        "--cov-config={package_root}/pyproject.toml",
+        "--cov-report=term-missing",
+        "--cov-report=xml",
+    ], extend = true },
+    { replace = "posargs", extend = true },
+]]
+
+# Register factors so they can be freely combined with Python environments via -e.
+[env.oldestdeps]
+[env.datamodels]
+[env.cov]
+[env.xdist]
+[env.devdeps]
+[env.jwst]
+[env.romancal]
