@@ -24,16 +24,13 @@ jobs:
       id-token: write
     with:
       envs: |
-        - linux: py311-oldestdeps-cov-xdist
+        - linux: py312-oldestdeps-cov-xdist
           coverage: codecov-oidc
-        - linux: py311-xdist
-        - linux: py311-downstreamdeps-cov-xdist
-          coverage: codecov-oidc
-        - linux: py312-xdist-nolegacypath
         - linux: py313-xdist
-        - linux: py314-cov-xdist
+        - linux: py314-xdist
+        - linux: py315-datamodels-cov-xdist
           coverage: codecov-oidc
-        - macos: py314-xdist
+        - macos: py315-xdist
   test_downstream:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@1285b95e32c783cfa40eb2ffbd6ca4cd023fb884  # v3.2.2
     with:

@@ -2,7 +2,7 @@
 name = "stpipe"
 description = "Framework for calibration pipeline software"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 authors = [
     { name = "STScI" },
 ]
@@ -71,7 +71,7 @@ xfail_strict = true
 doctest_plus = "enabled"
 doctest_rst = "enabled"
 text_file_format = "rst"
-addopts = ["--strict-config", "--strict-markers", "-ra", "--color=yes"]
+addopts = ["--strict-config", "--strict-markers", "-ra", "--color=yes", "-p no:legacypath"]
 testpaths = ["tests"]
 filterwarnings = ["error"]
 markers = ["soctests"]
