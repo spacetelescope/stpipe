@@ -27,11 +27,9 @@ jobs:
         - linux: py311-oldestdeps-cov-xdist
           coverage: codecov-oidc
         - linux: py311-xdist
-        - linux: py311-downstreamdeps-cov-xdist
-          coverage: codecov-oidc
         - linux: py312-xdist-nolegacypath
         - linux: py313-xdist
-        - linux: py314-cov-xdist
+        - linux: py314-datamodels-cov-xdist
           coverage: codecov-oidc
         - macos: py314-xdist
   test_downstream:
